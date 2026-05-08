@@ -1,30 +1,40 @@
 // src/modules/team/services/cometApi.ts - Клиент для API Comet АБФФ
+
+// Временные значения для теста (потом перенесём в .env)
 const COMET_BASE_URL = 'https://api-abff.analyticom.de';
-const COMET_TENANT = 'abff'; // Белорусская федерация футбола
+const COMET_USER = 'dstasyuk';
+const COMET_PASSWORD = 'AAPhUXqqK';
+
+// Кодируем логин и пароль в Base64 для Basic Auth
+function getAuthHeader(): string {
+  const credentials = Buffer.from(`${COMET_USER}:${COMET_PASSWORD}`).toString('base64');
+  return `Basic ${credentials}`;
+}
 
 // Типы данных Comet API
+export interface CometPlayer {
+  id: string;
+  personId?: string;
+  firstName?: string;
+  lastName?: string;
+  middleName?: string;
+  shortName?: string;
+  birthDate?: string;
+  nationality?: string | { name: string; isoCode?: string };
+  height?: number;
+  weight?: number;
+  position?: string | { name: string; code?: string };
+  shirtNumber?: number;
+  jerseyNumber?: number;
+  photoUrl?: string;
+  active?: boolean;
+}
+
 export interface CometTeam {
   id: string;
   name: string;
   shortName?: string;
   clubId?: string;
-}
-
-export interface CometPlayer {
-  id: string;
-  personId: string;
-  firstName: string;
-  lastName: string;
-  middleName?: string;
-  shortName?: string;
-  birthDate?: string;
-  nationality?: { name: string; isoCode: string };
-  height?: number;
-  weight?: number;
-  position?: { name: string; code: string };
-  shirtNumber?: number;
-  photoUrl?: string;
-  active: boolean;
 }
 
 export interface CometMatch {
@@ -35,10 +45,10 @@ export interface CometMatch {
   awayScore?: number;
   matchDate: string;
   kickoffTime?: string;
-  stadium?: { name: string };
-  competition: { id: string; name: string };
+  stadium?: string | { name: string };
+  competition?: { id: string; name: string };
   round?: string;
-  status: string; // SCHEDULED, LIVE, FINISHED, POSTPONED
+  status?: string;
 }
 
 export interface CometCompetition {
@@ -59,35 +69,61 @@ export interface CometStandingRow {
   points: number;
 }
 
-// Универсальная функция запросов к API
+// Универсальная функция запросов к API с авторизацией
 async function cometFetch<T>(endpoint: string): Promise<T[]> {
   const url = `${COMET_BASE_URL}${endpoint}`;
 
   try {
+    console.log(`=== Comet API запрос: ${url} ===`);
+
     const response = await fetch(url, {
       headers: {
         Accept: 'application/json',
+        Authorization: getAuthHeader(),
       },
-      next: { revalidate: 3600 }, // Кэш на 1 час (для серверных запросов)
+      cache: 'no-store',
     });
 
+    console.log(`Статус ответа: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
-      console.error(`Comet API error: ${response.status} ${response.statusText}`);
-      console.error(`URL: ${url}`);
+      console.error(`Ошибка: ${response.status}`);
       return [];
     }
 
-    const data = await response.json();
+    const rawText = await response.text();
+    console.log(`Первые 500 символов ответа:`, rawText.substring(0, 500));
 
-    // Comet API обычно оборачивает данные в объект с полем data или content
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      console.error('Ответ не является JSON');
+      return [];
+    }
+
+    console.log('Тип данных:', typeof data);
+    if (typeof data === 'object' && data !== null) {
+      console.log('Ключи:', Object.keys(data).slice(0, 10));
+    }
+    if (Array.isArray(data)) {
+      console.log('Массив, длина:', data.length);
+      if (data.length > 0) {
+        console.log('Первый элемент:', JSON.stringify(data[0]).substring(0, 300));
+      }
+    }
+
     if (Array.isArray(data)) return data;
     if (data.data && Array.isArray(data.data)) return data.data;
     if (data.content && Array.isArray(data.content)) return data.content;
 
-    console.warn('Неизвестный формат ответа Comet API:', Object.keys(data));
+    const firstKey = Object.keys(data)[0];
+    if (firstKey && Array.isArray(data[firstKey])) return data[firstKey];
+
+    console.warn('Не удалось извлечь массив из ответа');
     return [];
   } catch (error) {
-    console.error('Ошибка запроса к Comet API:', error);
+    console.error('Ошибка запроса:', error);
     return [];
   }
 }

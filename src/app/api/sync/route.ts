@@ -9,7 +9,7 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const { type, teamId, competitionId, cometTeamId, cometCompetitionId } = await request.json();
+    const { type, teamId, cometTeamId, cometCompetitionId } = await request.json();
 
     if (!teamId) {
       return NextResponse.json({ error: 'Не указан teamId' }, { status: 400 });
@@ -23,8 +23,25 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Не указан cometTeamId' }, { status: 400 });
         }
         const players = await fetchTeamPlayers(cometTeamId);
+        console.log(`Получено ${players.length} игроков из API`);
+
         for (const p of players) {
-          // Ищем существующего игрока по cometId
+          // Нормализуем данные (API может возвращать объекты вместо строк)
+          const firstName = typeof p.firstName === 'string' ? p.firstName : '';
+          const lastName = typeof p.lastName === 'string' ? p.lastName : '';
+          const nationality =
+            typeof p.nationality === 'object' && p.nationality?.name
+              ? p.nationality.name
+              : typeof p.nationality === 'string'
+                ? p.nationality
+                : null;
+          const position =
+            typeof p.position === 'object' && p.position?.name
+              ? p.position.name
+              : typeof p.position === 'string'
+                ? p.position
+                : null;
+
           const existing = await prisma.player.findFirst({
             where: { cometId: p.id },
           });
@@ -33,37 +50,37 @@ export async function POST(request: NextRequest) {
             await prisma.player.update({
               where: { id: existing.id },
               data: {
-                firstName: p.firstName,
-                lastName: p.lastName,
+                firstName,
+                lastName,
                 middleName: p.middleName || null,
                 shortName: p.shortName || null,
-                number: p.shirtNumber || null,
-                position: p.position?.name || null,
+                number: p.shirtNumber || (p as { jerseyNumber?: number }).jerseyNumber || null,
+                position,
                 birthDate: p.birthDate ? new Date(p.birthDate) : null,
-                nationality: p.nationality?.name || null,
+                nationality,
                 height: p.height || null,
                 weight: p.weight || null,
                 photoUrl: p.photoUrl || null,
-                isActive: p.active,
+                isActive: p.active !== false,
               },
             });
           } else {
             await prisma.player.create({
               data: {
                 cometId: p.id,
-                teamId: teamId,
-                firstName: p.firstName,
-                lastName: p.lastName,
+                teamId,
+                firstName,
+                lastName,
                 middleName: p.middleName || null,
                 shortName: p.shortName || null,
-                number: p.shirtNumber || null,
-                position: p.position?.name || null,
+                number: p.shirtNumber || (p as { jerseyNumber?: number }).jerseyNumber || null,
+                position,
                 birthDate: p.birthDate ? new Date(p.birthDate) : null,
-                nationality: p.nationality?.name || null,
+                nationality,
                 height: p.height || null,
                 weight: p.weight || null,
                 photoUrl: p.photoUrl || null,
-                isActive: p.active,
+                isActive: p.active !== false,
               },
             });
           }
@@ -76,7 +93,17 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Не указан cometTeamId' }, { status: 400 });
         }
         const matches = await fetchTeamMatches(cometTeamId, cometCompetitionId);
+        console.log(`Получено ${matches.length} матчей из API`);
+
         for (const m of matches) {
+          // Нормализуем данные
+          const stadium =
+            typeof m.stadium === 'object' && m.stadium?.name
+              ? m.stadium.name
+              : typeof m.stadium === 'string'
+                ? m.stadium
+                : null;
+
           const existing = await prisma.match.findFirst({
             where: { cometId: m.id },
           });
@@ -94,15 +121,15 @@ export async function POST(request: NextRequest) {
             await prisma.match.create({
               data: {
                 cometId: m.id,
-                teamId: teamId,
-                homeTeam: m.homeTeam.name,
-                awayTeam: m.awayTeam.name,
-                homeLogoUrl: m.homeTeam.logoUrl || null,
-                awayLogoUrl: m.awayTeam.logoUrl || null,
+                teamId,
+                homeTeam: m.homeTeam?.name || 'Неизвестно',
+                awayTeam: m.awayTeam?.name || 'Неизвестно',
+                homeLogoUrl: m.homeTeam?.logoUrl || null,
+                awayLogoUrl: m.awayTeam?.logoUrl || null,
                 homeScore: m.homeScore,
                 awayScore: m.awayScore,
                 matchDate: new Date(m.matchDate),
-                stadium: m.stadium?.name || null,
+                stadium,
                 tournament: m.competition?.name || null,
                 tournamentId: m.competition?.id || null,
                 round: m.round || null,
@@ -119,6 +146,8 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Не указан cometCompetitionId' }, { status: 400 });
         }
         const standings = await fetchCompetitionStandings(cometCompetitionId);
+        console.log(`Получено ${standings.length} записей турнирной таблицы`);
+
         // Удаляем старую таблицу и вставляем новую
         await prisma.standings.deleteMany({
           where: { tournamentId: cometCompetitionId },
@@ -127,8 +156,8 @@ export async function POST(request: NextRequest) {
           await prisma.standings.create({
             data: {
               tournamentId: cometCompetitionId,
-              teamName: row.team.name,
-              teamLogoUrl: row.team.logoUrl || null,
+              teamName: row.team?.name || 'Неизвестно',
+              teamLogoUrl: row.team?.logoUrl || null,
               position: row.position,
               played: row.played,
               won: row.won,
@@ -155,7 +184,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Преобразование статуса матча
-function mapStatus(apiStatus: string): string {
+function mapStatus(apiStatus?: string): string {
   switch (apiStatus?.toUpperCase()) {
     case 'SCHEDULED':
       return 'scheduled';

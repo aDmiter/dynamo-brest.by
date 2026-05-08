@@ -1,7 +1,17 @@
-import type { NextConfig } from "next";
+// next.config.ts - Конфигурация Next.js
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+    // Разрешаем локальные изображения
+    unoptimized: false,
+  },
 };
 
 export default nextConfig;

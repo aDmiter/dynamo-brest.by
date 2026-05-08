@@ -29,3 +29,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
+
+// PUT — обновить команду
+export async function PUT(request: NextRequest) {
+  try {
+    const data = await request.json();
+
+    if (!data.id) {
+      return NextResponse.json({ error: 'Не указан id команды' }, { status: 400 });
+    }
+
+    const team = await prisma.team.update({
+      where: { id: data.id },
+      data: {
+        name: data.name,
+        slug: data.slug,
+        cometId: data.cometId,
+        isActive: data.isActive,
+        order: data.order,
+      },
+    });
+
+    return NextResponse.json(team);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
