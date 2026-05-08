@@ -1,0 +1,10 @@
+// Это начало схемы. Пока только подключение к БД.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  // для production может быть другой
+}
