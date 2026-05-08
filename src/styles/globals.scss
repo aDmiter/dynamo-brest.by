@@ -1,0 +1,32 @@
+// src/styles/globals.scss - Глобальные стили приложения
+@import 'tailwindcss';
+
+// Кастомные CSS-переменные для стилизации
+:root {
+  // Основные цвета клуба Динамо-Брест
+  --color-primary: #004da8;
+  --color-primary-light: #005bb5;
+  --color-secondary: #ffffff;
+  --color-accent: #d50000;
+}
+
+// Базовые стили пишем на чистом CSS, без @apply
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  background-color: white;
+  color: #1f2937;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  line-height: 1.25;
+}

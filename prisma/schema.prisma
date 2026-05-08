@@ -1,3 +1,5 @@
+// prisma/schema.prisma - Схема базы данных ФК «Динамо-Брест»
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -5,4 +7,207 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+// Администраторы
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("editor")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Новости
+model News {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   @db.Text
+  excerpt     String   @db.Text
+  imageUrl    String?
+  isFeatured  Boolean  @default(false)
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Команда
+model Team {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  cometId   String?
+  isActive  Boolean   @default(true)
+  order     Int       @default(0)
+  players   Player[]
+  matches   Match[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// Игрок
+model Player {
+  id           String   @id @default(cuid())
+  cometId      String?
+  teamId       String
+  team         Team     @relation(fields: [teamId], references: [id])
+  firstName    String
+  lastName     String
+  middleName   String?
+  shortName    String?
+  number       Int?
+  position     String?
+  birthDate    DateTime?
+  nationality  String?
+  height       Int?
+  weight       Int?
+  photoUrl     String?
+  bio          String?  @db.Text
+  isActive     Boolean  @default(true)
+  customFields Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// Матч
+model Match {
+  id           String   @id @default(cuid())
+  cometId      String?
+  teamId       String
+  team         Team     @relation(fields: [teamId], references: [id])
+  homeTeam     String
+  awayTeam     String
+  homeLogoUrl  String?
+  awayLogoUrl  String?
+  homeScore    Int?
+  awayScore    Int?
+  matchDate    DateTime
+  stadium      String?
+  tournament   String?
+  tournamentId String?
+  round        String?
+  status       String   @default("scheduled")
+  isHome       Boolean  @default(true)
+  customFields Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// Турнирная таблица
+model Standings {
+  id           String   @id @default(cuid())
+  tournamentId String
+  teamName     String
+  teamLogoUrl  String?
+  position     Int
+  played       Int      @default(0)
+  won          Int      @default(0)
+  drawn        Int      @default(0)
+  lost         Int      @default(0)
+  goalsFor     Int      @default(0)
+  goalsAgainst Int      @default(0)
+  points       Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+// Категория товаров
+model ProductCategory {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  imageUrl  String?
+  order     Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// Товар
+model Product {
+  id          String          @id @default(cuid())
+  categoryId  String
+  category    ProductCategory @relation(fields: [categoryId], references: [id])
+  name        String
+  slug        String          @unique
+  description String          @db.Text
+  price       Decimal         @db.Decimal(10, 2)
+  oldPrice    Decimal?        @db.Decimal(10, 2)
+  sku         String?         @unique
+  inStock     Boolean         @default(true)
+  isFeatured  Boolean         @default(false)
+  images      String?         @db.Text
+  sizes       String?         @db.Text
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  orderItems  OrderItem[]
+}
+
+// Заказ
+model Order {
+  id            String      @id @default(cuid())
+  customerName  String
+  customerEmail String?
+  customerPhone String
+  address       String?
+  comment       String?     @db.Text
+  status        String      @default("new")
+  total         Decimal     @db.Decimal(10, 2)
+  items         OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+// Элемент заказа
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+  size      String?
+}
+
+// Рекламный баннер
+model Banner {
+  id        String    @id @default(cuid())
+  title     String
+  imageUrl  String
+  linkUrl   String
+  clicks    Int       @default(0)
+  views     Int       @default(0)
+  isActive  Boolean   @default(true)
+  position  String    @default("home")
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// Титулы клуба
+model Title {
+  id        String   @id @default(cuid())
+  name      String
+  year      Int
+  imageUrl  String?
+  type      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Переводы
+model Translation {
+  id        String   @id @default(cuid())
+  key       String
+  locale    String
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, locale])
 }
