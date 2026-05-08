@@ -57,9 +57,8 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full bg-[#003366] text-white shadow-lg">
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         {/* Логотип */}
-        <Link href="/" className="flex items-center gap-2 text-xl font-bold">
-          <FontAwesomeIcon icon={faFutbol} className="text-xl" />
-          <span>Динамо-Брест</span>
+        <Link href="/" className="flex items-center gap-2">
+          <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-10 w-auto" />
         </Link>
 
         {/* Десктопное меню */}
@@ -123,9 +122,8 @@ export default function Header() {
               <FontAwesomeIcon icon={faBars} className="text-xl" />
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] bg-[#003366] text-white">
-              <SheetTitle className="text-white text-lg font-bold mb-4">
-                <FontAwesomeIcon icon={faFutbol} className="mr-2" />
-                Динамо-Брест
+              <SheetTitle className="mb-4">
+                <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-8 w-auto" />
               </SheetTitle>
               <nav className="flex flex-col gap-2">
                 {menuItems.map((item) => (

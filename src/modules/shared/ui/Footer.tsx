@@ -11,9 +11,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* Логотип и описание */}
           <div>
-            <Link href="/" className="flex items-center gap-2 text-xl font-bold text-white">
-              <FontAwesomeIcon icon={faFutbol} />
-              <span>Динамо-Брест</span>
+            <Link href="/" className="flex items-center gap-2">
+              <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-12 w-auto" />
             </Link>
             <p className="mt-3 text-sm">Официальный сайт футбольного клуба «Динамо-Брест»</p>
           </div>

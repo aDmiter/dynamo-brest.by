@@ -42,9 +42,9 @@ export default function AdminSidebar() {
     <aside className="w-64 bg-[#003366] text-white flex flex-col">
       {/* Логотип админки */}
       <div className="p-4 border-b border-white/10">
-        <Link href="/admin/dashboard" className="flex items-center gap-2 text-lg font-bold">
-          <FontAwesomeIcon icon={faFutbol} />
-          <span>Админ-панель</span>
+        <Link href="/admin/dashboard" className="flex flex-col items-center gap-2">
+          <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-10 w-auto" />
+          <span className="text-sm font-medium">Админ-панель</span>
         </Link>
       </div>
 

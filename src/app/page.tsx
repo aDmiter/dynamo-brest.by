@@ -1,10 +1,18 @@
 // src/app/page.tsx - Главная страница
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFutbol, faCalendarDays, faTrophy, faShirt } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarDays, faTrophy, faShirt } from '@fortawesome/free-solid-svg-icons';
 
 export default function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Логотип и заголовок */}
+      <div className="mb-10 text-center">
+        <img src="/images/logos/logo-blue.png" alt="Динамо-Брест" className="mx-auto h-20 w-auto" />
+        <h1 className="mt-4 text-3xl font-bold text-[#003366]">
+          Добро пожаловать на официальный сайт ФК «Динамо-Брест»
+        </h1>
+      </div>
+
       {/* Слайдер новостей (место под будущий компонент) */}
       <section className="mb-10 overflow-hidden rounded-xl bg-gray-200">
         <div className="flex h-[350px] items-center justify-center text-gray-500 md:h-[450px]">

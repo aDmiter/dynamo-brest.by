@@ -39,7 +39,7 @@ model Team {
   id        String    @id @default(cuid())
   name      String
   slug      String    @unique
-  cometId   String?
+  cometId   String?   @unique
   isActive  Boolean   @default(true)
   order     Int       @default(0)
   players   Player[]
@@ -51,7 +51,7 @@ model Team {
 // Игрок
 model Player {
   id           String   @id @default(cuid())
-  cometId      String?
+  cometId      String?  @unique
   teamId       String
   team         Team     @relation(fields: [teamId], references: [id])
   firstName    String
@@ -75,7 +75,7 @@ model Player {
 // Матч
 model Match {
   id           String   @id @default(cuid())
-  cometId      String?
+  cometId      String?  @unique
   teamId       String
   team         Team     @relation(fields: [teamId], references: [id])
   homeTeam     String

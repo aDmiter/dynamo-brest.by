@@ -40,8 +40,12 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mb-2 text-4xl text-[#003366]">
-            <FontAwesomeIcon icon={faFutbol} />
+          <div className="mb-2">
+            <img
+              src="/images/logos/logo-blue.png"
+              alt="Динамо-Брест"
+              className="mx-auto h-16 w-auto"
+            />
           </div>
           <CardTitle className="text-2xl text-[#003366]">Динамо-Брест</CardTitle>
           <p className="text-sm text-gray-500">Вход в административную панель</p>
