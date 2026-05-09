@@ -178,6 +178,7 @@ model Banner {
   title     String
   imageUrl  String
   linkUrl   String
+  backgroundUrl String?
   clicks    Int       @default(0)
   views     Int       @default(0)
   isActive  Boolean   @default(true)
