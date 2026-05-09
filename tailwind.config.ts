@@ -1,4 +1,4 @@
-// tailwind.config.ts - Конфигурация Tailwind CSS v4
+// tailwind.config.ts - Конфигурация Tailwind CSS
 import type { Config } from 'tailwindcss';
 
 export default {
@@ -11,29 +11,40 @@ export default {
   theme: {
     extend: {
       colors: {
-        'dynamo-blue': {
-          DEFAULT: '#004da8',
-          light: '#005bb5',
-          dark: '#003d8a',
-        },
-        'dynamo-white': '#ffffff',
-        'dynamo-red': '#d50000',
-        'dynamo-gray': {
-          100: '#f3f4f6',
-          200: '#e5e7eb',
-          800: '#1f2937',
+        'club-dark': '#242C41',
+        'club-blue': '#14516c',
+        'club-light': '#a5b3d5',
+        'club-brown': '#a6725c',
+        'club-orange': '#ee862c',
+        'club-gold': '#f0ac74',
+        'club-gray': {
+          100: '#F5F5F5',
+          200: '#E0E0E0',
+          800: '#1A1A1A',
         },
       },
       fontFamily: {
-        sans: ['Roboto', 'Arial', 'sans-serif'],
-        condensed: ['Roboto Condensed', 'Arial', 'sans-serif'],
+        sans: ['Inter', 'Roboto', 'Arial', 'sans-serif'],
+        heading: ['Inter Tight', 'sans-serif'],
+        jersey: ['Jersey 10 Charted', 'monospace'],
+      },
+      borderRadius: {
+        DEFAULT: '0',
+        none: '0',
+        sm: '0',
+        md: '0',
+        lg: '0',
+        xl: '0',
+        '2xl': '0',
+        '3xl': '0',
+        full: '0',
       },
       screens: {
         sm: '640px',
         md: '768px',
         lg: '1024px',
         xl: '1280px',
-        '2xl': '1536px',
+        '2xl': '1440px',
       },
     },
   },

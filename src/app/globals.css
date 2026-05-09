@@ -39,94 +39,96 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
 }
 
 :root {
-  /* Фирменные цвета Динамо-Брест #003366 */
-  --background: oklch(1 0 0); /* Белый фон */
-  --foreground: oklch(0.145 0 0); /* Тёмный текст */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  /* Основной тёмный #242C41 */
+  --background: oklch(0.22 0.03 260);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.24 0.03 260);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.24 0.03 260);
+  --popover-foreground: oklch(0.95 0 0);
 
-  /* Основной тёмно-синий #003366 */
-  --primary: oklch(0.3 0.12 255); /* #003366 */
-  --primary-foreground: oklch(0.985 0 0); /* Белый текст на синем */
+  /* Светлее #14516c */
+  --primary: oklch(0.38 0.06 240);
+  --primary-foreground: oklch(0.985 0 0);
 
-  --secondary: oklch(0.92 0.03 255); /* Светло-синий */
-  --secondary-foreground: oklch(0.25 0.1 255); /* Тёмно-синий текст */
+  /* Самый светлый синий #a5b3d5 */
+  --secondary: oklch(0.72 0.05 255);
+  --secondary-foreground: oklch(0.22 0.03 260);
 
-  --muted: oklch(0.95 0 0); /* Светло-серый */
-  --muted-foreground: oklch(0.5 0 0); /* Серый текст */
+  --muted: oklch(0.3 0.03 260);
+  --muted-foreground: oklch(0.65 0.03 260);
 
-  /* Акцентный красный */
-  --accent: oklch(0.55 0.23 20); /* Красный */
-  --accent-foreground: oklch(0.985 0 0); /* Белый текст */
+  /* Коричневый #a6725c */
+  --accent: oklch(0.55 0.08 45);
+  --accent-foreground: oklch(0.985 0 0);
 
-  --destructive: oklch(0.5 0.23 20);
-  --border: oklch(0.82 0.03 255);
-  --input: oklch(0.82 0.03 255);
-  --ring: oklch(0.3 0.12 255); /* Синее кольцо фокуса */
+  /* Оранжевый акцент #ee862c */
+  --destructive: oklch(0.6 0.18 55);
 
-  --chart-1: oklch(0.3 0.12 255); /* #003366 */
-  --chart-2: oklch(0.55 0.23 20); /* Красный */
-  --chart-3: oklch(0.6 0.15 80); /* Зелёный */
-  --chart-4: oklch(0.7 0.15 60); /* Жёлтый */
-  --chart-5: oklch(0.5 0.05 255); /* Серо-синий */
+  --border: oklch(0.35 0.04 260);
+  --input: oklch(0.35 0.04 260);
+  --ring: oklch(0.6 0.18 55);
 
-  --radius: 0.625rem;
+  --chart-1: oklch(0.6 0.18 55);
+  --chart-2: oklch(0.55 0.08 45);
+  --chart-3: oklch(0.38 0.06 240);
+  --chart-4: oklch(0.72 0.05 255);
+  --chart-5: oklch(0.72 0.12 55);
 
-  --sidebar: oklch(0.22 0.08 255);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.3 0.12 255);
+  --radius: 0;
+
+  --sidebar: oklch(0.2 0.03 260);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.6 0.18 55);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.18 0.06 255);
+  --sidebar-accent: oklch(0.55 0.08 45);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.28 0.1 255);
-  --sidebar-ring: oklch(0.3 0.12 255);
+  --sidebar-border: oklch(0.3 0.04 260);
+  --sidebar-ring: oklch(0.6 0.18 55);
 }
 
-/* Тёмная тема (если понадобится позже) */
 .dark {
-  --background: oklch(0.15 0 0);
+  --background: oklch(0.2 0.03 260);
   --foreground: oklch(0.95 0 0);
-  --card: oklch(0.2 0 0);
+  --card: oklch(0.22 0.03 260);
   --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.2 0 0);
+  --popover: oklch(0.22 0.03 260);
   --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.4 0.14 255);
+  --primary: oklch(0.42 0.07 240);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.25 0.05 255);
+  --secondary: oklch(0.3 0.04 260);
   --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.55 0.23 20);
+  --muted: oklch(0.28 0.04 260);
+  --muted-foreground: oklch(0.6 0.03 260);
+  --accent: oklch(0.55 0.08 45);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.4 0.2 20);
+  --destructive: oklch(0.55 0.16 55);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.4 0.14 255);
-  --chart-1: oklch(0.4 0.14 255);
-  --chart-2: oklch(0.55 0.23 20);
-  --chart-3: oklch(0.5 0.15 80);
-  --chart-4: oklch(0.6 0.15 60);
-  --chart-5: oklch(0.4 0.05 255);
-  --sidebar: oklch(0.2 0 0);
+  --ring: oklch(0.6 0.18 55);
+  --chart-1: oklch(0.6 0.18 55);
+  --chart-2: oklch(0.55 0.08 45);
+  --chart-3: oklch(0.45 0.08 240);
+  --chart-4: oklch(0.7 0.05 255);
+  --chart-5: oklch(0.7 0.12 55);
+  --sidebar: oklch(0.18 0.03 260);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.4 0.14 255);
+  --sidebar-primary: oklch(0.6 0.18 55);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.25 0 0);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-accent: oklch(0.55 0.08 45);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.4 0.14 255);
+  --sidebar-ring: oklch(0.6 0.18 55);
 }
 
 @layer base {
@@ -139,6 +141,25 @@
     color: var(--foreground);
   }
   html {
-    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 900;
+  }
+}
+
+@layer utilities {
+  .transition-link {
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease;
   }
 }

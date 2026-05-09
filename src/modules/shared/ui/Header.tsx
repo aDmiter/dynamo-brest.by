@@ -1,163 +1,177 @@
-// src/modules/shared/ui/Header.tsx - Шапка сайта с навигацией
+// src/modules/shared/ui/Header.tsx - Шапка с иконками и выезжающими подписями
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFutbol, faBars } from '@fortawesome/free-solid-svg-icons';
-import { Button } from '@/components/ui/button';
 import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  NavigationMenuContent,
-  navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+  faBars,
+  faTimes,
+  faShoppingCart,
+  faShieldHalved,
+  faUsers,
+  faStore,
+  faNewspaper,
+} from '@fortawesome/free-solid-svg-icons';
 
-// Структура меню (позже будем загружать из админки или конфига)
 const menuItems = [
-  {
-    title: 'Клуб',
-    children: [
-      { title: 'О клубе', href: '/club/about' },
-      { title: 'История', href: '/club/history' },
-      { title: 'Титулы', href: '/club/titles' },
-      { title: 'Контакты', href: '/club/contacts' },
-    ],
-  },
-  {
-    title: 'Команда',
-    children: [
-      { title: 'Основной состав', href: '/team/main/players' },
-      { title: 'Календарь', href: '/team/main/calendar' },
-      { title: 'Результаты', href: '/team/main/results' },
-      { title: 'Таблица', href: '/team/main/table' },
-    ],
-  },
-  {
-    title: 'Магазин',
-    children: [
-      { title: 'Каталог', href: '/shop/catalog' },
-      { title: 'Корзина', href: '/shop/cart' },
-    ],
-  },
-  {
-    title: 'Новости',
-    href: '/news',
-  },
+  { title: 'Клуб', href: '/club/about', icon: faShieldHalved },
+  { title: 'Команда', href: '/team/main/players', icon: faUsers },
+  { title: 'Магазин', href: '/shop/catalog', icon: faStore },
+  { title: 'Новости', href: '/news', icon: faNewspaper },
 ];
 
 export default function Header() {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [sideMenuVisible, setSideMenuVisible] = useState(true);
+  const [topMenuVisible, setTopMenuVisible] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const halfScreen = window.innerHeight * 0.5;
+
+      if (currentScrollY > halfScreen) {
+        setSideMenuVisible(false);
+        if (currentScrollY < lastScrollY.current) {
+          setTopMenuVisible(true);
+        } else if (currentScrollY > lastScrollY.current + 10) {
+          setTopMenuVisible(false);
+        }
+      } else {
+        setSideMenuVisible(true);
+        setTopMenuVisible(false);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#003366] text-white shadow-lg">
-      <div className="container mx-auto flex items-center justify-between px-4 py-3">
-        {/* Логотип */}
-        <Link href="/" className="flex items-center gap-2">
-          <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-10 w-auto" />
+    <>
+      {/* Вертикальное меню слева */}
+      <header
+        className={`fixed left-0 top-0 z-50 hidden h-screen w-20 flex-col items-center justify-between bg-[#242C41]/80 py-8 transition-all duration-500 lg:flex ${
+          sideMenuVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+      >
+        <Link href="/" className="flex flex-col items-center gap-2">
+          <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-12 w-auto" />
         </Link>
 
-        {/* Десктопное меню */}
-        <div className="hidden lg:block">
-          <NavigationMenu>
-            <NavigationMenuList className="gap-1">
-              {menuItems.map((item) => (
-                <NavigationMenuItem key={item.title}>
-                  {item.children ? (
-                    <>
-                      <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 hover:text-white">
-                        {item.title}
-                      </NavigationMenuTrigger>
-                      <NavigationMenuContent>
-                        <ul className="min-w-[200px] p-2">
-                          {item.children.map((child) => (
-                            <li key={child.title}>
-                              <Link
-                                href={child.href}
-                                className="block rounded-md px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
-                              >
-                                {child.title}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      </NavigationMenuContent>
-                    </>
-                  ) : (
-                    <Link
-                      href={item.href || '/'}
-                      className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white/10 hover:text-white`}
-                    >
-                      {item.title}
-                    </Link>
-                  )}
-                </NavigationMenuItem>
-              ))}
-            </NavigationMenuList>
-          </NavigationMenu>
-        </div>
-
-        {/* Кнопки действий (десктоп) */}
-        <div className="hidden items-center gap-3 lg:flex">
-          <Link href="/shop/cart">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-white text-gray-800 hover:bg-white hover:text-[#003366]"
+        <nav className="flex flex-col items-center">
+          {menuItems.map((item) => (
+            <Link
+              key={item.title}
+              href={item.href}
+              className="group relative flex h-16 w-20 items-center justify-center"
             >
-              Корзина
-            </Button>
-          </Link>
-          <span className="cursor-pointer text-sm hover:underline">RU / BY</span>
-        </div>
+              <FontAwesomeIcon
+                icon={item.icon}
+                className="relative z-10 text-2xl text-white/70 transition-colors group-hover:text-[#ee862c]"
+              />
+              <div className="absolute left-0 top-0 flex h-full w-auto min-w-[200px] items-center gap-4 bg-[#242C41] pl-20 pr-6 opacity-0 -translate-x-full transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none group-hover:pointer-events-auto">
+                <span className="font-heading text-base font-bold text-white uppercase tracking-widest">
+                  {item.title}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </nav>
 
-        {/* Мобильное меню (гамбургер) */}
-        <div className="lg:hidden">
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger className="inline-flex items-center justify-center rounded-md p-2 text-white hover:bg-white/10">
-              <FontAwesomeIcon icon={faBars} className="text-xl" />
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] bg-[#003366] text-white">
-              <SheetTitle className="mb-4">
-                <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-8 w-auto" />
-              </SheetTitle>
-              <nav className="flex flex-col gap-2">
-                {menuItems.map((item) => (
-                  <div key={item.title} className="border-b border-white/20 pb-2">
-                    {item.href && !item.children ? (
-                      <Link
-                        href={item.href}
-                        className="block py-2 text-lg font-medium hover:text-gray-300"
-                        onClick={() => setMobileOpen(false)}
-                      >
-                        {item.title}
-                      </Link>
-                    ) : (
-                      <>
-                        <span className="block py-2 text-lg font-medium">{item.title}</span>
-                        {item.children?.map((child) => (
-                          <Link
-                            key={child.title}
-                            href={child.href}
-                            className="block py-1 pl-4 text-base text-gray-300 hover:text-white"
-                            onClick={() => setMobileOpen(false)}
-                          >
-                            {child.title}
-                          </Link>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
+        <div className="flex flex-col items-center gap-4">
+          <Link
+            href="/shop/cart"
+            className="group relative flex h-12 w-20 items-center justify-center"
+          >
+            <FontAwesomeIcon
+              icon={faShoppingCart}
+              className="relative z-10 text-xl text-white/50 transition-colors group-hover:text-[#ee862c]"
+            />
+            <div className="absolute left-0 top-0 flex h-full w-auto min-w-[180px] items-center gap-4 bg-[#242C41] pl-20 pr-6 opacity-0 -translate-x-full transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none group-hover:pointer-events-auto">
+              <span className="font-heading text-base font-bold text-white uppercase tracking-widest">
+                Корзина
+              </span>
+            </div>
+          </Link>
+          <button className="text-sm text-white/50 hover:text-[#ee862c] transition-colors">
+            RU
+          </button>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Верхнее меню при скролле */}
+      <header
+        className={`fixed left-0 right-0 top-0 z-50 hidden items-center justify-between bg-[#242C41]/95 backdrop-blur-md px-8 py-4 transition-all duration-300 lg:flex ${
+          topMenuVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+        }`}
+      >
+        <div className="w-20" />
+        <div className="flex-1 flex justify-center">
+          <Link href="/">
+            <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-8 w-auto" />
+          </Link>
+        </div>
+        <div className="flex items-center gap-6">
+          {menuItems.map((item) => (
+            <Link
+              key={item.title}
+              href={item.href}
+              className="text-sm font-medium text-white/70 uppercase tracking-wider transition-colors hover:text-[#ee862c]"
+            >
+              {item.title}
+            </Link>
+          ))}
+          <Link
+            href="/shop/cart"
+            className="text-white/70 hover:text-[#ee862c] text-sm transition-colors"
+          >
+            <FontAwesomeIcon icon={faShoppingCart} className="mr-1" />
+          </Link>
+          <button className="text-sm text-white/70 hover:text-[#ee862c] transition-colors">
+            RU
+          </button>
+        </div>
+      </header>
+
+      {/* Мобильный Header */}
+      <header className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between bg-[#242C41] px-4 py-3 lg:hidden">
+        <Link href="/">
+          <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-6 w-auto" />
+        </Link>
+        <button onClick={() => setMenuOpen(true)} className="text-white">
+          <FontAwesomeIcon icon={faBars} className="text-xl" />
+        </button>
+      </header>
+
+      {/* Мобильное меню */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-[#242C41] lg:hidden">
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="font-heading text-lg font-bold text-white">Меню</span>
+            <button onClick={() => setMenuOpen(false)} className="text-white">
+              <FontAwesomeIcon icon={faTimes} className="text-xl" />
+            </button>
+          </div>
+          <nav className="flex flex-col gap-0 px-4 pt-8">
+            {menuItems.map((item) => (
+              <Link
+                key={item.title}
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 border-b border-gray-700 py-4 font-heading text-lg font-bold text-white uppercase tracking-widest"
+              >
+                <FontAwesomeIcon icon={item.icon} className="text-[#ee862c]" />
+                {item.title}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
+    </>
   );
 }

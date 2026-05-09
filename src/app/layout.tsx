@@ -1,4 +1,4 @@
-// src/app/layout.tsx - Корневой layout приложения
+// src/app/layout.tsx - Корневой layout
 import type { Metadata } from 'next';
 import '@/lib/fontawesome';
 import '@/styles/globals.scss';
@@ -8,18 +8,25 @@ import Footer from '@/modules/shared/ui/Footer';
 export const metadata: Metadata = {
   title: 'Динамо-Брест',
   description: 'Официальный сайт футбольного клуба «Динамо-Брест»',
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru">
-      <body className="flex min-h-screen flex-col bg-white text-gray-900 antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Inter:wght@400;500;600;700&family=Jersey+10+Charted&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-screen bg-[#242C41] text-white antialiased">
         <Header />
-        <main className="flex-1">{children}</main>
+        <main>{children}</main>
         <Footer />
       </body>
     </html>
