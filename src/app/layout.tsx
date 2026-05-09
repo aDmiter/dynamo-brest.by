@@ -4,16 +4,20 @@ import '@/lib/fontawesome';
 import '@/styles/globals.scss';
 import Header from '@/modules/shared/ui/Header';
 import Footer from '@/modules/shared/ui/Footer';
+import { headers } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Динамо-Брест',
   description: 'Официальный сайт футбольного клуба «Динамо-Брест»',
-  icons: {
-    icon: '/favicon.png',
-  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Определяем, является ли страница админкой
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname') || '';
+
+  const isAdmin = pathname.startsWith('/admin');
+
   return (
     <html lang="ru">
       <head>
@@ -25,9 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen bg-[#242C41] text-white antialiased">
-        <Header />
+        {!isAdmin && <Header />}
         <main>{children}</main>
-        <Footer />
+        {!isAdmin && <Footer />}
       </body>
     </html>
   );

@@ -1,4 +1,4 @@
-// src/app/admin/layout.tsx - Layout админ-панели с проверкой авторизации
+// src/app/admin/layout.tsx - Layout админ-панели
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import AdminSidebar from '@/modules/admin/components/AdminSidebar';

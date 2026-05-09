@@ -1,8 +1,5 @@
-// src/modules/shared/ui/AdBanner.tsx - Рекламный баннер на главной
 'use client';
-import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+// src/modules/shared/ui/AdBanner.tsx - Рекламный баннер на главной
 
 interface AdBannerProps {
   title: string;
@@ -40,10 +37,7 @@ export default function AdBanner({
         backgroundPosition: 'center',
       }}
     >
-      {/* Оверлей для фона */}
-      {backgroundUrl && (
-        <div className="banner__background-overlay absolute inset-0 bg-[#0B0F1C]/70" />
-      )}
+      {/* Фон, если нет картинки */}
       {!backgroundUrl && (
         <div className="banner__background-solid absolute inset-0 bg-gradient-to-br from-[#0B0F1C] via-[#0D1225] to-[#0F1529]" />
       )}
@@ -62,11 +56,6 @@ export default function AdBanner({
             alt={title}
             className="banner__image max-h-[300px] w-auto max-w-full object-contain md:max-w-[1400px]"
           />
-          {/* Метка "Реклама" */}
-          <span className="banner__label absolute right-2 top-2 flex items-center gap-1 bg-black/50 px-2 py-1 text-[10px] uppercase tracking-wider text-white/50">
-            <FontAwesomeIcon icon={faExternalLinkAlt} className="text-[8px]" />
-            Реклама
-          </span>
         </a>
       </div>
 
