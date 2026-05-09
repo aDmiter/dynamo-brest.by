@@ -35,7 +35,11 @@ export default function NewsCard({
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-[#14516c]/20 text-gray-600">
-            <span className="font-heading text-4xl">ДБ</span>
+            <img
+              src="/images/placeholder.jpg"
+              alt="Placeholder"
+              className="h-full w-full object-cover opacity-50"
+            />
           </div>
         )}
         {/* Категория */}

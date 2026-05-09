@@ -17,6 +17,7 @@ import {
   faTrophy,
   faLanguage,
   faSignOutAlt,
+  faHandshake,
 } from '@fortawesome/free-solid-svg-icons';
 
 const menuItems = [
@@ -29,6 +30,7 @@ const menuItems = [
   { title: 'Товары', href: '/admin/products', icon: faShirt },
   { title: 'Заказы', href: '/admin/orders', icon: faShoppingCart },
   { title: 'Баннеры', href: '/admin/banners', icon: faAd },
+  { title: 'Спонсоры', href: '/admin/sponsors', icon: faHandshake },
   { title: 'Титулы', href: '/admin/titles', icon: faTrophy },
   { title: 'Переводы', href: '/admin/translations', icon: faLanguage },
 ];

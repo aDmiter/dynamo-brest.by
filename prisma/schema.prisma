@@ -214,3 +214,16 @@ model Translation {
 
   @@unique([key, locale])
 }
+
+// Спонсоры
+model Sponsor {
+  id        String   @id @default(cuid())
+  name      String
+  imageUrl  String
+  linkUrl   String?
+  type      String   @default("general") // league, general, government
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

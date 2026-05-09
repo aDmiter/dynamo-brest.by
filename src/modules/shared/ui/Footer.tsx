@@ -1,18 +1,41 @@
 // src/modules/shared/ui/Footer.tsx - Подвал сайта
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFutbol } from '@fortawesome/free-solid-svg-icons';
-import { faVk, faYoutube, faTelegram } from '@fortawesome/free-brands-svg-icons';
+import { socialLinks } from '@/modules/config/social';
+import SponsorsSection from './SponsorsSection';
 
-export default function Footer() {
+export default async function Footer() {
   return (
     <footer className="bg-[#1A1A1A] text-gray-400">
+      {/* Спонсоры */}
+      <SponsorsSection />
+
+      {/* Социальные сети */}
+      <div className="border-b border-white/5 bg-[#0B0F1C]">
+        <div className="container mx-auto max-w-[1200px] px-4 py-10">
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+            {socialLinks.map((social) => (
+              <a
+                key={social.label}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={social.label}
+                className="text-2xl text-gray-500 transition-all duration-300 hover:text-white hover:scale-110"
+              >
+                <FontAwesomeIcon icon={social.icon} />
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Основной футер */}
       <div className="container mx-auto px-8 py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
           <div>
             <Link href="/" className="flex items-center gap-3">
-              <FontAwesomeIcon icon={faFutbol} className="text-2xl text-[#ee862c]" />
-              <span className="text-lg font-bold text-white">Динамо-Брест</span>
+              <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-8 w-auto" />
             </Link>
             <p className="mt-4 text-sm leading-relaxed">
               Официальный сайт футбольного клуба «Динамо-Брест»
@@ -52,15 +75,17 @@ export default function Footer() {
               Социальные сети
             </h3>
             <div className="flex gap-4">
-              <a href="#" className="text-2xl hover:text-[#ee862c] transition-colors">
-                <FontAwesomeIcon icon={faVk} />
-              </a>
-              <a href="#" className="text-2xl hover:text-[#ee862c] transition-colors">
-                <FontAwesomeIcon icon={faYoutube} />
-              </a>
-              <a href="#" className="text-2xl hover:text-[#ee862c] transition-colors">
-                <FontAwesomeIcon icon={faTelegram} />
-              </a>
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-2xl hover:text-[#ee862c] transition-colors"
+                >
+                  <FontAwesomeIcon icon={social.icon} />
+                </a>
+              ))}
             </div>
           </div>
         </div>

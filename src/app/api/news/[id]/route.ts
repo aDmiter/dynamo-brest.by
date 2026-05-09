@@ -12,10 +12,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     const data = await request.json();
 
-    console.log('PUT /api/news/:id - body:', JSON.stringify(data));
-    console.log('PUT /api/news/:id - id:', id);
-
-    // Собираем только переданные поля
+    // Собираем только переданные поля (игнорируем undefined)
     const updateData: Record<string, unknown> = {};
 
     if (data.title !== undefined) updateData.title = data.title;
@@ -25,9 +22,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.category !== undefined) updateData.category = data.category;
     if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
     if (data.isPublished !== undefined) updateData.isPublished = data.isPublished;
-    if (data.publishedAt !== undefined) updateData.publishedAt = new Date(data.publishedAt);
-
-    console.log('PUT /api/news/:id - updateData:', JSON.stringify(updateData));
+    if (data.publishedAt !== undefined && data.publishedAt !== null) {
+      updateData.publishedAt = new Date(data.publishedAt);
+    }
 
     const news = await prisma.news.update({
       where: { id },
@@ -37,7 +34,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(news);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    console.error('PUT error:', message);
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

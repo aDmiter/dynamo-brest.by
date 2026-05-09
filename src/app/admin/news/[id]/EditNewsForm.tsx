@@ -1,10 +1,10 @@
-// src/app/admin/news/new/page.tsx - Создание новости
+// src/app/admin/news/[id]/EditNewsForm.tsx - Форма редактирования новости
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faSave, faArrowLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,30 +29,45 @@ const categories = [
   { value: 'video', label: 'Видео' },
 ];
 
-export default function NewNewsPage() {
+interface NewsItem {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  imageUrl: string | null;
+  category: string;
+  isFeatured: boolean;
+  isPublished: boolean;
+  publishedAt: Date;
+}
+
+export default function EditNewsForm({ news }: { news: NewsItem }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const [form, setForm] = useState({
-    title: '',
-    content: '',
-    excerpt: '',
-    imageUrl: '',
-    category: 'general',
-    isFeatured: false,
-    isPublished: true,
-    publishedAt: new Date().toISOString().slice(0, 16),
+    title: news.title,
+    content: news.content,
+    excerpt: news.excerpt,
+    imageUrl: news.imageUrl || '',
+    category: news.category,
+    isFeatured: news.isFeatured,
+    isPublished: news.isPublished,
+    publishedAt: new Date(news.publishedAt).toISOString().slice(0, 16),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
-      const res = await fetch('/api/news', {
-        method: 'POST',
+      const res = await fetch(`/api/news/${news.id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
@@ -61,7 +76,8 @@ export default function NewNewsPage() {
       });
 
       if (res.ok) {
-        router.push('/admin/news');
+        setSuccess('Новость обновлена');
+        router.refresh();
       } else {
         const data = await res.json();
         setError(data.error || 'Ошибка');
@@ -73,9 +89,19 @@ export default function NewNewsPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm('Удалить новость?')) return;
+    try {
+      await fetch(`/api/news/${news.id}`, { method: 'DELETE' });
+      router.push('/admin/news');
+    } catch {
+      setError('Ошибка при удалении');
+    }
+  };
+
   return (
-    <div>
-      <div className="mb-6 flex items-center gap-4">
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
         <Link href="/admin/news">
           <Button
             variant="outline"
@@ -85,17 +111,22 @@ export default function NewNewsPage() {
             <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> Назад
           </Button>
         </Link>
-        <h1 className="font-heading text-2xl font-bold text-white">Добавить новость</h1>
       </div>
 
       <Card className="max-w-4xl border-white/10 bg-white/5 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-white">Новая новость</CardTitle>
+          <CardTitle className="text-white">{news.title}</CardTitle>
+          <p className="text-sm text-gray-500">Slug: {news.slug}</p>
         </CardHeader>
         <CardContent>
           {error && (
             <div className="mb-4 border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
               {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-400">
+              {success}
             </div>
           )}
 
@@ -131,7 +162,7 @@ export default function NewNewsPage() {
             <div>
               <label className="mb-1 block text-sm text-gray-400">Текст</label>
               <TipTapEditor
-                content={form.content}
+                content={news.content}
                 onChange={(html) => setForm({ ...form, content: html })}
               />
             </div>
@@ -188,15 +219,9 @@ export default function NewNewsPage() {
                 <FontAwesomeIcon icon={faSave} className="mr-2" />
                 {loading ? 'Сохранение...' : 'Сохранить'}
               </Button>
-              <Link href="/admin/news">
-                <Button
-                  variant="outline"
-                  type="button"
-                  className="border-white/10 text-gray-400 hover:text-white"
-                >
-                  Отмена
-                </Button>
-              </Link>
+              <Button variant="destructive" type="button" onClick={handleDelete}>
+                <FontAwesomeIcon icon={faTrash} className="mr-2" /> Удалить
+              </Button>
             </div>
           </form>
         </CardContent>
