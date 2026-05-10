@@ -15,24 +15,16 @@ export default function AddToCartButton({ productId, productName }: Props) {
   const [added, setAdded] = useState(false);
 
   const handleAddToCart = () => {
-    // Получаем текущую корзину из localStorage
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-
-    // Проверяем, есть ли уже такой товар
     const existing = cart.find((item: { productId: string }) => item.productId === productId);
-
     if (existing) {
       existing.quantity += 1;
     } else {
       cart.push({ productId, productName, quantity: 1 });
     }
-
     localStorage.setItem('cart', JSON.stringify(cart));
     setAdded(true);
-
     setTimeout(() => setAdded(false), 2000);
-
-    // Событие обновления корзины
     window.dispatchEvent(new Event('cartUpdated'));
   };
 
@@ -40,10 +32,10 @@ export default function AddToCartButton({ productId, productName }: Props) {
     <Button
       onClick={handleAddToCart}
       size="lg"
-      className={`w-full transition-colors ${
-        added ? 'bg-green-600 hover:bg-green-700' : 'bg-[#003366] hover:bg-[#002244]'
-      }`}
       disabled={added}
+      className={`w-full transition-colors ${
+        added ? 'bg-green-600 hover:bg-green-700' : 'bg-[#242C41] hover:bg-[#1a1f30]'
+      }`}
     >
       <FontAwesomeIcon icon={added ? faCheck : faShoppingCart} className="mr-2" />
       {added ? 'Добавлено!' : 'В корзину'}

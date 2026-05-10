@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
-import DeleteSponsorButton from './DeleteSponsorButton';
+import DeleteButton from '@/modules/admin/components/DeleteButton';
+import ToggleButton from '@/modules/admin/components/ToggleButton';
 
 export default async function SponsorsAdminPage() {
   const sponsors = await prisma.sponsor.findMany({
@@ -35,7 +36,7 @@ export default async function SponsorsAdminPage() {
               <th className="p-3 text-left text-sm text-gray-400">Лого</th>
               <th className="p-3 text-left text-sm text-gray-400">Название</th>
               <th className="p-3 text-left text-sm text-gray-400">Тип</th>
-              <th className="p-3 text-left text-sm text-gray-400">Активен</th>
+              <th className="p-3 text-center text-sm text-gray-400">Активен</th>
               <th className="p-3 text-center text-sm text-gray-400">Действия</th>
             </tr>
           </thead>
@@ -58,7 +59,16 @@ export default async function SponsorsAdminPage() {
                   </td>
                   <td className="p-3 text-white">{s.name}</td>
                   <td className="p-3 text-sm text-gray-400">{typeLabels[s.type] || s.type}</td>
-                  <td className="p-3 text-sm">{s.isActive ? '✅' : '❌'}</td>
+                  <td className="p-3 text-center">
+                    <ToggleButton
+                      id={s.id}
+                      apiUrl="/api/sponsors"
+                      field="isActive"
+                      value={s.isActive}
+                      labelOn="Да"
+                      labelOff="Нет"
+                    />
+                  </td>
                   <td className="p-3 text-center">
                     <div className="flex items-center justify-center gap-3">
                       <Link
@@ -67,7 +77,7 @@ export default async function SponsorsAdminPage() {
                       >
                         <FontAwesomeIcon icon={faEdit} /> Ред.
                       </Link>
-                      <DeleteSponsorButton sponsorId={s.id} sponsorName={s.name} />
+                      <DeleteButton id={s.id} apiUrl="/api/sponsors" name={s.name} />
                     </div>
                   </td>
                 </tr>

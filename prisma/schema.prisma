@@ -1,5 +1,3 @@
-// prisma/schema.prisma - Схема базы данных ФК «Динамо-Брест»
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,10 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Администраторы
-model Admin {
+model admin {
   id        String   @id @default(cuid())
-  email     String   @unique
+  email     String   @unique(map: "Admin_email_key")
   password  String
   name      String
   role      String   @default("editor")
@@ -20,66 +17,26 @@ model Admin {
   updatedAt DateTime @updatedAt
 }
 
-// Новости
-model News {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  content     String   @db.Text
-  excerpt     String   @db.Text
-  imageUrl    String?
-  category    String   @default("general")
-  isFeatured  Boolean  @default(false)
-  isPublished Boolean  @default(true)
-  publishedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model banner {
+  id            String    @id @default(cuid())
+  title         String
+  imageUrl      String
+  linkUrl       String
+  clicks        Int       @default(0)
+  views         Int       @default(0)
+  isActive      Boolean   @default(true)
+  position      String    @default("home")
+  startDate     DateTime?
+  endDate       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  backgroundUrl String?
 }
 
-// Команда
-model Team {
-  id        String    @id @default(cuid())
-  name      String
-  slug      String    @unique
-  cometId   String?   @unique
-  isActive  Boolean   @default(true)
-  order     Int       @default(0)
-  players   Player[]
-  matches   Match[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-// Игрок
-model Player {
+model match {
   id           String   @id @default(cuid())
-  cometId      String?  @unique
+  cometId      String?  @unique(map: "Match_cometId_key")
   teamId       String
-  team         Team     @relation(fields: [teamId], references: [id])
-  firstName    String
-  lastName     String
-  middleName   String?
-  shortName    String?
-  number       Int?
-  position     String?
-  birthDate    DateTime?
-  nationality  String?
-  height       Int?
-  weight       Int?
-  photoUrl     String?
-  bio          String?  @db.Text
-  isActive     Boolean  @default(true)
-  customFields Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-// Матч
-model Match {
-  id           String   @id @default(cuid())
-  cometId      String?  @unique
-  teamId       String
-  team         Team     @relation(fields: [teamId], references: [id])
   homeTeam     String
   awayTeam     String
   homeLogoUrl  String?
@@ -96,10 +53,125 @@ model Match {
   customFields Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  team         team     @relation(fields: [teamId], references: [id], map: "Match_teamId_fkey")
+
+  @@index([teamId], map: "Match_teamId_fkey")
 }
 
-// Турнирная таблица
-model Standings {
+model news {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique(map: "News_slug_key")
+  content     String   @db.Text
+  excerpt     String   @db.Text
+  imageUrl    String?
+  isFeatured  Boolean  @default(false)
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  category    String   @default("general")
+  isPublished Boolean  @default(true)
+}
+
+model order {
+  id            String      @id @default(cuid())
+  customerName  String
+  customerEmail String?
+  customerPhone String
+  address       String?
+  comment       String?     @db.Text
+  status        String      @default("new")
+  total         Decimal     @db.Decimal(10, 2)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  orderitem     orderitem[]
+}
+
+model orderitem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+  size      String?
+  order     order   @relation(fields: [orderId], references: [id], map: "OrderItem_orderId_fkey")
+  product   product @relation(fields: [productId], references: [id], map: "OrderItem_productId_fkey")
+
+  @@index([orderId], map: "OrderItem_orderId_fkey")
+  @@index([productId], map: "OrderItem_productId_fkey")
+}
+
+model player {
+  id           String    @id @default(cuid())
+  cometId      String?   @unique(map: "Player_cometId_key")
+  teamId       String
+  firstName    String
+  lastName     String
+  middleName   String?
+  shortName    String?
+  number       Int?
+  position     String?
+  birthDate    DateTime?
+  nationality  String?
+  height       Int?
+  weight       Int?
+  photoUrl     String?
+  bio          String?   @db.Text
+  isActive     Boolean   @default(true)
+  customFields Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  team         team      @relation(fields: [teamId], references: [id], map: "Player_teamId_fkey")
+
+  @@index([teamId], map: "Player_teamId_fkey")
+}
+
+model product {
+  id              String            @id @default(cuid())
+  categoryId      String
+  name            String
+  slug            String            @unique(map: "Product_slug_key")
+  description     String            @db.Text
+  price           Decimal           @db.Decimal(10, 2)
+  oldPrice        Decimal?          @db.Decimal(10, 2)
+  inStock         Boolean           @default(true)
+  isFeatured      Boolean           @default(false)
+  images          String?           @db.Text
+  sizes           String?           @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  article         String?           @unique(map: "Product_article_key")
+  composition     String?           @db.Text
+  orderitem       orderitem[]
+  productcategory productcategory   @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
+
+  @@index([categoryId], map: "Product_categoryId_fkey")
+}
+
+model productcategory {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique(map: "ProductCategory_slug_key")
+  imageUrl  String?
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  product   product[]
+}
+
+model sponsor {
+  id        String   @id @default(cuid())
+  name      String
+  imageUrl  String
+  linkUrl   String?
+  type      String   @default("general")
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model standings {
   id           String   @id @default(cuid())
   tournamentId String
   teamName     String
@@ -115,84 +187,20 @@ model Standings {
   updatedAt    DateTime @updatedAt
 }
 
-// Категория товаров
-model ProductCategory {
-  id        String    @id @default(cuid())
+model team {
+  id        String   @id @default(cuid())
   name      String
-  slug      String    @unique
-  imageUrl  String?
-  order     Int       @default(0)
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  slug      String   @unique(map: "Team_slug_key")
+  cometId   String?  @unique(map: "Team_cometId_key")
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  match     match[]
+  player    player[]
 }
 
-// Товар
-model Product {
-  id          String          @id @default(cuid())
-  categoryId  String
-  category    ProductCategory @relation(fields: [categoryId], references: [id])
-  name        String
-  slug        String          @unique
-  description String          @db.Text
-  price       Decimal         @db.Decimal(10, 2)
-  oldPrice    Decimal?        @db.Decimal(10, 2)
-  sku         String?         @unique
-  inStock     Boolean         @default(true)
-  isFeatured  Boolean         @default(false)
-  images      String?         @db.Text
-  sizes       String?         @db.Text
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  orderItems  OrderItem[]
-}
-
-// Заказ
-model Order {
-  id            String      @id @default(cuid())
-  customerName  String
-  customerEmail String?
-  customerPhone String
-  address       String?
-  comment       String?     @db.Text
-  status        String      @default("new")
-  total         Decimal     @db.Decimal(10, 2)
-  items         OrderItem[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-}
-
-// Элемент заказа
-model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  order     Order   @relation(fields: [orderId], references: [id])
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-  quantity  Int
-  price     Decimal @db.Decimal(10, 2)
-  size      String?
-}
-
-// Рекламный баннер
-model Banner {
-  id        String    @id @default(cuid())
-  title     String
-  imageUrl  String
-  linkUrl   String
-  backgroundUrl String?
-  clicks    Int       @default(0)
-  views     Int       @default(0)
-  isActive  Boolean   @default(true)
-  position  String    @default("home")
-  startDate DateTime?
-  endDate   DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-// Титулы клуба
-model Title {
+model title {
   id        String   @id @default(cuid())
   name      String
   year      Int
@@ -203,8 +211,7 @@ model Title {
   updatedAt DateTime @updatedAt
 }
 
-// Переводы
-model Translation {
+model translation {
   id        String   @id @default(cuid())
   key       String
   locale    String
@@ -212,18 +219,16 @@ model Translation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([key, locale])
+  @@unique([key, locale], map: "Translation_key_locale_key")
 }
 
-// Спонсоры
-model Sponsor {
+model Country {
   id        String   @id @default(cuid())
-  name      String
-  imageUrl  String
-  linkUrl   String?
-  type      String   @default("general") // league, general, government
+  name      String   @unique
+  code      String   @unique
+  price     Decimal? @db.Decimal(10, 2)
+  isActive  Boolean  @default(false)
   order     Int      @default(0)
-  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

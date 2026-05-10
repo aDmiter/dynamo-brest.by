@@ -4,11 +4,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faArrowLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+  faSave,
+  faArrowLeft,
+  faTrash,
+  faEye,
+  faMousePointer,
+} from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import ImageUpload from '@/modules/admin/components/ImageUpload';
 
 interface Banner {
   id: string;
@@ -32,7 +39,7 @@ export default function EditBannerForm({ banner }: Props) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     title: banner.title,
     imageUrl: banner.imageUrl,
     linkUrl: banner.linkUrl,
@@ -50,7 +57,7 @@ export default function EditBannerForm({ banner }: Props) {
       const response = await fetch(`/api/banners/${banner.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(form),
       });
 
       if (response.ok) {
@@ -69,7 +76,6 @@ export default function EditBannerForm({ banner }: Props) {
 
   const handleDelete = async () => {
     if (!confirm('Удалить баннер?')) return;
-
     try {
       await fetch(`/api/banners/${banner.id}`, { method: 'DELETE' });
       router.push('/admin/banners');
@@ -82,7 +88,11 @@ export default function EditBannerForm({ banner }: Props) {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/admin/banners">
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-white/10 text-gray-400 hover:text-white"
+          >
             <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
             Назад
           </Button>
@@ -90,85 +100,85 @@ export default function EditBannerForm({ banner }: Props) {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Форма */}
-        <Card className="md:col-span-2">
+        <Card className="md:col-span-2 border-white/10 bg-white/5 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Редактирование</CardTitle>
+            <CardTitle className="text-white">{banner.title}</CardTitle>
           </CardHeader>
           <CardContent>
             {error && (
-              <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
+              <div className="mb-4 border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+                {error}
+              </div>
             )}
             {success && (
-              <div className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-600">
+              <div className="mb-4 border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-400">
                 {success}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="mb-1 block text-sm font-medium">Название *</label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
+                <label className="mb-1 block text-sm text-gray-400">Баннер</label>
+                <ImageUpload
+                  value={form.imageUrl}
+                  onChange={(url) => setForm({ ...form, imageUrl: url })}
                 />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium">URL баннера *</label>
-                <Input
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  required
-                />
-                {formData.imageUrl && (
-                  <img
-                    src={formData.imageUrl}
-                    alt="Превью"
-                    className="mt-2 max-h-20 object-contain"
-                  />
+                {form.imageUrl && (
+                  <img src={form.imageUrl} alt="Превью" className="mt-2 max-h-16 object-contain" />
                 )}
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Ссылка *</label>
+                <label className="mb-1 block text-sm text-gray-400">Название *</label>
                 <Input
-                  value={formData.linkUrl}
-                  onChange={(e) => setFormData({ ...formData, linkUrl: e.target.value })}
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  className="border-white/10 bg-white/5 text-white"
                   required
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Фон секции</label>
+                <label className="mb-1 block text-sm text-gray-400">Ссылка *</label>
                 <Input
-                  value={formData.backgroundUrl}
-                  onChange={(e) => setFormData({ ...formData, backgroundUrl: e.target.value })}
+                  value={form.linkUrl}
+                  onChange={(e) => setForm({ ...form, linkUrl: e.target.value })}
+                  className="border-white/10 bg-white/5 text-white"
+                  required
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="h-4 w-4"
+              <div>
+                <label className="mb-1 block text-sm text-gray-400">Фон секции</label>
+                <ImageUpload
+                  value={form.backgroundUrl}
+                  onChange={(url) => setForm({ ...form, backgroundUrl: url })}
                 />
-                <label htmlFor="isActive" className="text-sm">
+              </div>
+
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.isActive}
+                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                    className="h-4 w-4 accent-[#ee862c]"
+                  />
                   Баннер активен
                 </label>
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button type="submit" disabled={loading}>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-[#ee862c] hover:bg-[#f0ac74]"
+                >
                   <FontAwesomeIcon icon={faSave} className="mr-2" />
                   {loading ? 'Сохранение...' : 'Сохранить'}
                 </Button>
                 <Button variant="destructive" type="button" onClick={handleDelete}>
-                  <FontAwesomeIcon icon={faTrash} className="mr-2" />
-                  Удалить
+                  <FontAwesomeIcon icon={faTrash} className="mr-2" /> Удалить
                 </Button>
               </div>
             </form>
@@ -176,23 +186,25 @@ export default function EditBannerForm({ banner }: Props) {
         </Card>
 
         {/* Статистика */}
-        <Card>
+        <Card className="border-white/10 bg-white/5 backdrop-blur-sm h-fit">
           <CardHeader>
-            <CardTitle className="text-lg">Статистика</CardTitle>
+            <CardTitle className="text-lg text-white">Статистика</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-500">Показы</p>
-                <p className="text-2xl font-bold text-[#003366]">{banner.views}</p>
+              <div className="border border-white/10 p-4 text-center">
+                <FontAwesomeIcon icon={faEye} className="mb-1 text-2xl text-gray-400" />
+                <p className="text-sm text-gray-400">Показы</p>
+                <p className="text-2xl font-bold text-white">{banner.views}</p>
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Клики</p>
-                <p className="text-2xl font-bold text-[#ee862c]">{banner.clicks}</p>
+              <div className="border border-white/10 p-4 text-center">
+                <FontAwesomeIcon icon={faMousePointer} className="mb-1 text-2xl text-[#ee862c]" />
+                <p className="text-sm text-gray-400">Клики</p>
+                <p className="text-2xl font-bold text-white">{banner.clicks}</p>
               </div>
-              <div>
-                <p className="text-sm text-gray-500">CTR</p>
-                <p className="text-2xl font-bold text-[#14516c]">
+              <div className="border border-white/10 p-4 text-center">
+                <p className="text-sm text-gray-400">CTR</p>
+                <p className="text-2xl font-bold text-white">
                   {banner.views > 0 ? ((banner.clicks / banner.views) * 100).toFixed(2) : '0'}%
                 </p>
               </div>

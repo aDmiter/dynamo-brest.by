@@ -1,4 +1,4 @@
-// src/app/admin/news/DeleteNewsButton.tsx - Кнопка удаления новости
+// src/modules/admin/components/DeleteButton.tsx - Универсальная кнопка удаления
 'use client';
 
 import { useState } from 'react';
@@ -6,22 +6,24 @@ import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
-interface DeleteNewsButtonProps {
-  newsId: string;
-  newsTitle: string;
+interface DeleteButtonProps {
+  id: string;
+  apiUrl: string; // например: '/api/news' или '/api/banners'
+  name: string; // название для confirm
+  onDeleted?: () => void;
 }
 
-export default function DeleteNewsButton({ newsId, newsTitle }: DeleteNewsButtonProps) {
+export default function DeleteButton({ id, apiUrl, name, onDeleted }: DeleteButtonProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleDelete = async () => {
-    if (!confirm(`Удалить новость "${newsTitle}"?`)) return;
-
+    if (!confirm(`Удалить "${name}"?`)) return;
     setLoading(true);
     try {
-      await fetch(`/api/news/${newsId}`, { method: 'DELETE' });
-      router.refresh();
+      await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+      if (onDeleted) onDeleted();
+      else router.refresh();
     } catch (error) {
       console.error('Ошибка удаления:', error);
     } finally {

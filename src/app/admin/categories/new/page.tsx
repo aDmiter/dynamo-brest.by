@@ -1,4 +1,4 @@
-// src/app/admin/banners/new/page.tsx - Создание рекламного баннера
+// src/app/admin/categories/new/page.tsx - Добавление категории
 'use client';
 
 import { useState } from 'react';
@@ -10,19 +10,18 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import ImageUpload from '@/modules/admin/components/ImageUpload';
+import { transliterate } from '@/lib/utils';
 
-export default function NewBannerPage() {
+export default function NewCategoryPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const [form, setForm] = useState({
-    title: '',
+    name: '',
+    slug: '',
     imageUrl: '',
-    linkUrl: '',
-    backgroundUrl: '',
-    isActive: true,
-    position: 'home',
+    order: 0,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,21 +29,29 @@ export default function NewBannerPage() {
     setLoading(true);
     setError('');
 
+    if (!form.name) {
+      setError('Название обязательно');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch('/api/banners', {
+      const res = await fetch('/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          slug: form.slug || transliterate(form.name),
+        }),
       });
-
-      if (response.ok) {
-        router.push('/admin/banners');
+      if (res.ok) {
+        router.push('/admin/categories');
       } else {
-        const data = await response.json();
-        setError(data.error || 'Ошибка при создании баннера');
+        const data = await res.json();
+        setError(data.error || 'Ошибка');
       }
     } catch {
-      setError('Ошибка соединения с сервером');
+      setError('Ошибка соединения');
     } finally {
       setLoading(false);
     }
@@ -53,22 +60,21 @@ export default function NewBannerPage() {
   return (
     <div>
       <div className="mb-6 flex items-center gap-4">
-        <Link href="/admin/banners">
+        <Link href="/admin/categories">
           <Button
             variant="outline"
             size="sm"
             className="border-white/10 text-gray-400 hover:text-white"
           >
-            <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
-            Назад
+            <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> Назад
           </Button>
         </Link>
-        <h1 className="font-heading text-2xl font-bold text-white">Добавить баннер</h1>
+        <h1 className="font-heading text-2xl font-bold text-white">Добавить категорию</h1>
       </div>
 
       <Card className="max-w-2xl border-white/10 bg-white/5 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-white">Новый рекламный баннер</CardTitle>
+          <CardTitle className="text-white">Новая категория</CardTitle>
         </CardHeader>
         <CardContent>
           {error && (
@@ -77,9 +83,9 @@ export default function NewBannerPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm text-gray-400">Баннер *</label>
+              <label className="text-sm text-gray-400 mb-2 block">Изображение</label>
               <ImageUpload
                 value={form.imageUrl}
                 onChange={(url) => setForm({ ...form, imageUrl: url })}
@@ -87,48 +93,34 @@ export default function NewBannerPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm text-gray-400">Название *</label>
+              <label className="text-sm text-gray-400">Название *</label>
               <Input
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                value={form.name}
+                onChange={(e) =>
+                  setForm({ ...form, name: e.target.value, slug: transliterate(e.target.value) })
+                }
                 className="border-white/10 bg-white/5 text-white"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm text-gray-400">
-                Ссылка (куда ведёт баннер) *
-              </label>
+              <label className="text-sm text-gray-400">Slug (URL)</label>
               <Input
-                value={form.linkUrl}
-                onChange={(e) => setForm({ ...form, linkUrl: e.target.value })}
+                value={form.slug}
+                onChange={(e) => setForm({ ...form, slug: e.target.value })}
                 className="border-white/10 bg-white/5 text-white"
-                required
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm text-gray-400">
-                Фон секции
-                <span className="text-gray-600 ml-1">— необязательно</span>
-              </label>
-              <ImageUpload
-                value={form.backgroundUrl}
-                onChange={(url) => setForm({ ...form, backgroundUrl: url })}
+              <label className="text-sm text-gray-400">Порядок сортировки</label>
+              <Input
+                type="number"
+                value={form.order}
+                onChange={(e) => setForm({ ...form, order: parseInt(e.target.value) || 0 })}
+                className="border-white/10 bg-white/5 text-white"
               />
-            </div>
-
-            <div className="flex items-center gap-6">
-              <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                  className="h-4 w-4 accent-[#ee862c]"
-                />
-                Баннер активен
-              </label>
             </div>
 
             <div className="flex gap-3 pt-4">
@@ -136,7 +128,7 @@ export default function NewBannerPage() {
                 <FontAwesomeIcon icon={faSave} className="mr-2" />
                 {loading ? 'Сохранение...' : 'Сохранить'}
               </Button>
-              <Link href="/admin/banners">
+              <Link href="/admin/categories">
                 <Button
                   variant="outline"
                   type="button"

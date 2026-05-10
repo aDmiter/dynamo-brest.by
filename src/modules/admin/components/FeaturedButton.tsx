@@ -1,4 +1,4 @@
-// src/app/admin/news/ToggleFeaturedButton.tsx - Быстрое переключение "В слайдер"
+// src/modules/admin/components/FeaturedButton.tsx - Кнопка переключения "В слайдер" (звезда)
 'use client';
 
 import { useState } from 'react';
@@ -6,32 +6,26 @@ import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
 
-interface ToggleFeaturedButtonProps {
+interface FeaturedButtonProps {
   newsId: string;
   isFeatured: boolean;
 }
 
-export default function ToggleFeaturedButton({ newsId, isFeatured }: ToggleFeaturedButtonProps) {
+export default function FeaturedButton({ newsId, isFeatured }: FeaturedButtonProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const toggle = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/news/${newsId}`, {
+      await fetch(`/api/news/${newsId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isFeatured: !isFeatured }),
       });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        console.error('Server error:', errorData);
-      }
-
       router.refresh();
     } catch (error) {
-      console.error('Fetch error:', error);
+      console.error('Ошибка:', error);
     } finally {
       setLoading(false);
     }

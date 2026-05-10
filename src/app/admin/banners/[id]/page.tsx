@@ -9,23 +9,15 @@ interface Props {
 
 export default async function EditBannerPage({ params }: Props) {
   const { id } = await params;
-
   const banner = await prisma.banner.findUnique({ where: { id } });
 
-  if (!banner) {
-    notFound();
-  }
-
-  // Статистика кликов по дням (за последние 30 дней)
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  if (!banner) notFound();
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#003366]">Редактирование баннера</h1>
+        <h1 className="font-heading text-2xl font-bold text-white">Редактирование баннера</h1>
       </div>
-
       <EditBannerForm banner={banner} />
     </div>
   );

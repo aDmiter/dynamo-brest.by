@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
-import DeleteNewsButton from './DeleteNewsButton';
-import ToggleFeaturedButton from './ToggleFeaturedButton';
-import TogglePublishButton from './TogglePublishButton';
+import DeleteButton from '@/modules/admin/components/DeleteButton';
+import ToggleButton from '@/modules/admin/components/ToggleButton';
+import FeaturedButton from '@/modules/admin/components/FeaturedButton';
 
 export default async function NewsAdminPage() {
   const news = await prisma.news.findMany({
@@ -63,10 +63,17 @@ export default async function NewsAdminPage() {
                     {new Date(item.publishedAt).toLocaleDateString('ru-RU')}
                   </td>
                   <td className="p-3 text-center">
-                    <ToggleFeaturedButton newsId={item.id} isFeatured={item.isFeatured} />
+                    <FeaturedButton newsId={item.id} isFeatured={item.isFeatured} />
                   </td>
                   <td className="p-3 text-center">
-                    <TogglePublishButton newsId={item.id} isPublished={item.isPublished} />
+                    <ToggleButton
+                      id={item.id}
+                      apiUrl="/api/news"
+                      field="isPublished"
+                      value={item.isPublished}
+                      labelOn="Опубл."
+                      labelOff="Скрыто"
+                    />
                   </td>
                   <td className="p-3">
                     <div className="flex items-center justify-center gap-3">
@@ -76,7 +83,7 @@ export default async function NewsAdminPage() {
                       >
                         <FontAwesomeIcon icon={faEdit} /> Ред.
                       </Link>
-                      <DeleteNewsButton newsId={item.id} newsTitle={item.title} />
+                      <DeleteButton id={item.id} apiUrl="/api/news" name={item.title} />
                     </div>
                   </td>
                 </tr>

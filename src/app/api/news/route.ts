@@ -1,53 +1,56 @@
-// src/app/api/news/[id]/route.ts - API для конкретной новости
+// src/app/api/news/route.ts - API новостей
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { transliterate } from '@/lib/utils';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
+// GET — список новостей с пагинацией
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get('page') || '1');
+  const limit = parseInt(searchParams.get('limit') || '12');
+  const skip = (page - 1) * limit;
+
+  const [news, total] = await Promise.all([
+    prisma.news.findMany({
+      where: { isPublished: true },
+      orderBy: { publishedAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.news.count({ where: { isPublished: true } }),
+  ]);
+
+  return NextResponse.json({
+    news,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+    hasMore: skip + limit < total,
+  });
 }
 
-// PUT — обновить новость
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+// POST — создать новость
+export async function POST(request: NextRequest) {
   try {
-    const { id } = await params;
     const data = await request.json();
 
-    console.log('PUT /api/news/:id - body:', JSON.stringify(data));
-    console.log('PUT /api/news/:id - id:', id);
+    const slug = data.slug || transliterate(data.title);
 
-    // Собираем только переданные поля
-    const updateData: Record<string, unknown> = {};
-
-    if (data.title !== undefined) updateData.title = data.title;
-    if (data.content !== undefined) updateData.content = data.content;
-    if (data.excerpt !== undefined) updateData.excerpt = data.excerpt;
-    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
-    if (data.category !== undefined) updateData.category = data.category;
-    if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
-    if (data.isPublished !== undefined) updateData.isPublished = data.isPublished;
-    if (data.publishedAt !== undefined) updateData.publishedAt = new Date(data.publishedAt);
-
-    console.log('PUT /api/news/:id - updateData:', JSON.stringify(updateData));
-
-    const news = await prisma.news.update({
-      where: { id },
-      data: updateData,
+    const news = await prisma.news.create({
+      data: {
+        title: data.title,
+        slug,
+        content: data.content,
+        excerpt: data.excerpt || data.content.substring(0, 200) + '...',
+        imageUrl: data.imageUrl || null,
+        category: data.category || 'general',
+        isFeatured: data.isFeatured || false,
+        isPublished: data.isPublished ?? true,
+        publishedAt: data.publishedAt ? new Date(data.publishedAt) : new Date(),
+      },
     });
 
-    return NextResponse.json(news);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    console.error('PUT error:', message);
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
-}
-
-// DELETE — удалить новость
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
-    const { id } = await params;
-    await prisma.news.delete({ where: { id } });
-    return NextResponse.json({ success: true });
+    return NextResponse.json(news, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
     return NextResponse.json({ error: message }, { status: 400 });

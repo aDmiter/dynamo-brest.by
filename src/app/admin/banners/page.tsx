@@ -2,8 +2,10 @@
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEye, faMousePointer } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faEye, faMousePointer } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
+import DeleteButton from '@/modules/admin/components/DeleteButton';
+import ToggleButton from '@/modules/admin/components/ToggleButton';
 
 export default async function BannersAdminPage() {
   const banners = await prisma.banner.findMany({
@@ -13,71 +15,84 @@ export default async function BannersAdminPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#003366]">Рекламные баннеры</h1>
+        <h1 className="font-heading text-2xl font-bold text-white">Рекламные баннеры</h1>
         <Link href="/admin/banners/new">
-          <Button size="sm">
+          <Button size="sm" className="bg-[#ee862c] hover:bg-[#f0ac74]">
             <FontAwesomeIcon icon={faPlus} className="mr-2" />
             Добавить баннер
           </Button>
         </Link>
       </div>
 
-      <div className="rounded-lg bg-white shadow">
+      <div className="border border-white/10 bg-white/5 backdrop-blur-sm">
         <table className="w-full">
-          <thead className="border-b bg-gray-50">
+          <thead className="border-b border-white/10 bg-white/5">
             <tr>
-              <th className="p-3 text-left text-sm font-medium text-gray-500">Превью</th>
-              <th className="p-3 text-left text-sm font-medium text-gray-500">Название</th>
-              <th className="p-3 text-left text-sm font-medium text-gray-500">Позиция</th>
-              <th className="p-3 text-left text-sm font-medium text-gray-500">Активен</th>
-              <th className="p-3 text-left text-sm font-medium text-gray-500">
-                <FontAwesomeIcon icon={faEye} className="mr-1" /> Показы
+              <th className="p-3 text-left text-sm font-medium text-gray-400">#</th>
+              <th className="p-3 text-left text-sm font-medium text-gray-400">Превью</th>
+              <th className="p-3 text-left text-sm font-medium text-gray-400">Название</th>
+              <th className="p-3 text-left text-sm font-medium text-gray-400">Позиция</th>
+              <th className="p-3 text-center text-sm font-medium text-gray-400">
+                <FontAwesomeIcon icon={faEye} className="mr-1" />
               </th>
-              <th className="p-3 text-left text-sm font-medium text-gray-500">
-                <FontAwesomeIcon icon={faMousePointer} className="mr-1" /> Клики
+              <th className="p-3 text-center text-sm font-medium text-gray-400">
+                <FontAwesomeIcon icon={faMousePointer} className="mr-1" />
               </th>
-              <th className="p-3 text-left text-sm font-medium text-gray-500">Действия</th>
+              <th className="p-3 text-center text-sm font-medium text-gray-400">Активен</th>
+              <th className="p-3 text-center text-sm font-medium text-gray-400">Действия</th>
             </tr>
           </thead>
           <tbody>
             {banners.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-6 text-center text-gray-500">
+                <td colSpan={8} className="p-6 text-center text-gray-500">
                   Нет баннеров. Нажмите «Добавить баннер».
                 </td>
               </tr>
             ) : (
-              banners.map((banner) => (
-                <tr key={banner.id} className="border-b hover:bg-gray-50">
+              banners.map((banner, index) => (
+                <tr
+                  key={banner.id}
+                  className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                >
+                  <td className="p-3 text-sm text-gray-500">{index + 1}</td>
                   <td className="p-3">
                     {banner.imageUrl ? (
                       <img
                         src={banner.imageUrl}
                         alt={banner.title}
-                        className="h-10 max-w-[100px] object-contain"
+                        className="h-10 max-w-[80px] object-contain"
                       />
                     ) : (
-                      <span className="text-gray-400">—</span>
+                      <span className="text-gray-500">—</span>
                     )}
                   </td>
-                  <td className="p-3 font-medium">{banner.title}</td>
-                  <td className="p-3 text-sm text-gray-500">{banner.position}</td>
                   <td className="p-3">
-                    {banner.isActive ? (
-                      <span className="text-green-600 text-sm">✓</span>
-                    ) : (
-                      <span className="text-red-600 text-sm">✗</span>
-                    )}
+                    <p className="max-w-[200px] font-medium text-white truncate">{banner.title}</p>
                   </td>
-                  <td className="p-3 text-sm">{banner.views}</td>
-                  <td className="p-3 text-sm">{banner.clicks}</td>
+                  <td className="p-3 text-sm text-gray-400">{banner.position}</td>
+                  <td className="p-3 text-center text-sm text-gray-400">{banner.views}</td>
+                  <td className="p-3 text-center text-sm text-gray-400">{banner.clicks}</td>
+                  <td className="p-3 text-center">
+                    <ToggleButton
+                      id={banner.id}
+                      apiUrl="/api/banners"
+                      field="isActive"
+                      value={banner.isActive}
+                      labelOn="Да"
+                      labelOff="Нет"
+                    />
+                  </td>
                   <td className="p-3">
-                    <Link
-                      href={`/admin/banners/${banner.id}`}
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      Редактировать
-                    </Link>
+                    <div className="flex items-center justify-center gap-3">
+                      <Link
+                        href={`/admin/banners/${banner.id}`}
+                        className="inline-flex items-center gap-1 text-sm text-[#ee862c] hover:underline"
+                      >
+                        <FontAwesomeIcon icon={faEdit} /> Ред.
+                      </Link>
+                      <DeleteButton id={banner.id} apiUrl="/api/banners" name={banner.title} />
+                    </div>
                   </td>
                 </tr>
               ))
