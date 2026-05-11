@@ -17,14 +17,14 @@ export default function ProductImages({ images, productName }: ProductImagesProp
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
 
   return (
-    <div className="product-images">
-      {/* Главный слайдер */}
+    <div className="product-images relative h-full">
+      {/* Главный слайдер — на всю высоту */}
       <Swiper
         spaceBetween={0}
         slidesPerView={1}
         thumbs={{ swiper: thumbsSwiper }}
         modules={[Thumbs]}
-        className="product-images__main aspect-square"
+        className="product-images__main h-full"
       >
         {images.map((img, i) => (
           <SwiperSlide key={i}>
@@ -37,29 +37,31 @@ export default function ProductImages({ images, productName }: ProductImagesProp
         ))}
       </Swiper>
 
-      {/* Превью под слайдером */}
+      {/* Миниатюры снизу по центру */}
       {images.length > 1 && (
-        <Swiper
-          onSwiper={setThumbsSwiper}
-          spaceBetween={8}
-          slidesPerView={4}
-          watchSlidesProgress
-          modules={[Thumbs]}
-          className="product-images__thumbs mt-4"
-        >
-          {images.map((img, i) => (
-            <SwiperSlide
-              key={i}
-              className="cursor-pointer border-2 border-transparent transition-colors hover:border-[#ee862c]"
-            >
-              <img
-                src={img}
-                alt={`${productName} - превью ${i + 1}`}
-                className="aspect-square w-full object-cover"
-              />
-            </SwiperSlide>
-          ))}
-        </Swiper>
+        <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2">
+          <Swiper
+            onSwiper={setThumbsSwiper}
+            spaceBetween={6}
+            slidesPerView={images.length}
+            watchSlidesProgress
+            modules={[Thumbs]}
+            className="product-images__thumbs !w-auto"
+          >
+            {images.map((img, i) => (
+              <SwiperSlide
+                key={i}
+                className="!w-16 cursor-pointer border-2 border-transparent transition-colors hover:border-[#ee862c]"
+              >
+                <img
+                  src={img}
+                  alt={`${productName} - превью ${i + 1}`}
+                  className="aspect-square w-full object-cover"
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
       )}
     </div>
   );

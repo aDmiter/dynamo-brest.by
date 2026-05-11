@@ -8,11 +8,10 @@ import AdBanner from '@/modules/shared/ui/AdBanner';
 import VideoSection from '@/modules/shared/ui/VideoSection';
 import TitlesSection from '@/modules/shared/ui/TitlesSection';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShirt } from '@fortawesome/free-solid-svg-icons';
+import { faShirt, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 
 export default async function Home() {
-  // 5 последних избранных новостей для слайдера
   const featuredNews = await prisma.news.findMany({
     where: { isFeatured: true, isPublished: true },
     orderBy: { publishedAt: 'desc' },
@@ -20,7 +19,6 @@ export default async function Home() {
     select: { id: true, title: true, slug: true, imageUrl: true, category: true },
   });
 
-  // 20 последних новостей для карусели
   const latestNews = await prisma.news.findMany({
     where: { isPublished: true },
     orderBy: { publishedAt: 'desc' },
@@ -28,25 +26,25 @@ export default async function Home() {
     select: { id: true, title: true, slug: true, imageUrl: true },
   });
 
-  // Активный баннер
   const banner = await prisma.banner.findFirst({
     where: { isActive: true, position: 'home' },
     orderBy: { createdAt: 'desc' },
   });
 
+  const featuredProducts = await prisma.product.findMany({
+    where: { inStock: true },
+    orderBy: { createdAt: 'desc' },
+    take: 4,
+    include: { productcategory: true },
+  });
+
   return (
     <ScrollSnapWrapper>
       <div>
-        {/* Секция 1: Слайдер */}
         <HeroSlider featuredNews={featuredNews} />
-
-        {/* Секция 2: Карусель новостей */}
         <NewsCarousel news={latestNews} />
-
-        {/* Секция 3: Матчи */}
         <MatchSection />
 
-        {/* Секция 4: Рекламный баннер */}
         {banner ? (
           <AdBanner
             title={banner.title}
@@ -81,29 +79,79 @@ export default async function Home() {
         )}
 
         {/* Секция 5: Товары магазина */}
-        <section className="shop flex min-h-screen flex-col bg-white text-[#242C41]">
+        <section className="shop relative flex min-h-screen flex-col bg-white">
           <div className="shop__products flex flex-1 flex-col md:flex-row">
-            {[1, 2, 3, 4].map((item) => (
-              <div
-                key={item}
-                className="shop__product group relative flex flex-1 items-center justify-center border-r border-b border-gray-200 p-8 transition-colors hover:bg-gray-50"
-              >
-                <div className="text-center">
-                  <FontAwesomeIcon icon={faShirt} className="mb-6 text-6xl text-[#ee862c]" />
-                  <p className="font-heading text-lg font-bold uppercase tracking-wider">
-                    Товар {item}
-                  </p>
-                  <p className="mt-2 text-sm text-gray-500">Категория</p>
-                  <p className="mt-4 font-heading text-3xl font-bold text-[#ee862c]">99.00 BYN</p>
-                  <button className="mt-6 border border-[#242C41] px-8 py-3 text-sm font-medium uppercase tracking-wider transition-colors hover:bg-[#242C41] hover:text-white">
-                    В корзину
-                  </button>
-                </div>
-              </div>
-            ))}
+            {featuredProducts.length === 0
+              ? [1, 2, 3, 4].map((item) => (
+                  <div
+                    key={item}
+                    className="shop__product group relative flex flex-1 items-center justify-center border-r border-b border-gray-200 transition-colors hover:bg-gray-50"
+                  >
+                    <div className="text-center p-8">
+                      <FontAwesomeIcon icon={faShirt} className="mb-6 text-6xl text-[#ee862c]" />
+                      <p className="font-heading text-lg font-bold uppercase tracking-wider text-[#242C41]">
+                        Товар {item}
+                      </p>
+                      <p className="mt-2 text-sm text-gray-500">Скоро в продаже</p>
+                      <p className="mt-4 font-heading text-3xl font-bold text-[#ee862c]">—</p>
+                    </div>
+                  </div>
+                ))
+              : featuredProducts.map((product) => {
+                  const images: string[] = product.images ? JSON.parse(product.images) : [];
+                  const hasDiscount =
+                    product.oldPrice && Number(product.oldPrice) > Number(product.price);
+                  return (
+                    <Link
+                      key={product.id}
+                      href={`/shop/product/${product.slug}`}
+                      className="shop__product group relative flex flex-1 border-r border-b border-gray-200 overflow-hidden"
+                    >
+                      {images[0] ? (
+                        <img
+                          src={images[0]}
+                          alt={product.name}
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                          <FontAwesomeIcon icon={faShirt} className="text-6xl text-gray-300" />
+                        </div>
+                      )}
+
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-8 pt-24">
+                        <p className="font-heading text-xl font-bold uppercase tracking-wider text-white line-clamp-2">
+                          {product.name}
+                        </p>
+                        {hasDiscount ? (
+                          <div className="mt-2">
+                            <p className="font-heading text-2xl font-bold text-red-500">
+                              {Number(product.price).toFixed(2)} BYN
+                            </p>
+                            <p className="text-sm text-white/50 line-through">
+                              {Number(product.oldPrice).toFixed(2)} BYN
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="mt-2 font-heading text-2xl font-bold text-[#ee862c]">
+                            {Number(product.price).toFixed(2)} BYN
+                          </p>
+                        )}
+                        <span className="mt-3 inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-white/70 transition-colors group-hover:text-[#ee862c]">
+                          Подробнее
+                          <FontAwesomeIcon
+                            icon={faArrowRight}
+                            className="text-xs transition-transform group-hover:translate-x-1"
+                          />
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
           </div>
+
           <div className="shop__footer flex items-center justify-between bg-[#F5F5F5] px-8 py-6">
-            <h2 className="font-heading text-xl font-bold uppercase tracking-wider">
+            <h2 className="font-heading text-xl font-bold uppercase tracking-wider text-[#242C41]">
               <FontAwesomeIcon icon={faShirt} className="mr-3 text-[#ee862c]" /> Магазин
             </h2>
             <Link
@@ -113,12 +161,23 @@ export default async function Home() {
               Все товары →
             </Link>
           </div>
+
+          <div className="shop__title absolute left-0 bottom-0 pointer-events-none select-none">
+            <span
+              className="block text-[80px] font-black uppercase tracking-[0.1em] text-[#a5b3d5]/20 md:text-[120px] leading-none"
+              style={{
+                writingMode: 'vertical-lr',
+                transform: 'rotate(180deg)',
+                fontFamily: "'Inter Tight', sans-serif",
+                fontWeight: 900,
+              }}
+            >
+              МАГАЗИН
+            </span>
+          </div>
         </section>
 
-        {/* Секция 6: FCDBTV */}
         <VideoSection />
-
-        {/* Секция 7: Титулы */}
         <TitlesSection />
       </div>
     </ScrollSnapWrapper>

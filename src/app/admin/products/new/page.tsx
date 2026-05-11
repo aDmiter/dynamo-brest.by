@@ -27,12 +27,14 @@ export default function NewProductPage() {
     oldPrice: '',
     categoryId: '',
     images: [] as string[],
-    sizes: [] as string[],
     inStock: true,
     isFeatured: false,
   });
 
+  const [sizes, setSizes] = useState<{ size: string; quantity: number }[]>([]);
   const [newSize, setNewSize] = useState('');
+  const [newSizeQty, setNewSizeQty] = useState(1);
+  const [hasCustomization, setHasCustomization] = useState(false);
 
   useEffect(() => {
     fetch('/api/categories')
@@ -41,24 +43,28 @@ export default function NewProductPage() {
       .catch(console.error);
   }, []);
 
-  const addImage = (url: string) => {
-    setForm({ ...form, images: [...form.images, url] });
-  };
-
-  const removeImage = (index: number) => {
+  const addImage = (url: string) => setForm({ ...form, images: [...form.images, url] });
+  const removeImage = (index: number) =>
     setForm({ ...form, images: form.images.filter((_, i) => i !== index) });
-  };
 
   const addSize = () => {
-    if (newSize.trim()) {
-      setForm({ ...form, sizes: [...form.sizes, newSize.trim()] });
+    if (newSize.trim() && newSizeQty > 0) {
+      const existing = sizes.find((s) => s.size === newSize.trim());
+      if (existing) {
+        setSizes(
+          sizes.map((s) =>
+            s.size === newSize.trim() ? { ...s, quantity: s.quantity + newSizeQty } : s
+          )
+        );
+      } else {
+        setSizes([...sizes, { size: newSize.trim(), quantity: newSizeQty }]);
+      }
       setNewSize('');
+      setNewSizeQty(1);
     }
   };
 
-  const removeSize = (index: number) => {
-    setForm({ ...form, sizes: form.sizes.filter((_, i) => i !== index) });
-  };
+  const removeSize = (size: string) => setSizes(sizes.filter((s) => s.size !== size));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +80,8 @@ export default function NewProductPage() {
           slug: transliterate(form.name),
           price: parseFloat(form.price),
           oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : null,
+          sizes,
+          hasCustomization,
         }),
       });
       if (res.ok) router.push('/admin/products');
@@ -124,7 +132,12 @@ export default function NewProductPage() {
                   </div>
                 ))}
               </div>
-              <ImageUpload value="" onChange={addImage} />
+              <ImageUpload
+                value={form.images.length > 0 ? form.images[form.images.length - 1] : ''}
+                onChange={(url) => {
+                  if (url) addImage(url);
+                }}
+              />
             </div>
 
             <div>
@@ -202,14 +215,23 @@ export default function NewProductPage() {
               />
             </div>
 
+            {/* Размеры с количеством */}
             <div>
-              <label className="text-sm text-gray-400">Размеры</label>
-              <div className="flex gap-2 mb-2">
+              <label className="text-sm text-gray-400 mb-2 block">Размеры и количество</label>
+              <div className="flex gap-2 mb-3">
                 <Input
                   value={newSize}
                   onChange={(e) => setNewSize(e.target.value)}
                   className="border-white/10 bg-white/5 text-white flex-1"
-                  placeholder="S, M, L..."
+                  placeholder="Размер (S, M, L...)"
+                />
+                <Input
+                  type="number"
+                  value={newSizeQty}
+                  onChange={(e) => setNewSizeQty(parseInt(e.target.value) || 1)}
+                  className="border-white/10 bg-white/5 text-white w-20"
+                  placeholder="Кол-во"
+                  min="1"
                 />
                 <Button
                   type="button"
@@ -221,19 +243,42 @@ export default function NewProductPage() {
                   <FontAwesomeIcon icon={faPlus} />
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {form.sizes.map((s, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 border border-white/10 px-2 py-1 text-xs text-white"
-                  >
-                    {s}
-                    <button onClick={() => removeSize(i)} className="text-red-400">
-                      <FontAwesomeIcon icon={faTimes} className="text-[10px]" />
-                    </button>
-                  </span>
-                ))}
-              </div>
+              {sizes.length > 0 && (
+                <div className="space-y-2">
+                  {sizes.map((s) => (
+                    <div
+                      key={s.size}
+                      className="flex items-center gap-4 border border-white/10 bg-white/5 px-3 py-2"
+                    >
+                      <span className="text-white text-sm font-bold w-10">{s.size}</span>
+                      <span className="text-gray-400 text-sm">×{s.quantity} шт.</span>
+                      <button
+                        type="button"
+                        onClick={() => removeSize(s.size)}
+                        className="ml-auto text-red-400 hover:text-red-300"
+                      >
+                        <FontAwesomeIcon icon={faTimes} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {sizes.length === 0 && (
+                <p className="text-xs text-gray-600">Без размеров — товар без учёта остатков</p>
+              )}
+            </div>
+
+            {/* Нанесение */}
+            <div className="border-t border-white/10 pt-4">
+              <label className="flex items-center gap-3 text-sm text-gray-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasCustomization}
+                  onChange={(e) => setHasCustomization(e.target.checked)}
+                  className="h-4 w-4 accent-[#ee862c]"
+                />
+                <span className="text-white font-medium">Доступно нанесение</span>
+              </label>
             </div>
 
             <div className="flex items-center gap-6">

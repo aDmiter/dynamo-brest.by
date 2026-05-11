@@ -84,6 +84,9 @@ model order {
   total         Decimal     @db.Decimal(10, 2)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  orderNumber String? @unique
+  trackingCode String?
+  deliveryPrice Decimal? @db.Decimal(10, 2)
   orderitem     orderitem[]
 }
 
@@ -94,6 +97,7 @@ model orderitem {
   quantity  Int
   price     Decimal @db.Decimal(10, 2)
   size      String?
+  customization String? @db.Text  // JSON с деталями нанесения
   order     order   @relation(fields: [orderId], references: [id], map: "OrderItem_orderId_fkey")
   product   product @relation(fields: [productId], references: [id], map: "OrderItem_productId_fkey")
 
@@ -142,7 +146,10 @@ model product {
   updatedAt       DateTime          @updatedAt
   article         String?           @unique(map: "Product_article_key")
   composition     String?           @db.Text
+  quantity Int @default(0)
+  hasCustomization Boolean @default(false)
   orderitem       orderitem[]
+  productsize     ProductSize[]
   productcategory productcategory   @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
 
   @@index([categoryId], map: "Product_categoryId_fkey")
@@ -229,6 +236,40 @@ model Country {
   price     Decimal? @db.Decimal(10, 2)
   isActive  Boolean  @default(false)
   order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductSize {
+  id        String   @id @default(cuid())
+  productId String
+  product   product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      String
+  quantity  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, size])
+}
+
+model Customization {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   // player, logo, flag
+  imageUrl  String?
+  price     Decimal  @db.Decimal(10, 2) @default(0)
+  isFullSet Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PlayerCustomization {
+  id        String   @id @default(cuid())
+  name      String   // Фамилия игрока
+  number    Int      // Номер игрока
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -17,14 +17,15 @@ interface Product {
   article: string | null;
   description: string;
   composition: string | null;
-  price: { toString: () => string };
-  oldPrice: { toString: () => string } | null;
+  price: string;
+  oldPrice: string | null;
   categoryId: string;
   images: string | null;
-  sizes: string | null;
   inStock: boolean;
   isFeatured: boolean;
-  productcategory?: { id: string; name: string };
+  hasCustomization?: boolean;
+  productcategory?: { id: string; name: string } | null;
+  productsize: { id: string; size: string; quantity: number }[];
 }
 
 export default function EditProductForm({ product }: { product: Product }) {
@@ -39,16 +40,20 @@ export default function EditProductForm({ product }: { product: Product }) {
     article: product.article || '',
     description: product.description,
     composition: product.composition || '',
-    price: product.price.toString(),
-    oldPrice: product.oldPrice?.toString() || '',
+    price: product.price,
+    oldPrice: product.oldPrice || '',
     categoryId: product.categoryId,
     images: (product.images ? JSON.parse(product.images) : []) as string[],
-    sizes: (product.sizes ? JSON.parse(product.sizes) : []) as string[],
     inStock: product.inStock,
     isFeatured: product.isFeatured,
   });
 
+  const [sizes, setSizes] = useState<{ size: string; quantity: number }[]>(
+    product.productsize?.map((s) => ({ size: s.size, quantity: s.quantity })) || []
+  );
   const [newSize, setNewSize] = useState('');
+  const [newSizeQty, setNewSizeQty] = useState(1);
+  const [hasCustomization, setHasCustomization] = useState(product.hasCustomization || false);
 
   useEffect(() => {
     fetch('/api/categories')
@@ -57,24 +62,25 @@ export default function EditProductForm({ product }: { product: Product }) {
       .catch(console.error);
   }, []);
 
-  const addImage = (url: string) => {
-    setForm({ ...form, images: [...form.images, url] });
-  };
-
-  const removeImage = (index: number) => {
-    setForm({ ...form, images: form.images.filter((_, i) => i !== index) });
-  };
+  const addImage = (url: string) => setForm({ ...form, images: [...form.images, url] });
+  const removeImage = (i: number) =>
+    setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) });
 
   const addSize = () => {
-    if (newSize.trim()) {
-      setForm({ ...form, sizes: [...form.sizes, newSize.trim()] });
+    if (newSize.trim() && newSizeQty > 0) {
+      const existing = sizes.find((s) => s.size === newSize.trim());
+      if (existing)
+        setSizes(
+          sizes.map((s) =>
+            s.size === newSize.trim() ? { ...s, quantity: s.quantity + newSizeQty } : s
+          )
+        );
+      else setSizes([...sizes, { size: newSize.trim(), quantity: newSizeQty }]);
       setNewSize('');
+      setNewSizeQty(1);
     }
   };
-
-  const removeSize = (index: number) => {
-    setForm({ ...form, sizes: form.sizes.filter((_, i) => i !== index) });
-  };
+  const removeSize = (size: string) => setSizes(sizes.filter((s) => s.size !== size));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +96,8 @@ export default function EditProductForm({ product }: { product: Product }) {
           ...form,
           price: parseFloat(form.price),
           oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : null,
+          sizes,
+          hasCustomization,
         }),
       });
 
@@ -160,7 +168,12 @@ export default function EditProductForm({ product }: { product: Product }) {
                   </div>
                 ))}
               </div>
-              <ImageUpload value="" onChange={addImage} />
+              <ImageUpload
+                value={form.images.length > 0 ? form.images[form.images.length - 1] : ''}
+                onChange={(url) => {
+                  if (url) addImage(url);
+                }}
+              />
             </div>
 
             <div>
@@ -238,14 +251,22 @@ export default function EditProductForm({ product }: { product: Product }) {
               />
             </div>
 
+            {/* Размеры */}
             <div>
-              <label className="text-sm text-gray-400">Размеры</label>
-              <div className="flex gap-2 mb-2">
+              <label className="text-sm text-gray-400 mb-2 block">Размеры и количество</label>
+              <div className="flex gap-2 mb-3">
                 <Input
                   value={newSize}
                   onChange={(e) => setNewSize(e.target.value)}
                   className="border-white/10 bg-white/5 text-white flex-1"
-                  placeholder="S, M, L..."
+                  placeholder="Размер"
+                />
+                <Input
+                  type="number"
+                  value={newSizeQty}
+                  onChange={(e) => setNewSizeQty(parseInt(e.target.value) || 1)}
+                  className="border-white/10 bg-white/5 text-white w-20"
+                  placeholder="Кол-во"
                 />
                 <Button
                   type="button"
@@ -257,19 +278,35 @@ export default function EditProductForm({ product }: { product: Product }) {
                   <FontAwesomeIcon icon={faPlus} />
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {form.sizes.map((s, i) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1 border border-white/10 px-2 py-1 text-xs text-white"
+              {sizes.map((s) => (
+                <div
+                  key={s.size}
+                  className="flex items-center gap-4 border border-white/10 bg-white/5 px-3 py-2 mb-1"
+                >
+                  <span className="text-white text-sm font-bold w-10">{s.size}</span>
+                  <span className="text-gray-400 text-sm">×{s.quantity} шт.</span>
+                  <button
+                    type="button"
+                    onClick={() => removeSize(s.size)}
+                    className="ml-auto text-red-400"
                   >
-                    {s}
-                    <button onClick={() => removeSize(i)} className="text-red-400">
-                      <FontAwesomeIcon icon={faTimes} className="text-[10px]" />
-                    </button>
-                  </span>
-                ))}
-              </div>
+                    <FontAwesomeIcon icon={faTimes} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Нанесение */}
+            <div className="border-t border-white/10 pt-4">
+              <label className="flex items-center gap-3 text-sm text-gray-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasCustomization}
+                  onChange={(e) => setHasCustomization(e.target.checked)}
+                  className="h-4 w-4 accent-[#ee862c]"
+                />
+                <span className="text-white font-medium">Доступно нанесение</span>
+              </label>
             </div>
 
             <div className="flex items-center gap-6">

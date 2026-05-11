@@ -25,7 +25,33 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [sideMenuVisible, setSideMenuVisible] = useState(true);
   const [topMenuVisible, setTopMenuVisible] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const lastScrollY = useRef(0);
+
+  // Следим за изменениями корзины
+  useEffect(() => {
+    const updateCartCount = () => {
+      try {
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const count = cart.reduce(
+          (sum: number, item: { quantity: number }) => sum + item.quantity,
+          0
+        );
+        setCartCount(count);
+      } catch {
+        setCartCount(0);
+      }
+    };
+
+    updateCartCount();
+    window.addEventListener('cartUpdated', updateCartCount);
+    window.addEventListener('storage', updateCartCount);
+
+    return () => {
+      window.removeEventListener('cartUpdated', updateCartCount);
+      window.removeEventListener('storage', updateCartCount);
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,6 +118,11 @@ export default function Header() {
               icon={faShoppingCart}
               className="relative z-10 text-xl text-white/50 transition-colors group-hover:text-[#ee862c]"
             />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 right-2 z-20 flex h-5 w-5 items-center justify-center bg-[#ee862c] text-[10px] font-bold text-white">
+                {cartCount > 99 ? '99+' : cartCount}
+              </span>
+            )}
             <div className="absolute left-0 top-0 flex h-full w-auto min-w-[180px] items-center gap-4 bg-[#242C41] pl-20 pr-6 opacity-0 -translate-x-full transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none group-hover:pointer-events-auto">
               <span className="font-heading text-base font-bold text-white uppercase tracking-widest">
                 Корзина
@@ -128,9 +159,15 @@ export default function Header() {
           ))}
           <Link
             href="/shop/cart"
-            className="text-white/70 hover:text-[#ee862c] text-sm transition-colors"
+            className="text-white/70 hover:text-[#ee862c] text-sm transition-colors flex items-center gap-1 relative"
           >
-            <FontAwesomeIcon icon={faShoppingCart} className="mr-1" />
+            <FontAwesomeIcon icon={faShoppingCart} />
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-3 flex h-4 w-4 items-center justify-center bg-[#ee862c] text-[9px] font-bold text-white">
+                {cartCount > 99 ? '99+' : cartCount}
+              </span>
+            )}
+            Корзина
           </Link>
           <button className="text-sm text-white/70 hover:text-[#ee862c] transition-colors">
             RU
@@ -143,9 +180,20 @@ export default function Header() {
         <Link href="/">
           <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-6 w-auto" />
         </Link>
-        <button onClick={() => setMenuOpen(true)} className="text-white">
-          <FontAwesomeIcon icon={faBars} className="text-xl" />
-        </button>
+
+        <div className="flex items-center gap-4">
+          <Link href="/shop/cart" className="relative text-white">
+            <FontAwesomeIcon icon={faShoppingCart} className="text-lg" />
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-3 flex h-4 w-4 items-center justify-center bg-[#ee862c] text-[9px] font-bold text-white">
+                {cartCount > 99 ? '99+' : cartCount}
+              </span>
+            )}
+          </Link>
+          <button onClick={() => setMenuOpen(true)} className="text-white">
+            <FontAwesomeIcon icon={faBars} className="text-xl" />
+          </button>
+        </div>
       </header>
 
       {/* Мобильное меню */}

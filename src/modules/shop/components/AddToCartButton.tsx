@@ -1,26 +1,50 @@
-// src/modules/shop/components/AddToCartButton.tsx - Кнопка добавления в корзину
+// src/modules/shop/components/AddToCartButton.tsx
 'use client';
 
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShoppingCart, faCheck } from '@fortawesome/free-solid-svg-icons';
-import { Button } from '@/components/ui/button';
+import { faShoppingCart, faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 interface Props {
   productId: string;
   productName: string;
+  price?: number;
+  image?: string;
+  selectedSize?: string | null;
 }
 
-export default function AddToCartButton({ productId, productName }: Props) {
+export default function AddToCartButton({
+  productId,
+  productName,
+  price,
+  image,
+  selectedSize,
+}: Props) {
   const [added, setAdded] = useState(false);
 
   const handleAddToCart = () => {
+    if (!selectedSize) {
+      alert('Выберите размер');
+      return;
+    }
+
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existing = cart.find((item: { productId: string }) => item.productId === productId);
+    const cartKey = `${productId}_${selectedSize}`;
+    const existing = cart.find((item: { cartKey: string }) => item.cartKey === cartKey);
+
     if (existing) {
       existing.quantity += 1;
     } else {
-      cart.push({ productId, productName, quantity: 1 });
+      cart.push({
+        cartKey,
+        productId,
+        productName,
+        quantity: 1,
+        price: price || 0,
+        image: image || '',
+        size: selectedSize,
+        customization: null,
+      });
     }
     localStorage.setItem('cart', JSON.stringify(cart));
     setAdded(true);
@@ -29,16 +53,14 @@ export default function AddToCartButton({ productId, productName }: Props) {
   };
 
   return (
-    <Button
+    <button
       onClick={handleAddToCart}
-      size="lg"
       disabled={added}
-      className={`w-full transition-colors ${
-        added ? 'bg-green-600 hover:bg-green-700' : 'bg-[#242C41] hover:bg-[#1a1f30]'
-      }`}
+      className={`inline-flex items-center gap-3 px-10 py-4 text-sm font-bold uppercase tracking-wider transition-all ${added ? 'bg-green-600 text-white' : 'bg-[#ee862c] text-white hover:bg-[#f0ac74]'}`}
     >
-      <FontAwesomeIcon icon={added ? faCheck : faShoppingCart} className="mr-2" />
+      <FontAwesomeIcon icon={added ? faCheck : faShoppingCart} className="text-xs" />
       {added ? 'Добавлено!' : 'В корзину'}
-    </Button>
+      <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+    </button>
   );
 }

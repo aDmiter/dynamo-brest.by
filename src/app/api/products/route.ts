@@ -17,7 +17,10 @@ export async function GET(request: NextRequest) {
   const [products, total] = await Promise.all([
     prisma.product.findMany({
       where,
-      include: { productcategory: true },
+      include: {
+        productcategory: true,
+        productsize: true,
+      },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
@@ -39,7 +42,6 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     let slug = data.slug || transliterate(data.name);
 
-    // Проверяем уникальность slug
     const existing = await prisma.product.findUnique({ where: { slug } });
     if (existing) {
       slug = slug + '-' + Date.now().toString().slice(-6);
@@ -56,11 +58,23 @@ export async function POST(request: NextRequest) {
         oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
         categoryId: data.categoryId,
         images: data.images ? JSON.stringify(data.images) : '[]',
-        sizes: data.sizes ? JSON.stringify(data.sizes) : '[]',
         inStock: Boolean(data.inStock),
         isFeatured: Boolean(data.isFeatured),
       },
     });
+
+    // Создаём размеры с количеством
+    if (data.sizes && Array.isArray(data.sizes) && data.sizes.length > 0) {
+      for (const sizeItem of data.sizes) {
+        await prisma.productSize.create({
+          data: {
+            productId: product.id,
+            size: sizeItem.size,
+            quantity: sizeItem.quantity,
+          },
+        });
+      }
+    }
 
     return NextResponse.json(product, { status: 201 });
   } catch (error: unknown) {
