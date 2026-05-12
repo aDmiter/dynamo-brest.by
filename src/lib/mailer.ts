@@ -1,20 +1,21 @@
-// src/lib/mailer.ts - Отправка email уведомлений
+// src/lib/mailer.ts
 import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: true,
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: 'divid.joomlin@gmail.com',
+    pass: 'tbckytarhjtnjjkg',
   },
 });
 
 interface OrderItem {
   product: { name: string };
   quantity: number;
-  price: { toString: () => string };
+  price: number;
+  size?: string | null;
 }
 
 interface Order {
@@ -24,126 +25,159 @@ interface Order {
   customerEmail: string | null;
   customerPhone: string;
   address: string | null;
-  total: { toString: () => string };
+  total: number;
   status: string;
   trackingCode?: string | null;
+  deliveryPrice?: number | null;
   orderitem: OrderItem[];
 }
 
 const statusLabels: Record<string, string> = {
   received: 'Получен',
+  processing: 'В обработке',
   shipped: 'Отправлен',
   delivered: 'Доставлен',
   cancelled: 'Отменён',
 };
 
-function getOrderItemsHtml(order: Order): string {
-  return order.orderitem
+function getOrderItemsHtml(items: OrderItem[]): string {
+  if (!items.length) return '<tr><td colspan="3">Нет товаров</td></tr>';
+
+  return items
     .map(
-      (item) =>
-        `<tr>
-          <td style="padding:8px;border-bottom:1px solid #eee">${item.product.name}</td>
-          <td style="padding:8px;text-align:center;border-bottom:1px solid #eee">${item.quantity}</td>
-          <td style="padding:8px;text-align:right;border-bottom:1px solid #eee">${Number(item.price).toFixed(2)} BYN</td>
-        </tr>`
+      (item) => `
+    <tr style="border-bottom: 1px solid #2a3045;">
+      <td style="padding: 12px 8px;">
+        ${item.product.name}
+        ${item.size ? `<br><small style="color: #a5b3d5;">Размер: ${item.size}</small>` : ''}
+      </td>
+      <td style="padding: 12px 8px; text-align: center;">${item.quantity}</td>
+      <td style="padding: 12px 8px; text-align: right;">${item.price.toFixed(2)} BYN</td>
+    </tr>
+  `
     )
     .join('');
 }
 
-function getTrackingHtml(order: Order): string {
-  if (!order.trackingCode) return '';
-  return `
-    <div style="margin:20px 0;padding:15px;background:#f5f5f5;border-radius:4px">
-      <p style="margin:0;font-size:14px"><strong>Код отслеживания:</strong> <span style="color:#ee862c;font-size:16px">${order.trackingCode}</span></p>
-      <p style="margin:5px 0 0;font-size:12px;color:#666">Отследить посылку можно на сайте <a href="https://belpost.by" style="color:#ee862c">Белпочты</a></p>
-    </div>
-  `;
-}
+export async function sendNewOrderEmail(order: Order) {
+  const orderNum = order.orderNumber || order.id.slice(-6);
+  const subtotal = order.total;
+  const deliveryPrice = order.deliveryPrice || 0;
+  const totalWithDelivery = subtotal + deliveryPrice;
 
-export async function sendOrderEmails(order: Order, newStatus?: string) {
-  const orderNum = order.orderNumber || '—';
-  const statusLabel = newStatus ? statusLabels[newStatus] || newStatus : null;
+  // Письмо клиенту
+  if (order.customerEmail) {
+    const customerHtml = `
+      <div style="max-width: 500px; margin: 0 auto; font-family: Arial, sans-serif;">
+        <div style="background: #242C41; padding: 20px; text-align: center;">
+          <h2 style="color: #ee862c; margin: 0;">Динамо-Брест</h2>
+        </div>
+        <div style="padding: 20px;">
+          <p>Здравствуйте, <strong>${order.customerName}</strong>!</p>
+          <p>Ваш заказ <strong>№${orderNum}</strong> принят и передан в обработку.</p>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+              <tr style="background: #242C41; color: white;">
+                <th style="padding: 10px; text-align: left;">Товар</th>
+                <th style="padding: 10px; text-align: center;">Кол-во</th>
+                <th style="padding: 10px; text-align: right;">Цена</th>
+               </tr>
+            </thead>
+            <tbody>${getOrderItemsHtml(order.orderitem)}</tbody>
+            <tfoot>
+              <tr><td colspan="2" style="padding: 8px; text-align: right;">Сумма:</td><td style="text-align: right;">${subtotal.toFixed(2)} BYN</td></tr>
+              <tr><td colspan="2" style="padding: 8px; text-align: right;">Доставка:</td><td style="text-align: right;">${deliveryPrice.toFixed(2)} BYN</td></tr>
+              <tr style="font-weight: bold;"><td colspan="2" style="padding: 8px; text-align: right;">Итого:</td><td style="text-align: right; color: #ee862c;">${totalWithDelivery.toFixed(2)} BYN</td></tr>
+            </tfoot>
+          </table>
+          
+          <p>Спасибо за покупку!</p>
+          <hr>
+          <p style="font-size: 12px; color: #999;">ФК «Динамо-Брест» | dynamo-brest.by</p>
+        </div>
+      </div>
+    `;
 
-  try {
-    // Письмо клиенту
-    if (order.customerEmail) {
-      let subject: string;
-      let html: string;
+    await transporter.sendMail({
+      from: 'Динамо-Брест <divid.joomlin@gmail.com>',
+      to: order.customerEmail,
+      subject: `✅ Заказ ${orderNum} принят!`,
+      html: customerHtml,
+    });
+    console.log(`✅ Письмо клиенту отправлено: ${order.customerEmail}`);
+  }
 
-      if (statusLabel) {
-        // Уведомление о смене статуса
-        subject = `Статус заказа ${orderNum} изменён — ${statusLabel}`;
-        html = `
-          <div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif">
-            <h1 style="color:#003366">Динамо-Брест</h1>
-            <h2>Статус заказа ${orderNum}: ${statusLabel}</h2>
-            <p>Здравствуйте, ${order.customerName}!</p>
-            ${statusLabel === 'Отправлен' && order.trackingCode ? getTrackingHtml(order) : ''}
-            ${statusLabel === 'Отменён' ? '<p>Ваш заказ был отменён. Если у вас есть вопросы, свяжитесь с нами.</p>' : ''}
-            ${statusLabel === 'Доставлен' ? '<p>Ваш заказ доставлен! Спасибо за покупку!</p>' : ''}
-            <hr style="border:1px solid #eee;margin:20px 0" />
-            <p style="color:#999;font-size:12px">ФК «Динамо-Брест» | dynamo-brest.by</p>
-          </div>
-        `;
-      } else {
-        // Подтверждение заказа
-        subject = `Заказ ${orderNum} принят — Динамо-Брест`;
-        html = `
-          <div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif">
-            <h1 style="color:#003366">Динамо-Брест</h1>
-            <h2>Заказ ${orderNum} принят!</h2>
-            <p>Спасибо за заказ, ${order.customerName}!</p>
-            <table style="width:100%;border-collapse:collapse;margin:20px 0">
-              <thead><tr style="background:#003366;color:white"><th style="padding:8px;text-align:left">Товар</th><th style="padding:8px;text-align:center">Кол-во</th><th style="padding:8px;text-align:right">Цена</th></tr></thead>
-              <tbody>${getOrderItemsHtml(order)}</tbody>
-              <tfoot><tr><td colspan="2" style="padding:8px;text-align:right;font-weight:bold">Итого:</td><td style="padding:8px;text-align:right;font-weight:bold;color:#ee862c">${Number(order.total).toFixed(2)} BYN</td></tr></tfoot>
-            </table>
-            <p>Со статусом заказа и кодом отслеживания доставки можно будет ознакомиться в личном кабинете.</p>
-            <hr style="border:1px solid #eee;margin:20px 0" />
-            <p style="color:#999;font-size:12px">ФК «Динамо-Брест» | dynamo-brest.by</p>
-          </div>
-        `;
-      }
-
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to: order.customerEmail,
-        subject,
-        html,
-      });
-    }
-
-    // Письмо админу
-    const adminSubject = statusLabel
-      ? `Статус заказа ${orderNum} изменён на "${statusLabel}" — ${order.customerName}`
-      : `Новый заказ ${orderNum} — ${order.customerName}`;
-
+  // Письмо админу
+  if (process.env.ADMIN_EMAIL) {
     const adminHtml = `
-      <div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif">
-        <h2>${statusLabel ? `Статус изменён: ${statusLabel}` : 'Новый заказ'} ${orderNum}</h2>
+      <div style="max-width: 500px; margin: 0 auto; font-family: Arial, sans-serif;">
+        <h2 style="color: #ee862c;">🛍 НОВЫЙ ЗАКАЗ ${orderNum}</h2>
         <p><strong>Клиент:</strong> ${order.customerName}</p>
         <p><strong>Телефон:</strong> ${order.customerPhone}</p>
         <p><strong>Email:</strong> ${order.customerEmail || '—'}</p>
         <p><strong>Адрес:</strong> ${order.address || '—'}</p>
-        ${order.trackingCode ? `<p><strong>Трекинг:</strong> ${order.trackingCode}</p>` : ''}
-        <table style="width:100%;border-collapse:collapse;margin:20px 0">${getOrderItemsHtml(order)}</table>
-        <p style="font-size:18px"><strong>Итого: ${Number(order.total).toFixed(2)} BYN</strong></p>
+        <hr>
+        <p><strong>Сумма:</strong> ${totalWithDelivery.toFixed(2)} BYN</p>
+        <table style="width: 100%; border-collapse: collapse;">${getOrderItemsHtml(order.orderitem)}</table>
       </div>
     `;
 
-    if (process.env.ADMIN_EMAIL) {
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to: process.env.ADMIN_EMAIL,
-        subject: adminSubject,
-        html: adminHtml,
-      });
-    }
+    await transporter.sendMail({
+      from: 'Динамо-Брест <divid.joomlin@gmail.com>',
+      to: process.env.ADMIN_EMAIL,
+      subject: `🛍 Новый заказ ${orderNum} — ${order.customerName}`,
+      html: adminHtml,
+    });
+    console.log(`✅ Письмо админу отправлено: ${process.env.ADMIN_EMAIL}`);
+  }
+}
 
-    console.log(
-      `Письма отправлены для заказа ${orderNum}${statusLabel ? ` (статус: ${statusLabel})` : ''}`
-    );
-  } catch (error) {
-    console.error('Ошибка отправки писем:', error);
+export async function sendStatusUpdateEmail(order: Order, newStatus: string) {
+  const orderNum = order.orderNumber || order.id.slice(-6);
+  const statusLabel = statusLabels[newStatus] || newStatus;
+
+  if (!order.customerEmail) return;
+
+  const html = `
+    <div style="max-width: 500px; margin: 0 auto; font-family: Arial, sans-serif;">
+      <div style="background: #242C41; padding: 20px; text-align: center;">
+        <h2 style="color: #ee862c; margin: 0;">Динамо-Брест</h2>
+      </div>
+      <div style="padding: 20px;">
+        <p>Здравствуйте, <strong>${order.customerName}</strong>!</p>
+        <p>Статус вашего заказа <strong>№${orderNum}</strong> изменён на:</p>
+        <div style="background: #f0f0f0; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; color: #ee862c;">
+          ${statusLabel}
+        </div>
+        ${
+          newStatus === 'shipped' && order.trackingCode
+            ? `
+          <p><strong>Код отслеживания:</strong> ${order.trackingCode}</p>
+          <p>Отследить: <a href="https://belpost.by">belpost.by</a></p>
+        `
+            : ''
+        }
+        <hr>
+        <p style="font-size: 12px; color: #999;">ФК «Динамо-Брест» | dynamo-brest.by</p>
+      </div>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: 'Динамо-Брест <divid.joomlin@gmail.com>',
+    to: order.customerEmail,
+    subject: `🔄 Статус заказа ${orderNum} изменён — ${statusLabel}`,
+    html,
+  });
+  console.log(`✅ Письмо о смене статуса отправлено: ${order.customerEmail}`);
+}
+
+// Универсальная функция для совместимости
+export async function sendOrderEmails(order: Order, newStatus?: string) {
+  if (newStatus) {
+    await sendStatusUpdateEmail(order, newStatus);
+  } else {
+    await sendNewOrderEmail(order);
   }
 }

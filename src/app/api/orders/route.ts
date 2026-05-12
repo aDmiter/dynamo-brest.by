@@ -72,7 +72,40 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    sendOrderEmails(order).catch(console.error);
+    // Преобразуем Decimal в number для всего объекта
+    const orderForEmail = {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      customerName: order.customerName,
+      customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone,
+      address: order.address,
+      status: order.status,
+      trackingCode: order.trackingCode,
+      total: Number(order.total),
+      deliveryPrice: order.deliveryPrice ? Number(order.deliveryPrice) : null,
+      orderitem: order.orderitem.map((item) => ({
+        quantity: item.quantity,
+        price: Number(item.price),
+        size: item.size,
+        product: {
+          name: item.product.name,
+        },
+      })),
+    };
+
+    console.log('📧 Пытаюсь отправить письмо для заказа:', {
+      id: order.id,
+      email: order.customerEmail,
+      orderNumber: order.orderNumber,
+    });
+
+    try {
+      await sendOrderEmails(orderForEmail);
+      console.log('✅ sendOrderEmails успешно выполнен');
+    } catch (err) {
+      console.error('❌ Ошибка в sendOrderEmails:', err);
+    }
 
     return NextResponse.json(order, { status: 201 });
   } catch (error: unknown) {

@@ -84,22 +84,22 @@ model order {
   total         Decimal     @db.Decimal(10, 2)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
-  orderNumber String? @unique
-  trackingCode String?
-  deliveryPrice Decimal? @db.Decimal(10, 2)
+  orderNumber   String?     @unique
+  trackingCode  String?
+  deliveryPrice Decimal?    @db.Decimal(10, 2)
   orderitem     orderitem[]
 }
 
 model orderitem {
-  id        String  @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     Decimal @db.Decimal(10, 2)
-  size      String?
-  customization String? @db.Text  // JSON с деталями нанесения
-  order     order   @relation(fields: [orderId], references: [id], map: "OrderItem_orderId_fkey")
-  product   product @relation(fields: [productId], references: [id], map: "OrderItem_productId_fkey")
+  id            String  @id @default(cuid())
+  orderId       String
+  productId     String
+  quantity      Int
+  price         Decimal @db.Decimal(10, 2)
+  size          String?
+  customization String? @db.Text
+  order         order   @relation(fields: [orderId], references: [id], map: "OrderItem_orderId_fkey")
+  product       product @relation(fields: [productId], references: [id], map: "OrderItem_productId_fkey")
 
   @@index([orderId], map: "OrderItem_orderId_fkey")
   @@index([productId], map: "OrderItem_productId_fkey")
@@ -122,6 +122,8 @@ model player {
   photoUrl     String?
   bio          String?   @db.Text
   isActive     Boolean   @default(true)
+  isPublished  Boolean   @default(true)  // ✅ Добавлено: показывать на сайте
+  order        Int       @default(0)     // ✅ Добавлено: порядок сортировки
   customFields Json?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -146,8 +148,8 @@ model product {
   updatedAt       DateTime          @updatedAt
   article         String?           @unique(map: "Product_article_key")
   composition     String?           @db.Text
-  quantity Int @default(0)
-  hasCustomization Boolean @default(false)
+  quantity        Int               @default(0)
+  hasCustomization Boolean          @default(false)
   orderitem       orderitem[]
   productsize     ProductSize[]
   productcategory productcategory   @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
@@ -255,7 +257,7 @@ model ProductSize {
 model Customization {
   id        String   @id @default(cuid())
   name      String
-  type      String   // player, logo, flag
+  type      String
   imageUrl  String?
   price     Decimal  @db.Decimal(10, 2) @default(0)
   isFullSet Boolean  @default(false)
@@ -267,8 +269,8 @@ model Customization {
 
 model PlayerCustomization {
   id        String   @id @default(cuid())
-  name      String   // Фамилия игрока
-  number    Int      // Номер игрока
+  name      String
+  number    Int
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

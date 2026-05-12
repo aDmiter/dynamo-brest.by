@@ -1,62 +1,44 @@
-// src/app/team/main/table/page.tsx - Турнирная таблица
-import { prisma } from '@/lib/prisma';
+// src/app/team/main/table/page.tsx
+import { Metadata } from 'next';
+import StandingsTable from '@/modules/team/components/StandingsTable';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalendarAlt, faTrophy } from '@fortawesome/free-solid-svg-icons';
 
-export default async function TablePage() {
-  // Получаем последнюю запись из Standings, группируем по tournamentId
-  const standings = await prisma.standings.findMany({
-    orderBy: { position: 'asc' },
-  });
+export const metadata: Metadata = {
+  title: 'Турнирная таблица | Динамо-Брест',
+  description:
+    'Турнирная таблица BETERA - Высшая лига 2026. Положение команд, статистика матчей, очки, забитые и пропущенные голы.',
+};
 
+export default function StandingsPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-center text-3xl font-bold text-[#003366]">Турнирная таблица</h1>
-
-      {standings.length === 0 ? (
-        <p className="text-center text-gray-500">Нет данных турнирной таблицы</p>
-      ) : (
-        <div className="overflow-x-auto rounded-xl bg-white shadow-md">
-          <table className="w-full">
-            <thead className="bg-[#003366] text-white">
-              <tr>
-                <th className="p-3 text-left">#</th>
-                <th className="p-3 text-left">Команда</th>
-                <th className="p-3 text-center">И</th>
-                <th className="p-3 text-center">В</th>
-                <th className="p-3 text-center">Н</th>
-                <th className="p-3 text-center">П</th>
-                <th className="p-3 text-center">М</th>
-                <th className="p-3 text-center">О</th>
-              </tr>
-            </thead>
-            <tbody>
-              {standings.map((row) => (
-                <tr
-                  key={row.id}
-                  className={`border-b hover:bg-gray-50 ${
-                    row.teamName.includes('Динамо-Брест') ? 'bg-blue-50 font-semibold' : ''
-                  }`}
-                >
-                  <td className="p-3">{row.position}</td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      {row.teamLogoUrl && <img src={row.teamLogoUrl} alt="" className="h-6 w-6" />}
-                      {row.teamName}
-                    </div>
-                  </td>
-                  <td className="p-3 text-center">{row.played}</td>
-                  <td className="p-3 text-center">{row.won}</td>
-                  <td className="p-3 text-center">{row.drawn}</td>
-                  <td className="p-3 text-center">{row.lost}</td>
-                  <td className="p-3 text-center">
-                    {row.goalsFor}–{row.goalsAgainst}
-                  </td>
-                  <td className="p-3 text-center font-bold">{row.points}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="min-h-screen bg-[#0d1117] pt-24 pb-16 px-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Заголовок страницы */}
+        <div className="mb-8 text-center">
+          <div className="inline-block relative mb-4">
+            <FontAwesomeIcon
+              icon={faTrophy}
+              className="text-5xl text-[#ee862c] opacity-20 absolute -left-8 top-1/2 transform -translate-y-1/2"
+            />
+            <h1 className="font-heading text-4xl md:text-5xl font-black text-white uppercase tracking-wider">
+              Турнирная таблица
+            </h1>
+          </div>
+          <p className="text-gray-400 text-sm mt-2 flex items-center justify-center gap-2">
+            <FontAwesomeIcon icon={faCalendarAlt} className="text-[#ee862c]" />
+            BETERA - Высшая лига 2026
+          </p>
         </div>
-      )}
+
+        {/* Таблица */}
+        <StandingsTable />
+
+        {/* Подпись */}
+        <div className="mt-6 text-right text-xs text-gray-500">
+          * Данные предоставлены платформой АБФФ
+        </div>
+      </div>
     </div>
   );
 }
