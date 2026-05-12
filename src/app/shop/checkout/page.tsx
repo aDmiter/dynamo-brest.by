@@ -1,4 +1,4 @@
-// src/app/shop/checkout/page.tsx - Оформление заказа
+// src/app/shop/checkout/page.tsx - Оформление заказа с WebPay
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,8 +7,7 @@ import {
   faShoppingCart,
   faArrowRight,
   faArrowLeft,
-  faCheck,
-  faEnvelope,
+  faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 
@@ -31,11 +30,6 @@ interface Country {
   isActive: boolean;
 }
 
-interface ProductStock {
-  quantity: number;
-  productsize: { size: string; quantity: number }[];
-}
-
 export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>(() => {
     if (typeof window !== 'undefined') {
@@ -50,8 +44,7 @@ export default function CheckoutPage() {
 
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [orderNumber, setOrderNumber] = useState('');
+  const [processingPayment, setProcessingPayment] = useState(false);
   const [error, setError] = useState('');
 
   const [form, setForm] = useState({
@@ -75,43 +68,46 @@ export default function CheckoutPage() {
   const deliveryPrice = selectedCountry?.price ? Number(selectedCountry.price) : 0;
   const total = subtotal + deliveryPrice;
 
+  const submitToWebPay = (params: Record<string, string>) => {
+    console.log('📤 WebPay POST params:', params);
+    try {
+      sessionStorage.setItem('webpay_params', JSON.stringify(params));
+    } catch {}
+
+    const formElement = document.createElement('form');
+    formElement.method = 'POST';
+    formElement.action = 'https://securesandbox.webpay.by';
+    formElement.style.display = 'none';
+    formElement.acceptCharset = 'UTF-8';
+
+    Object.entries(params).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = value;
+      formElement.appendChild(input);
+    });
+
+    document.body.appendChild(formElement);
+    formElement.submit();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
-    // Проверяем остатки перед отправкой
-    for (const item of cart) {
-      try {
-        const res = await fetch(`/api/products/${item.productId}`);
-        const product: ProductStock = await res.json();
-
-        if (item.size) {
-          const sizeEntry = product.productsize?.find((s) => s.size === item.size);
-          if (!sizeEntry || sizeEntry.quantity < item.quantity) {
-            setError(`Товар "${item.productName}" (размер ${item.size}) закончился на складе`);
-            setLoading(false);
-            return;
-          }
-        } else if (product.quantity < item.quantity) {
-          setError(`Товар "${item.productName}" закончился на складе`);
-          setLoading(false);
-          return;
-        }
-      } catch {
-        setError('Ошибка проверки остатков');
-        setLoading(false);
-        return;
-      }
-    }
 
     try {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...form,
+          customerName: form.customerName,
+          customerEmail: form.customerEmail,
           customerPhone: '',
+          address: form.address,
+          comment: form.comment,
+          deliveryPrice,
           items: cart.map((item) => ({
             productId: item.productId,
             productName: item.productName,
@@ -121,19 +117,40 @@ export default function CheckoutPage() {
             customization: item.customization || null,
           })),
           total,
-          deliveryPrice,
+          status: 'pending_payment',
         }),
       });
 
+      const orderData = await res.json();
+
       if (res.ok) {
+        const orderNumber = orderData.orderNumber || orderData.id;
+
         localStorage.removeItem('cart');
         window.dispatchEvent(new Event('cartUpdated'));
-        const orderData = await res.json();
-        setOrderNumber(orderData.orderNumber || '');
-        setSuccess(true);
+
+        const signRes = await fetch('/api/webpay/create-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: orderNumber,
+            amount: total,
+            description: 'Заказ в интернет-магазине Динамо-Брест',
+            customerEmail: form.customerEmail,
+            customerName: form.customerName,
+          }),
+        });
+
+        const signData = await signRes.json();
+
+        if (signData.success) {
+          setProcessingPayment(true);
+          submitToWebPay(signData.params);
+        } else {
+          setError('Не удалось создать платёж');
+        }
       } else {
-        const data = await res.json();
-        setError(data.error || 'Ошибка при создании заказа');
+        setError(orderData.error || 'Ошибка при создании заказа');
       }
     } catch {
       setError('Ошибка соединения');
@@ -141,72 +158,6 @@ export default function CheckoutPage() {
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="flex min-h-screen bg-white">
-        <div className="flex w-full flex-col items-center justify-center px-8 py-16 md:w-1/2 md:ml-20 md:pl-12 md:pr-16">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center bg-green-100">
-            <FontAwesomeIcon icon={faCheck} className="text-4xl text-green-600" />
-          </div>
-          <h1
-            className="text-center font-heading text-3xl font-bold text-[#242C41] md:text-4xl"
-            style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
-          >
-            Заказ <span className="text-[#ee862c]">{orderNumber}</span> принят!
-          </h1>
-          <div className="mt-6 max-w-md text-center space-y-3">
-            <div className="flex items-start gap-3 text-left">
-              <FontAwesomeIcon icon={faEnvelope} className="text-[#ee862c] mt-1 flex-shrink-0" />
-              <p className="text-sm text-gray-500">
-                Ссылка с информацией о заказе отправлена на вашу почту.
-              </p>
-            </div>
-            <p className="text-sm text-gray-500">
-              Со статусом заказа и кодом отслеживания доставки можно будет ознакомиться там.
-            </p>
-          </div>
-          <div className="mt-8 space-y-3 text-center">
-            <p className="text-xs text-gray-400">
-              Order <span className="text-[#ee862c] font-bold">{orderNumber}</span> accepted!
-            </p>
-            <p className="text-xs text-gray-400">
-              A link with order information has been sent to your email.
-            </p>
-            <p className="text-xs text-gray-400">
-              You will be able to track your order status and delivery tracking code there.
-            </p>
-          </div>
-          <Link
-            href="/"
-            className="mt-10 inline-flex items-center gap-3 bg-[#ee862c] px-10 py-4 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#f0ac74] transition-colors"
-          >
-            На главную <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
-          </Link>
-        </div>
-        <div className="relative hidden h-screen w-[50vw] md:block">
-          <img
-            src="/images/cart-bg.jpg"
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/30" />
-          <div className="absolute right-0 bottom-0 pointer-events-none select-none">
-            <span
-              className="block text-[80px] font-black uppercase tracking-[0.1em] text-white/20 md:text-[100px] leading-none"
-              style={{
-                writingMode: 'vertical-lr',
-                fontFamily: "'Inter Tight', sans-serif",
-                fontWeight: 900,
-              }}
-            >
-              ЗАКАЗ
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (cart.length === 0) {
     return (
@@ -320,11 +271,24 @@ export default function CheckoutPage() {
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || processingPayment}
               className="inline-flex items-center gap-3 bg-[#ee862c] px-10 py-4 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#f0ac74] transition-colors disabled:opacity-50"
             >
-              {loading ? 'Обработка...' : 'Оплатить и заказать'}{' '}
-              <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+              {processingPayment ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />{' '}
+                  Перенаправление...
+                </>
+              ) : loading ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" /> Создание
+                  заказа...
+                </>
+              ) : (
+                <>
+                  Оплатить через WebPay <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+                </>
+              )}
             </button>
           </div>
         </form>
