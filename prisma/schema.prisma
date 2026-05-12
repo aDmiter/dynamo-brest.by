@@ -34,28 +34,71 @@ model banner {
 }
 
 model match {
-  id           String   @id @default(cuid())
-  cometId      String?  @unique(map: "Match_cometId_key")
-  teamId       String
-  homeTeam     String
-  awayTeam     String
-  homeLogoUrl  String?
-  awayLogoUrl  String?
-  homeScore    Int?
-  awayScore    Int?
-  matchDate    DateTime
-  stadium      String?
-  tournament   String?
-  tournamentId String?
-  round        String?
-  status       String   @default("scheduled")
-  isHome       Boolean  @default(true)
-  customFields Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  team         team     @relation(fields: [teamId], references: [id], map: "Match_teamId_fkey")
+  id              String       @id @default(cuid())
+  cometId         String?      @unique(map: "Match_cometId_key")
+  teamId          String
+  homeTeamId      Int?
+  awayTeamId      Int?
+  homeTeam        String
+  awayTeam        String
+  homeLogoUrl     String?
+  awayLogoUrl     String?
+  homeScore       Int?
+  awayScore       Int?
+  matchDate       DateTime
+  stadium         String?
+  facilityId      Int?
+  facility        Facility?    @relation(fields: [facilityId], references: [cometId])
+  tournament      String?
+  tournamentId    String?
+  round           String?
+  status          String       @default("scheduled")
+  isHome          Boolean      @default(true)
+  matchType       String?      // "osnova", "dubl", "women"
+  gender          String?
+  attendance      Int?
+  customFields    Json?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  team            team         @relation(fields: [teamId], references: [id], map: "Match_teamId_fkey")
+  homeOpponent    OpponentTeam? @relation("HomeMatches", fields: [homeTeamId], references: [cometId])
+  awayOpponent    OpponentTeam? @relation("AwayMatches", fields: [awayTeamId], references: [cometId])
 
   @@index([teamId], map: "Match_teamId_fkey")
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+}
+
+model OpponentTeam {
+  id        String   @id @default(cuid())
+  cometId   Int?     @unique
+  name      String
+  shortName String?
+  logoUrl   String?
+  city      String?
+  country   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  homeMatches match[] @relation("HomeMatches")
+  awayMatches match[] @relation("AwayMatches")
+}
+
+model Facility {
+  id        String   @id @default(cuid())
+  cometId   Int      @unique
+  name      String
+  shortName String?
+  address   String?
+  city      String?
+  region    String?
+  country   String?
+  type      String?
+  lat       Float?
+  lng       Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  matches   match[]
 }
 
 model news {
