@@ -25,12 +25,23 @@ import {
   faPlusCircle,
   faChevronDown,
   faGlobe,
+  faUser,
 } from '@fortawesome/free-solid-svg-icons';
 import { useState } from 'react';
 
 const menuItems = [
   { title: 'Дашборд', href: '/admin/dashboard', icon: faHome },
   { title: 'Новости', href: '/admin/news', icon: faNewspaper },
+  {
+    title: 'Игроки',
+    href: '/admin/players',
+    icon: faUsers,
+    children: [
+      { title: 'Основной состав', href: '/admin/players/osnovnoy-sostav' },
+      { title: 'Дублирующий состав', href: '/admin/players/dubliruyushchiy-sostav' },
+      { title: 'Женская команда', href: '/admin/players/zhenskaya-komanda' },
+    ],
+  },
   {
     title: 'Интернет-магазин',
     href: '/admin/shop',
@@ -45,7 +56,6 @@ const menuItems = [
     ],
   },
   { title: 'Команды', href: '/admin/teams', icon: faUsers },
-  { title: 'Игроки', href: '/admin/players', icon: faUsers },
   { title: 'Матчи', href: '/admin/matches', icon: faCalendarDays },
   { title: 'Таблицы', href: '/admin/standings', icon: faTableList },
   { title: 'Баннеры', href: '/admin/banners', icon: faAd },
@@ -56,7 +66,14 @@ const menuItems = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const [shopOpen, setShopOpen] = useState(false);
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
+    players: false,
+    shop: false,
+  });
+
+  const toggleMenu = (key: string) => {
+    setOpenMenus((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   return (
     <aside className="relative flex w-64 flex-col overflow-hidden">
@@ -80,10 +97,12 @@ export default function AdminSidebar() {
               const isChildActive = item.children.some(
                 (child) => pathname === child.href || pathname.startsWith(child.href + '/')
               );
+              const menuKey = item.title === 'Игроки' ? 'players' : 'shop';
+
               return (
-                <div key={item.href}>
+                <div key={item.title}>
                   <button
-                    onClick={() => setShopOpen(!shopOpen)}
+                    onClick={() => toggleMenu(menuKey)}
                     className={`group relative flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-300 ${
                       isChildActive
                         ? 'bg-[#ee862c]/20 text-[#ee862c] shadow-lg shadow-[#ee862c]/10'
@@ -97,10 +116,10 @@ export default function AdminSidebar() {
                     <span className="relative z-10 flex-1 text-left">{item.title}</span>
                     <FontAwesomeIcon
                       icon={faChevronDown}
-                      className={`relative z-10 w-3 transition-transform ${shopOpen ? 'rotate-180' : ''}`}
+                      className={`relative z-10 w-3 transition-transform ${openMenus[menuKey] ? 'rotate-180' : ''}`}
                     />
                   </button>
-                  {shopOpen && (
+                  {openMenus[menuKey] && (
                     <div className="ml-7 mt-1 space-y-1 border-l border-white/10 pl-4">
                       {item.children.map((child) => {
                         const isChildActive =

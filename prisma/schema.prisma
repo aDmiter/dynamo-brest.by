@@ -106,53 +106,64 @@ model orderitem {
 }
 
 model player {
-  id           String    @id @default(cuid())
-  cometId      String?   @unique(map: "Player_cometId_key")
-  teamId       String
-  firstName    String
-  lastName     String
-  middleName   String?
-  shortName    String?
-  number       Int?
-  position     String?
-  birthDate    DateTime?
-  nationality  String?
-  height       Int?
-  weight       Int?
-  photoUrl     String?
-  bio          String?   @db.Text
-  isActive     Boolean   @default(true)
-  isPublished  Boolean   @default(true)  // ✅ Добавлено: показывать на сайте
-  order        Int       @default(0)     // ✅ Добавлено: порядок сортировки
-  customFields Json?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  team         team      @relation(fields: [teamId], references: [id], map: "Player_teamId_fkey")
+  id                 String         @id @default(cuid())
+  cometId            String?        @unique(map: "Player_cometId_key")
+  firstName          String
+  lastName           String
+  middleName         String?
+  shortName          String?
+  number             Int?
+  position           String?
+  birthDate          DateTime?
+  nationality        String?
+  country            String?
+  city               String?
+  gender             String?
+  level              String?
+  height             Int?
+  weight             Int?
+  photoUrl           String?
+  bio                String?        @db.Text
+  isActive           Boolean        @default(true)
+  isPublished        Boolean        @default(true)
+  isManuallyCreated  Boolean        @default(false)
+  order              Int            @default(0)
+  customFields       Json?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  playerTeams        PlayerTeam[]
+}
 
-  @@index([teamId], map: "Player_teamId_fkey")
+model PlayerTeam {
+  playerId String
+  teamId   String
+  player   player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  team     team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([playerId, teamId])
 }
 
 model product {
-  id              String            @id @default(cuid())
-  categoryId      String
-  name            String
-  slug            String            @unique(map: "Product_slug_key")
-  description     String            @db.Text
-  price           Decimal           @db.Decimal(10, 2)
-  oldPrice        Decimal?          @db.Decimal(10, 2)
-  inStock         Boolean           @default(true)
-  isFeatured      Boolean           @default(false)
-  images          String?           @db.Text
-  sizes           String?           @db.Text
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  article         String?           @unique(map: "Product_article_key")
-  composition     String?           @db.Text
-  quantity        Int               @default(0)
-  hasCustomization Boolean          @default(false)
-  orderitem       orderitem[]
-  productsize     ProductSize[]
-  productcategory productcategory   @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
+  id                String            @id @default(cuid())
+  categoryId        String
+  name              String
+  slug              String            @unique(map: "Product_slug_key")
+  description       String            @db.Text
+  price             Decimal           @db.Decimal(10, 2)
+  oldPrice          Decimal?          @db.Decimal(10, 2)
+  inStock           Boolean           @default(true)
+  isFeatured        Boolean           @default(false)
+  images            String?           @db.Text
+  sizes             String?           @db.Text
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  article           String?           @unique(map: "Product_article_key")
+  composition       String?           @db.Text
+  quantity          Int               @default(0)
+  hasCustomization  Boolean           @default(false)
+  orderitem         orderitem[]
+  productsize       ProductSize[]
+  productcategory   productcategory   @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
 
   @@index([categoryId], map: "Product_categoryId_fkey")
 }
@@ -197,16 +208,16 @@ model standings {
 }
 
 model team {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique(map: "Team_slug_key")
-  cometId   String?  @unique(map: "Team_cometId_key")
-  isActive  Boolean  @default(true)
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  match     match[]
-  player    player[]
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique(map: "Team_slug_key")
+  cometId     String?      @unique(map: "Team_cometId_key")
+  isActive    Boolean      @default(true)
+  order       Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  match       match[]
+  playerTeams PlayerTeam[]
 }
 
 model title {
