@@ -29,6 +29,8 @@ export async function POST(request: NextRequest) {
         type: data.type || 'link',
         linkUrl: data.linkUrl || null,
         pageContent: data.pageContent || null,
+        imageUrl: data.imageUrl || null,
+        subtitle: data.subtitle || null,
         parentId: data.parentId || null,
         order: data.order || 0,
         isActive: data.isActive ?? true,

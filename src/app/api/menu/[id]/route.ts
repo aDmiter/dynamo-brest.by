@@ -18,6 +18,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.type !== undefined) updateData.type = data.type;
     if (data.linkUrl !== undefined) updateData.linkUrl = data.linkUrl;
     if (data.pageContent !== undefined) updateData.pageContent = data.pageContent;
+    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
+    if (data.subtitle !== undefined) updateData.subtitle = data.subtitle;
     if (data.parentId !== undefined) updateData.parentId = data.parentId;
     if (data.order !== undefined) updateData.order = data.order;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
@@ -41,9 +43,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
 
-    // Сначала удаляем дочерние пункты
     await prisma.menuitem.deleteMany({ where: { parentId: id } });
-    // Затем удаляем сам пункт
     await prisma.menuitem.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
