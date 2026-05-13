@@ -15346,6 +15346,9 @@ ALTER TABLE `PlayerTeam` ADD CONSTRAINT `PlayerTeam_teamId_fkey` FOREIGN KEY (`t
 
 
 
+=== File: prisma/migrations/20260512_add_use_sizes/migration.sql ===
+ALTER TABLE `product` ADD COLUMN `useSizes` BOOLEAN NOT NULL DEFAULT false;
+
 === File: prisma/migrations/20260512_cometid_optional/migration.sql ===
 -- AlterTable
 ALTER TABLE `product` ADD COLUMN `useSizes` BOOLEAN NOT NULL DEFAULT false;-- This is an empty migration.
@@ -17134,6 +17137,350 @@ export default function LoginPage() {
 }
 
 
+=== File: src/app/admin/matches/[id]/edit/EditMatchForm.tsx ===
+// src/app/admin/matches/[id]/edit/EditMatchForm.tsx - Форма редактирования матча
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSave, faArrowLeft, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
+import { formatLocalDateTime, toUTCString } from '@/lib/date-utils';
+
+interface Team {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Opponent {
+  id: string;
+  cometId: number | null;
+  name: string;
+}
+
+interface MatchData {
+  id: string;
+  teamId: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeTeamId: number | null;
+  awayTeamId: number | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  matchDate: string;
+  stadium: string | null;
+  tournament: string | null;
+  round: string | null;
+  status: string;
+  isHome: boolean;
+  matchType: string | null;
+  attendance: number | null;
+}
+
+export default function EditMatchForm({
+  match,
+  teams,
+  opponents,
+}: {
+  match: MatchData;
+  teams: Team[];
+  opponents: Opponent[];
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const [form, setForm] = useState({
+    homeTeam: match.homeTeam,
+    awayTeam: match.awayTeam,
+    homeScore: match.homeScore?.toString() || '',
+    awayScore: match.awayScore?.toString() || '',
+    matchDate: formatLocalDateTime(match.matchDate), // Исправлено: локальное время
+    stadium: match.stadium || '',
+    tournament: match.tournament || '',
+    round: match.round || '',
+    status: match.status,
+    isHome: match.isHome,
+    matchType: match.matchType || '',
+    attendance: match.attendance?.toString() || '',
+    teamId: match.teamId,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    const payload = {
+      homeTeam: form.homeTeam,
+      awayTeam: form.awayTeam,
+      homeScore: form.homeScore ? parseInt(form.homeScore) : null,
+      awayScore: form.awayScore ? parseInt(form.awayScore) : null,
+      matchDate: toUTCString(form.matchDate), // Исправлено: конвертируем в UTC для API
+      stadium: form.stadium || null,
+      tournament: form.tournament || null,
+      round: form.round || null,
+      status: form.status,
+      isHome: form.isHome,
+      matchType: form.matchType || null,
+      attendance: form.attendance ? parseInt(form.attendance) : null,
+      teamId: form.teamId,
+    };
+
+    try {
+      const response = await fetch(`/api/matches/${match.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess('Матч обновлён');
+        router.refresh();
+      } else {
+        setError(data.error || 'Ошибка при обновлении');
+      }
+    } catch (err) {
+      console.error('Ошибка при сохранении:', err);
+      setError('Ошибка соединения');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Удалить матч?')) return;
+    try {
+      const response = await fetch(`/api/matches/${match.id}`, { method: 'DELETE' });
+      if (response.ok) {
+        router.push('/admin/matches/calendar/osnovnoy-sostav');
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Ошибка при удалении');
+      }
+    } catch {
+      setError('Ошибка соединения');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Link href="/admin/matches/calendar/osnovnoy-sostav">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-white/10 text-gray-400 hover:text-white"
+          >
+            <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> Назад
+          </Button>
+        </Link>
+      </div>
+
+      <Card className="max-w-2xl border-white/10 bg-white/5 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white">
+            {match.homeTeam} vs {match.awayTeam}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <div className="mb-4 border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-400">
+              {success}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Хозяева</label>
+                <Input
+                  value={form.homeTeam}
+                  onChange={(e) => setForm({ ...form, homeTeam: e.target.value })}
+                  className="border-white/10 bg-white/5 text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Гости</label>
+                <Input
+                  value={form.awayTeam}
+                  onChange={(e) => setForm({ ...form, awayTeam: e.target.value })}
+                  className="border-white/10 bg-white/5 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Голы хозяев</label>
+                <Input
+                  type="number"
+                  value={form.homeScore}
+                  onChange={(e) => setForm({ ...form, homeScore: e.target.value })}
+                  className="border-white/10 bg-white/5 text-white"
+                  placeholder="—"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Голы гостей</label>
+                <Input
+                  type="number"
+                  value={form.awayScore}
+                  onChange={(e) => setForm({ ...form, awayScore: e.target.value })}
+                  className="border-white/10 bg-white/5 text-white"
+                  placeholder="—"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Зрители</label>
+                <Input
+                  type="number"
+                  value={form.attendance}
+                  onChange={(e) => setForm({ ...form, attendance: e.target.value })}
+                  className="border-white/10 bg-white/5 text-white"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-400 mb-1 block">Дата и время</label>
+              <Input
+                type="datetime-local"
+                value={form.matchDate}
+                onChange={(e) => setForm({ ...form, matchDate: e.target.value })}
+                className="border-white/10 bg-white/5 text-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Турнир</label>
+                <Input
+                  value={form.tournament}
+                  onChange={(e) => setForm({ ...form, tournament: e.target.value })}
+                  className="border-white/10 bg-white/5 text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Тур</label>
+                <Input
+                  value={form.round}
+                  onChange={(e) => setForm({ ...form, round: e.target.value })}
+                  className="border-white/10 bg-white/5 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Стадион</label>
+                <Input
+                  value={form.stadium}
+                  onChange={(e) => setForm({ ...form, stadium: e.target.value })}
+                  className="border-white/10 bg-white/5 text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Статус</label>
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  className="w-full border border-white/10 bg-white/5 p-2 text-sm text-white"
+                >
+                  <option value="scheduled">Запланирован</option>
+                  <option value="finished">Завершён</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 text-sm text-gray-400">
+                <input
+                  type="checkbox"
+                  checked={form.isHome}
+                  onChange={(e) => setForm({ ...form, isHome: e.target.checked })}
+                  className="accent-[#ee862c]"
+                />
+                Домашний матч
+              </label>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button type="submit" disabled={loading} className="bg-[#ee862c] hover:bg-[#f0ac74]">
+                <FontAwesomeIcon icon={faSave} className="mr-2" />
+                {loading ? 'Сохранение...' : 'Сохранить'}
+              </Button>
+              <Button variant="destructive" type="button" onClick={handleDelete}>
+                <FontAwesomeIcon icon={faTrash} className="mr-2" /> Удалить
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+
+=== File: src/app/admin/matches/[id]/edit/page.tsx ===
+// src/app/admin/matches/[id]/edit/page.tsx - Редактирование матча
+import { prisma } from '@/lib/prisma';
+import { notFound } from 'next/navigation';
+import EditMatchForm from './EditMatchForm';
+
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function EditMatchPage({ params }: Props) {
+  const { id } = await params;
+  const match = await prisma.match.findUnique({ where: { id } });
+
+  if (!match) notFound();
+
+  const teams = await prisma.team.findMany({
+    where: { isActive: true },
+    orderBy: { order: 'asc' },
+  });
+
+  const opponents = await prisma.opponentTeam.findMany({
+    where: { isActive: true },
+    orderBy: { name: 'asc' },
+  });
+
+  const serializedMatch = {
+    ...match,
+    matchDate: match.matchDate.toISOString(),
+    createdAt: match.createdAt.toISOString(),
+    updatedAt: match.updatedAt.toISOString(),
+  };
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="font-heading text-2xl font-bold text-white">Редактирование матча</h1>
+      </div>
+      <EditMatchForm match={serializedMatch} teams={teams} opponents={opponents} />
+    </div>
+  );
+}
+
+
 === File: src/app/admin/matches/calendar/[teamSlug]/MatchesCalendarClient.tsx ===
 // src/app/admin/matches/calendar/[teamSlug]/MatchesCalendarClient.tsx
 'use client';
@@ -17177,6 +17524,17 @@ interface Props {
   teamSlug: string;
   teamName: string;
   allTeams: OpponentInfo[];
+}
+
+function cleanTeamName(name: string): string {
+  return name
+    .replace(/\d+\s*:\s*\d+/, '')
+    .replace(/\d+\s*-\s*\d+/, '')
+    .replace(/-:-/g, '')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/[""]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export default function MatchesCalendarClient({ initialMatches, teamSlug, allTeams }: Props) {
@@ -17264,7 +17622,9 @@ export default function MatchesCalendarClient({ initialMatches, teamSlug, allTea
 
                 <div className="flex-1 flex items-center justify-center gap-4">
                   <div className="flex items-center gap-2 text-right flex-1 justify-end">
-                    <span className="text-white font-medium text-sm">{match.homeTeam}</span>
+                    <span className="text-white font-medium text-sm">
+                      {cleanTeamName(match.homeTeam)}
+                    </span>
                     {match.homeTeamId && getLogo(match.homeTeamId) && (
                       <Image
                         src={getLogo(match.homeTeamId)!}
@@ -17288,7 +17648,9 @@ export default function MatchesCalendarClient({ initialMatches, teamSlug, allTea
                         className="object-contain"
                       />
                     )}
-                    <span className="text-white font-medium text-sm">{match.awayTeam}</span>
+                    <span className="text-white font-medium text-sm">
+                      {cleanTeamName(match.awayTeam)}
+                    </span>
                   </div>
                 </div>
 
@@ -17299,7 +17661,7 @@ export default function MatchesCalendarClient({ initialMatches, teamSlug, allTea
                       onClick={() =>
                         match.facilityId ? setStadiumModal(match.facilityId) : undefined
                       }
-                      className={`text-xs mt-1 flex items-center gap-1 ${match.facilityId ? 'hover:text-[#ee862c] cursor-pointer transition-colors' : 'text-gray-400'}`}
+                      className={`text-xs mt-1 flex items-center gap-1 ml-auto ${match.facilityId ? 'text-gray-300 hover:text-white cursor-pointer transition-colors' : 'text-gray-500'}`}
                     >
                       <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-1" />
                       {match.stadium}
@@ -17681,7 +18043,7 @@ export default function NewMatchPage() {
 
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faUsers } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -17705,6 +18067,7 @@ interface Match {
   round: string | null;
   status: string;
   isHome: boolean;
+  attendance: number | null;
 }
 
 interface Props {
@@ -17791,6 +18154,12 @@ export default function MatchesResultsClient({ initialMatches, allTeams }: Props
             <div className="text-right min-w-[120px]">
               {match.tournament && <p className="text-[10px] text-[#ee862c]">{match.tournament}</p>}
               {match.round && <p className="text-[10px] text-gray-500">{match.round} тур</p>}
+              {match.attendance !== null && match.attendance !== undefined && (
+                <p className="text-[10px] text-gray-400 mt-0.5 flex items-center justify-end gap-1">
+                  <FontAwesomeIcon icon={faUsers} className="text-[9px]" />
+                  {match.attendance.toLocaleString()}
+                </p>
+              )}
             </div>
 
             <Link
@@ -18588,6 +18957,8 @@ import {
   faTrash,
   faToggleOn,
   faToggleOff,
+  faMars,
+  faVenus,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18607,6 +18978,14 @@ interface OpponentTeam {
 }
 
 const PAGE_SIZE = 50;
+const OUR_CLUB_IDS = [68812, 102734, 101132];
+
+// Карта пола для наших команд
+const TEAM_GENDER_MAP: Record<number, { label: string; color: string; icon: typeof faMars }> = {
+  68812: { label: 'Муж', color: 'text-blue-400', icon: faMars },
+  102734: { label: 'Муж', color: 'text-blue-400', icon: faMars },
+  101132: { label: 'Жен', color: 'text-pink-400', icon: faVenus },
+};
 
 export default function OpponentTeamsPage() {
   const [teams, setTeams] = useState<OpponentTeam[]>([]);
@@ -18621,7 +19000,6 @@ export default function OpponentTeamsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
-    shortName: '',
     city: '',
     country: '',
     logoUrl: '',
@@ -18629,7 +19007,6 @@ export default function OpponentTeamsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newForm, setNewForm] = useState({
     name: '',
-    shortName: '',
     city: '',
     country: '',
     logoUrl: '',
@@ -18643,12 +19020,32 @@ export default function OpponentTeamsPage() {
     return await res.json();
   }, []);
 
+  const getTeamGender = (cometId: number | null) => {
+    if (!cometId) return null;
+    return TEAM_GENDER_MAP[cometId] || null;
+  };
+
+  const sortTeamsWithPinned = useCallback((teamsList: OpponentTeam[]) => {
+    const ourClubs = teamsList.filter((t) => t.cometId && OUR_CLUB_IDS.includes(t.cometId));
+    const otherClubs = teamsList.filter((t) => !t.cometId || !OUR_CLUB_IDS.includes(t.cometId));
+
+    // Сортируем наши клубы: основной, дубль, женская
+    ourClubs.sort((a, b) => {
+      const order = [68812, 102734, 101132];
+      const aIndex = order.indexOf(a.cometId!);
+      const bIndex = order.indexOf(b.cometId!);
+      return aIndex - bIndex;
+    });
+
+    return [...ourClubs, ...otherClubs];
+  }, []);
+
   const refreshData = useCallback(async () => {
     const data = await fetchTeams(search, page);
-    setTeams(data.teams);
+    setTeams(sortTeamsWithPinned(data.teams));
     setTotal(data.total);
     setTotalPages(data.totalPages);
-  }, [search, page, fetchTeams]);
+  }, [search, page, fetchTeams, sortTeamsWithPinned]);
 
   useEffect(() => {
     let cancelled = false;
@@ -18656,7 +19053,7 @@ export default function OpponentTeamsPage() {
       try {
         const data = await fetchTeams(search, page);
         if (!cancelled) {
-          setTeams(data.teams);
+          setTeams(sortTeamsWithPinned(data.teams));
           setTotal(data.total);
           setTotalPages(data.totalPages);
           setLoading(false);
@@ -18683,7 +19080,7 @@ export default function OpponentTeamsPage() {
       try {
         const data = await fetchTeams(search, page);
         if (!cancelled) {
-          setTeams(data.teams);
+          setTeams(sortTeamsWithPinned(data.teams));
           setTotal(data.total);
           setTotalPages(data.totalPages);
         }
@@ -18697,7 +19094,7 @@ export default function OpponentTeamsPage() {
     return () => {
       cancelled = true;
     };
-  }, [search, page, fetchTeams]);
+  }, [search, page, fetchTeams, sortTeamsWithPinned]);
 
   const handleSync = async () => {
     setShowSyncModal(false);
@@ -18724,7 +19121,6 @@ export default function OpponentTeamsPage() {
     setEditingId(team.id);
     setEditForm({
       name: team.name,
-      shortName: team.shortName || '',
       city: team.city || '',
       country: team.country || '',
       logoUrl: team.logoUrl || '',
@@ -18778,7 +19174,7 @@ export default function OpponentTeamsPage() {
         body: JSON.stringify(newForm),
       });
       setShowAddModal(false);
-      setNewForm({ name: '', shortName: '', city: '', country: '', logoUrl: '' });
+      setNewForm({ name: '', city: '', country: '', logoUrl: '' });
       await refreshData();
     } catch (error) {
       console.error('Ошибка создания:', error);
@@ -18861,142 +19257,161 @@ export default function OpponentTeamsPage() {
                 <th className="p-3 text-left text-sm font-medium text-gray-400 w-12">#</th>
                 <th className="p-3 text-left text-sm font-medium text-gray-400 w-12">Лого</th>
                 <th className="p-3 text-left text-sm font-medium text-gray-400">Название</th>
-                <th className="p-3 text-left text-sm font-medium text-gray-400">Кратко</th>
                 <th className="p-3 text-left text-sm font-medium text-gray-400">Город</th>
+                <th className="p-3 text-center text-sm font-medium text-gray-400 w-16">Пол</th>
                 <th className="p-3 text-center text-sm font-medium text-gray-400 w-14">Акт.</th>
                 <th className="p-3 text-center text-sm font-medium text-gray-400 w-24">Действия</th>
               </tr>
             </thead>
             <tbody>
-              {teams.map((team, index) => (
-                <tr
-                  key={team.id}
-                  className={`border-b border-white/5 hover:bg-white/5 transition-colors ${!team.isActive ? 'opacity-40' : ''}`}
-                >
-                  <td className="p-3 text-sm text-gray-500">
-                    {(page - 1) * PAGE_SIZE + index + 1}
-                  </td>
-                  <td className="p-3">
-                    <div className="h-8 w-8 flex items-center justify-center bg-white/5">
-                      {team.logoUrl ? (
-                        <Image
-                          src={team.logoUrl}
-                          alt={team.name}
-                          width={32}
-                          height={32}
-                          className="h-full w-full object-contain"
-                        />
-                      ) : (
-                        <FontAwesomeIcon icon={faShieldHalved} className="text-gray-600 text-sm" />
-                      )}
-                    </div>
-                  </td>
-                  {editingId === team.id ? (
-                    <>
-                      <td className="p-3">
-                        <Input
-                          value={editForm.name}
-                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                          className="border-white/10 bg-white/5 text-white text-sm"
-                        />
-                      </td>
-                      <td className="p-3">
-                        <Input
-                          value={editForm.shortName}
-                          onChange={(e) => setEditForm({ ...editForm, shortName: e.target.value })}
-                          className="border-white/10 bg-white/5 text-white text-sm"
-                        />
-                      </td>
-                      <td className="p-3">
-                        <Input
-                          value={editForm.city}
-                          onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                          className="border-white/10 bg-white/5 text-white text-sm"
-                        />
-                      </td>
-                      <td className="p-3 text-center">
-                        <button
-                          onClick={() => toggleActive(team)}
-                          className={`text-xl transition-colors ${team.isActive ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
-                        >
-                          <FontAwesomeIcon icon={team.isActive ? faToggleOn : faToggleOff} />
-                        </button>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex flex-col gap-2 items-center">
-                          <div className="flex items-center gap-2">
-                            <Input
-                              value={editForm.logoUrl}
-                              onChange={(e) =>
-                                setEditForm({ ...editForm, logoUrl: e.target.value })
-                              }
-                              className="border-white/10 bg-white/5 text-white text-xs w-44"
-                              placeholder="URL логотипа"
-                            />
-                          </div>
-                          <ImageUpload
-                            value={editForm.logoUrl}
-                            onChange={(url) => setEditForm({ ...editForm, logoUrl: url })}
+              {teams.map((team, index) => {
+                const isOurClub = team.cometId && OUR_CLUB_IDS.includes(team.cometId);
+                const gender = getTeamGender(team.cometId);
+                return (
+                  <tr
+                    key={team.id}
+                    className={`border-b border-white/5 hover:bg-white/5 transition-colors ${!team.isActive ? 'opacity-40' : ''} ${isOurClub ? 'bg-[#ee862c]/5' : ''}`}
+                  >
+                    <td className="p-3 text-sm text-gray-500">
+                      {(page - 1) * PAGE_SIZE + index + 1}
+                    </td>
+                    <td className="p-3">
+                      <div className="h-8 w-8 flex items-center justify-center bg-white/5">
+                        {team.logoUrl ? (
+                          <Image
+                            src={team.logoUrl}
+                            alt={team.name}
+                            width={32}
+                            height={32}
+                            className="h-full w-full object-contain"
                           />
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={saveEdit}
-                              className="px-2 py-1 text-xs bg-green-600 text-white hover:bg-green-500"
+                        ) : (
+                          <FontAwesomeIcon
+                            icon={faShieldHalved}
+                            className="text-gray-600 text-sm"
+                          />
+                        )}
+                      </div>
+                    </td>
+                    {editingId === team.id ? (
+                      <>
+                        <td className="p-3">
+                          <Input
+                            value={editForm.name}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                            className="border-white/10 bg-white/5 text-white text-sm"
+                          />
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            value={editForm.city}
+                            onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                            className="border-white/10 bg-white/5 text-white text-sm"
+                          />
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className="text-sm text-gray-500">—</span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <button
+                            onClick={() => toggleActive(team)}
+                            className={`text-xl transition-colors ${team.isActive ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
+                          >
+                            <FontAwesomeIcon icon={team.isActive ? faToggleOn : faToggleOff} />
+                          </button>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex flex-col gap-2 items-center">
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={editForm.logoUrl}
+                                onChange={(e) =>
+                                  setEditForm({ ...editForm, logoUrl: e.target.value })
+                                }
+                                className="border-white/10 bg-white/5 text-white text-xs w-44"
+                                placeholder="URL логотипа"
+                              />
+                            </div>
+                            <ImageUpload
+                              value={editForm.logoUrl}
+                              onChange={(url) => setEditForm({ ...editForm, logoUrl: url })}
+                            />
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={saveEdit}
+                                className="px-2 py-1 text-xs bg-green-600 text-white hover:bg-green-500"
+                              >
+                                <FontAwesomeIcon icon={faSave} className="mr-1" />
+                                Сохр.
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="px-2 py-1 text-xs border border-white/10 text-gray-400 hover:text-white"
+                              >
+                                Отм.
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="p-3">
+                          <div>
+                            <p className="text-white text-sm font-medium">{team.name}</p>
+                            {team.cometId && (
+                              <p className="text-xs text-gray-500 mt-0.5 font-mono">
+                                ID: {team.cometId}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <p className="text-gray-400 text-sm">{team.city || '—'}</p>
+                        </td>
+                        <td className="p-3 text-center">
+                          {gender ? (
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold uppercase border ${gender.label === 'Муж' ? 'text-blue-400 border-blue-400/30 bg-blue-400/10' : 'text-pink-400 border-pink-400/30 bg-pink-400/10'}`}
                             >
-                              <FontAwesomeIcon icon={faSave} className="mr-1" />
-                              Сохр.
+                              <FontAwesomeIcon icon={gender.icon} className="text-[10px]" />
+                              {gender.label}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-gray-600">—</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-center">
+                          <button
+                            onClick={() => toggleActive(team)}
+                            className={`text-xl transition-colors ${team.isActive ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
+                          >
+                            <FontAwesomeIcon icon={team.isActive ? faToggleOn : faToggleOff} />
+                          </button>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => startEdit(team)}
+                              className="text-sm text-[#ee862c] hover:underline"
+                              title="Редактировать"
+                            >
+                              <FontAwesomeIcon icon={faEdit} />
                             </button>
                             <button
-                              onClick={() => setEditingId(null)}
-                              className="px-2 py-1 text-xs border border-white/10 text-gray-400 hover:text-white"
+                              onClick={() => deleteTeam(team)}
+                              className="text-sm text-red-400 hover:text-red-300"
+                              title="Удалить"
                             >
-                              Отм.
+                              <FontAwesomeIcon icon={faTrash} />
                             </button>
                           </div>
-                        </div>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="p-3">
-                        <p className="text-white text-sm font-medium">{team.name}</p>
-                      </td>
-                      <td className="p-3">
-                        <p className="text-gray-400 text-sm">{team.shortName || '—'}</p>
-                      </td>
-                      <td className="p-3">
-                        <p className="text-gray-400 text-sm">{team.city || '—'}</p>
-                      </td>
-                      <td className="p-3 text-center">
-                        <button
-                          onClick={() => toggleActive(team)}
-                          className={`text-xl transition-colors ${team.isActive ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
-                        >
-                          <FontAwesomeIcon icon={team.isActive ? faToggleOn : faToggleOff} />
-                        </button>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => startEdit(team)}
-                            className="text-sm text-[#ee862c] hover:underline"
-                            title="Редактировать"
-                          >
-                            <FontAwesomeIcon icon={faEdit} />
-                          </button>
-                          <button
-                            onClick={() => deleteTeam(team)}
-                            className="text-sm text-red-400 hover:text-red-300"
-                            title="Удалить"
-                          >
-                            <FontAwesomeIcon icon={faTrash} />
-                          </button>
-                        </div>
-                      </td>
-                    </>
-                  )}
-                </tr>
-              ))}
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -19085,14 +19500,6 @@ export default function OpponentTeamsPage() {
                   onChange={(e) => setNewForm({ ...newForm, name: e.target.value })}
                   className="border-white/10 bg-white/5 text-white"
                   placeholder="БАТЭ"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Краткое</label>
-                <Input
-                  value={newForm.shortName}
-                  onChange={(e) => setNewForm({ ...newForm, shortName: e.target.value })}
-                  className="border-white/10 bg-white/5 text-white"
                 />
               </div>
               <div>
@@ -24408,89 +24815,124 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 
-=== File: src/app/api/matches/route.ts ===
-// src/app/api/matches/route.ts - API матчей (список, создание)
+=== File: src/app/api/matches/[id]/route.ts ===
+// src/app/api/matches/[id]/route.ts - API для конкретного матча
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const teamSlug = searchParams.get('teamSlug') || '';
-  const status = searchParams.get('status') || ''; // 'scheduled' | 'finished'
-  const page = parseInt(searchParams.get('page') || '1');
-  const limit = parseInt(searchParams.get('limit') || '50');
-  const skip = (page - 1) * limit;
-
-  const where: Record<string, unknown> = {};
-
-  // Фильтр по команде
-  if (teamSlug) {
-    const team = await prisma.team.findUnique({ where: { slug: teamSlug } });
-    if (team) {
-      where.teamId = team.id;
-    }
-  }
-
-  // Фильтр по статусу
-  if (status) {
-    where.status = status;
-  }
-
-  // Сортировка: для scheduled — по возрастанию даты, для finished — по убыванию
-  const orderBy: Record<string, string> =
-    status === 'finished' ? { matchDate: 'desc' } : { matchDate: 'asc' };
-
-  const [matches, total] = await Promise.all([
-    prisma.match.findMany({
-      where,
-      orderBy,
-      skip,
-      take: limit,
-    }),
-    prisma.match.count({ where }),
-  ]);
-
-  return NextResponse.json({
-    matches,
-    total,
-    page,
-    totalPages: Math.ceil(total / limit),
-    hasMore: skip + limit < total,
-  });
+interface RouteParams {
+  params: Promise<{ id: string }>;
 }
 
-export async function POST(request: NextRequest) {
+// GET — получить один матч
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+  const match = await prisma.match.findUnique({ where: { id } });
+
+  if (!match) {
+    return NextResponse.json({ error: 'Матч не найден' }, { status: 404 });
+  }
+
+  return NextResponse.json(match);
+}
+
+// PUT — обновить матч
+export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    const { id } = await params;
     const data = await request.json();
 
-    // Находим нашу команду по slug
-    const team = data.teamSlug
-      ? await prisma.team.findUnique({ where: { slug: data.teamSlug } })
-      : null;
+    const updateData: Record<string, unknown> = {};
 
-    const match = await prisma.match.create({
-      data: {
-        teamId: team?.id || '',
-        homeTeam: data.homeTeam || '',
-        awayTeam: data.awayTeam || '',
-        homeTeamId: data.homeTeamId || null,
-        awayTeamId: data.awayTeamId || null,
-        homeScore: data.homeScore ?? null,
-        awayScore: data.awayScore ?? null,
-        matchDate: new Date(data.matchDate),
-        stadium: data.stadium || null,
-        facilityId: data.facilityId || null,
-        tournament: data.tournament || null,
-        round: data.round || null,
-        status: data.status || 'scheduled',
-        matchType: data.matchType || null,
-        gender: data.gender || null,
-        attendance: data.attendance || null,
-        isHome: data.isHome ?? true,
-      },
+    if (data.homeTeam !== undefined) updateData.homeTeam = data.homeTeam;
+    if (data.awayTeam !== undefined) updateData.awayTeam = data.awayTeam;
+    if (data.homeScore !== undefined) updateData.homeScore = data.homeScore;
+    if (data.awayScore !== undefined) updateData.awayScore = data.awayScore;
+    if (data.matchDate !== undefined) updateData.matchDate = new Date(data.matchDate);
+    if (data.stadium !== undefined) updateData.stadium = data.stadium;
+    if (data.tournament !== undefined) updateData.tournament = data.tournament;
+    if (data.round !== undefined) updateData.round = data.round;
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.isHome !== undefined) updateData.isHome = data.isHome;
+    if (data.matchType !== undefined) updateData.matchType = data.matchType;
+    if (data.attendance !== undefined) updateData.attendance = data.attendance;
+    if (data.teamId !== undefined) updateData.teamId = data.teamId;
+
+    const match = await prisma.match.update({
+      where: { id },
+      data: updateData,
     });
 
-    return NextResponse.json(match, { status: 201 });
+    return NextResponse.json(match);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    console.error('Ошибка обновления матча:', message);
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+// DELETE — удалить матч
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+    await prisma.match.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+
+=== File: src/app/api/matches/route.ts ===
+// src/app/api/matches/[id]/route.ts - API для конкретного матча
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+// PUT — обновить матч
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+    const data = await request.json();
+
+    const updateData: Record<string, unknown> = {};
+
+    if (data.homeTeam !== undefined) updateData.homeTeam = data.homeTeam;
+    if (data.awayTeam !== undefined) updateData.awayTeam = data.awayTeam;
+    if (data.homeScore !== undefined) updateData.homeScore = data.homeScore;
+    if (data.awayScore !== undefined) updateData.awayScore = data.awayScore;
+    if (data.matchDate !== undefined) updateData.matchDate = new Date(data.matchDate);
+    if (data.stadium !== undefined) updateData.stadium = data.stadium;
+    if (data.tournament !== undefined) updateData.tournament = data.tournament;
+    if (data.round !== undefined) updateData.round = data.round;
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.isHome !== undefined) updateData.isHome = data.isHome;
+    if (data.matchType !== undefined) updateData.matchType = data.matchType;
+    if (data.attendance !== undefined) updateData.attendance = data.attendance;
+    if (data.teamId !== undefined) updateData.teamId = data.teamId;
+
+    const match = await prisma.match.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return NextResponse.json(match);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+// DELETE — удалить матч
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+    await prisma.match.delete({ where: { id } });
+    return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
     return NextResponse.json({ error: message }, { status: 400 });
@@ -25553,6 +25995,18 @@ const COMET_BASE_URL = process.env.COMET_API_BASE_URL || 'https://comet.abff.by'
 
 const OUR_TEAM_IDS = [68812, 102734, 101132];
 
+const OUR_CLUB_NAMES: Record<number, string> = {
+  68812: 'Динамо-Брест',
+  102734: 'Динамо-Брест (дубль)',
+  101132: 'Динамо-Брест (жен)',
+};
+
+const OUR_CLUB_SHORT_NAMES: Record<number, string> = {
+  68812: 'Динамо-Брест',
+  102734: 'Динамо-Брест-2',
+  101132: 'Динамо-Брест-Ж',
+};
+
 async function fetchCometPage(
   apiKey: string,
   page: number,
@@ -25577,10 +26031,46 @@ function getMatchType(
   return 'osnova';
 }
 
+function cleanTeamName(rawName: string): string {
+  return rawName
+    .replace(/\d+\s*:\s*\d+/, '') // убираем счёт (например "0:3" или "1 : 2")
+    .replace(/\d+\s*-\s*\d+/, '') // убираем счёт через дефис (например "0-3")
+    .replace(/\([^)]*\)/g, '') // убираем всё в скобках
+    .replace(/[""]/g, '') // убираем кавычки
+    .replace(/\s+/g, ' ') // схлопываем множественные пробелы
+    .trim(); // обрезаем пробелы по краям
+}
+
+async function ensureOurTeams() {
+  for (const id of OUR_TEAM_IDS) {
+    const existing = await prisma.opponentTeam.findUnique({ where: { cometId: id } });
+
+    if (!existing) {
+      // Создаём только если клуба ещё нет
+      await prisma.opponentTeam.create({
+        data: {
+          cometId: id,
+          name: OUR_CLUB_NAMES[id] || `Динамо-Брест #${id}`,
+          shortName: OUR_CLUB_SHORT_NAMES[id] || `ДБ-${id}`,
+          city: 'Брест',
+          country: 'Беларусь',
+          isActive: true,
+        },
+      });
+    }
+    // Если клуб уже существует — НЕ трогаем название
+  }
+}
+
 async function syncAll() {
   const logs: string[] = [];
 
-  // 1. Стадионы из отчёта Competition Team Facilities
+  // 0. Сначала создаём наши клубы если их нет
+  logs.push('🏠 Проверка наших клубов...');
+  await ensureOurTeams();
+  logs.push('✅ Наши клубы проверены');
+
+  // 1. Стадионы
   logs.push('🏟️ Стадионы...');
   let page = 0;
   let totalFacilities = 0;
@@ -25602,7 +26092,7 @@ async function syncAll() {
       await prisma.facility.upsert({
         where: { cometId: facilityId },
         update: {
-          name: facilityName || facilityName,
+          name: facilityName,
           shortName: facilityName,
           address: facilityAddress || null,
           city: (f['facilityPlace'] as string) || null,
@@ -25638,16 +26128,17 @@ async function syncAll() {
     const matches = await fetchCometPage(COMET_API_KEY_MATCHES, page);
     if (matches.length === 0) break;
     for (const m of matches) {
-      const homeTeam = m.homeTeam as number;
-      const awayTeam = m.awayTeam as number;
-      if (OUR_TEAM_IDS.includes(homeTeam) && !OUR_TEAM_IDS.includes(awayTeam))
-        opponentIds.add(awayTeam);
-      if (OUR_TEAM_IDS.includes(awayTeam) && !OUR_TEAM_IDS.includes(homeTeam))
-        opponentIds.add(homeTeam);
+      const homeTeamId = m.homeTeam as number;
+      const awayTeamId = m.awayTeam as number;
+      if (OUR_TEAM_IDS.includes(homeTeamId) && !OUR_TEAM_IDS.includes(awayTeamId))
+        opponentIds.add(awayTeamId);
+      if (OUR_TEAM_IDS.includes(awayTeamId) && !OUR_TEAM_IDS.includes(homeTeamId))
+        opponentIds.add(homeTeamId);
     }
     page++;
     if (matches.length < 500) break;
   }
+
   let totalOpponents = 0;
   for (const id of opponentIds) {
     const exists = await prisma.opponentTeam.findUnique({ where: { cometId: id } });
@@ -25677,25 +26168,40 @@ async function syncAll() {
     const matches = await fetchCometPage(COMET_API_KEY_MATCHES, page);
     if (matches.length === 0) break;
     for (const m of matches) {
-      const homeTeam = m.homeTeam as number;
-      const awayTeam = m.awayTeam as number;
-      const isOurHome = OUR_TEAM_IDS.includes(homeTeam);
-      const isOurAway = OUR_TEAM_IDS.includes(awayTeam);
+      const homeTeamId = m.homeTeam as number;
+      const awayTeamId = m.awayTeam as number;
+      const isOurHome = OUR_TEAM_IDS.includes(homeTeamId);
+      const isOurAway = OUR_TEAM_IDS.includes(awayTeamId);
       if (!isOurHome && !isOurAway) continue;
 
       let homeScore: number | null = null;
       let awayScore: number | null = null;
       const desc = (m.matchDescription as string) || '';
+
+      // Извлекаем счёт
       const scoreMatch = desc.match(/(\d+)\s*:\s*(\d+)/);
       if (scoreMatch) {
         homeScore = parseInt(scoreMatch[1]);
         awayScore = parseInt(scoreMatch[2]);
       }
 
+      // Парсим названия команд из описания
+      const parts = desc
+        .split(' - ')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      let homeTeamName = parts[0] || `Команда ${homeTeamId}`;
+      let awayTeamName = parts[1] || `Команда ${awayTeamId}`;
+
+      // Очищаем названия от счёта и лишних символов
+      homeTeamName = cleanTeamName(homeTeamName);
+      awayTeamName = cleanTeamName(awayTeamName);
+
       const rawDate = (m.matchDate as number) || 0;
       const matchDate = rawDate > 946684800000 ? new Date(rawDate) : TBD_DATE;
 
-      const matchType = getMatchType(m);
+      const ourTeamId = isOurHome ? homeTeamId : awayTeamId;
+      const matchType = getMatchType(m, ourTeamId);
       const status = (m.matchStatus as string) === 'СЫГРАНО' ? 'finished' : 'scheduled';
       const slug = ourTeamSlugs[matchType];
       const ourTeam = await prisma.team.findUnique({ where: { slug } });
@@ -25706,17 +26212,12 @@ async function syncAll() {
 
       const matchData = {
         matchDate,
-        homeTeam: desc.split(' - ')[0]?.trim() || `Команда ${homeTeam}`,
-        awayTeam:
-          desc
-            .split(' - ')
-            .pop()
-            ?.replace(/\d+:\d+/, '')
-            .trim() || `Команда ${awayTeam}`,
+        homeTeam: homeTeamName,
+        awayTeam: awayTeamName,
         homeScore,
         awayScore,
-        homeTeamId: homeTeam,
-        awayTeamId: awayTeam,
+        homeTeamId: homeTeamId,
+        awayTeamId: awayTeamId,
         stadium: (m.facility as string) || null,
         facilityId: facilityIdFromMatch ? facilityIdFromMatch : null,
         tournament: (m.name as string) || null,
@@ -25745,15 +26246,26 @@ async function syncAll() {
   }
   logs.push(`⚽ Матчей: ${totalMatches} (создано: ${created}, обновлено: ${updated})`);
 
-  // 4. Обновляем названия клубов
+  // 4. Обновляем названия клубов (только для новых, без названий)
   for (const id of opponentIds) {
-    const match = await prisma.match.findFirst({
-      where: { OR: [{ homeTeamId: id }, { awayTeamId: id }] },
-      orderBy: { matchDate: 'desc' },
-    });
-    if (match) {
-      const name = match.homeTeamId === id ? match.homeTeam : match.awayTeam;
-      await prisma.opponentTeam.update({ where: { cometId: id }, data: { name, shortName: name } });
+    const team = await prisma.opponentTeam.findUnique({ where: { cometId: id } });
+    // Обновляем название только если оно всё ещё "Клуб #..."
+    if (team && team.name.startsWith('Клуб #')) {
+      const match = await prisma.match.findFirst({
+        where: { OR: [{ homeTeamId: id }, { awayTeamId: id }] },
+        orderBy: { matchDate: 'desc' },
+      });
+      if (match) {
+        const name = match.homeTeamId === id ? match.homeTeam : match.awayTeam;
+        // Очищаем название перед сохранением
+        const cleanedName = cleanTeamName(name);
+        if (cleanedName) {
+          await prisma.opponentTeam.update({
+            where: { cometId: id },
+            data: { name: cleanedName, shortName: cleanedName },
+          });
+        }
+      }
     }
   }
   logs.push('✅ Названия клубов обновлены');
@@ -26691,7 +27203,7 @@ import { getWebPayFormParams } from '@/lib/webpay';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { orderId, amount, description, customerEmail, customerName } = body;
+    const { orderId, amount, description, customerEmail, customerName, customerPhone } = body;
 
     if (!orderId || !amount) {
       return NextResponse.json({ error: 'orderId and amount are required' }, { status: 400 });
@@ -26702,17 +27214,22 @@ export async function POST(request: NextRequest) {
     const returnUrl = `${baseUrl}/shop/checkout/success?orderId=${cleanOrderId}`;
     const cancelUrl = `${baseUrl}/shop/checkout?orderId=${cleanOrderId}&cancelled=1`;
 
-    const params = getWebPayFormParams(
-      orderId,
+    const params = getWebPayFormParams({
+      orderNum: orderId,
       amount,
-      description || `Заказ ${orderId}`,
+      description: description || `Заказ ${orderId}`,
       returnUrl,
       cancelUrl,
       customerEmail,
-      customerName || 'Покупатель'
-    );
+      customerName,
+      customerPhone,
+    });
 
-    return NextResponse.json({ success: true, params });
+    return NextResponse.json({
+      success: true,
+      params,
+      paymentUrl: 'https://securesandbox.webpay.by', // тестовая среда
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('❌ WebPay create payment error:', message);
@@ -28092,15 +28609,14 @@ export default function CheckoutPage() {
   const deliveryPrice = selectedCountry?.price ? Number(selectedCountry.price) : 0;
   const total = subtotal + deliveryPrice;
 
+  // ИЗМЕНИТЬ только функцию submitToWebPay в src/app/shop/checkout/page.tsx
+
   const submitToWebPay = (params: Record<string, string>) => {
     console.log('📤 WebPay POST params:', params);
-    try {
-      sessionStorage.setItem('webpay_params', JSON.stringify(params));
-    } catch {}
 
     const formElement = document.createElement('form');
     formElement.method = 'POST';
-    formElement.action = 'https://securesandbox.webpay.by';
+    formElement.action = 'https://securesandbox.webpay.by'; // тестовая среда
     formElement.style.display = 'none';
     formElement.acceptCharset = 'UTF-8';
 
@@ -28113,6 +28629,11 @@ export default function CheckoutPage() {
     });
 
     document.body.appendChild(formElement);
+
+    // Небольшая задержка для отладки
+    console.log('📤 Submit to:', formElement.action);
+    console.log('📤 Params:', params);
+
     formElement.submit();
   };
 
@@ -30956,6 +31477,30 @@ export function getCometReportUrl(
 }
 
 
+=== File: src/lib/date-utils.ts ===
+// src/lib/date-utils.ts - Утилиты для работы с датами и временем
+/**
+ * Форматирует дату для datetime-local инпута (локальное время)
+ */
+export function formatLocalDateTime(isoString: string): string {
+  const d = new Date(isoString);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+/**
+ * Конвертирует локальное время из datetime-local в UTC строку для API
+ */
+export function toUTCString(localDateTime: string): string {
+  const d = new Date(localDateTime);
+  return d.toISOString();
+}
+
+
 === File: src/lib/fontawesome.ts ===
 // src/lib/fontawesome.ts - Конфигурация Font Awesome
 import { config } from '@fortawesome/fontawesome-svg-core';
@@ -31266,210 +31811,164 @@ export function formatDate(date: Date, locale: string = 'ru-RU'): string {
 
 
 === File: src/lib/webpay.ts ===
-// src/lib/webpay.ts - Клиент для работы с WEBPAY SOAP API
-import * as soap from 'soap';
+// src/lib/webpay.ts - Клиент для работы с WEBPAY (прямая форма + SOAP API)
 import crypto from 'crypto';
 
-const WSDL_URL = process.env.WEBPAY_WSDL_URL || 'https://sandbox.webpay.by/WSBApi2';
+// ====================== КОНФИГУРАЦИЯ ======================
+
 const STORE_ID = process.env.WEBPAY_STORE_ID || '584426783';
-const LOGIN = process.env.WEBPAY_LOGIN || 'dynamo';
-const PASSWORD = process.env.WEBPAY_PASSWORD || 'TUFbS4vO';
-const SECRET_KEY = process.env.WEBPAY_SECRET_KEY || PASSWORD;
+const SECRET_KEY = process.env.WEBPAY_SECRET_KEY || 'dynamo-brest-secret-key-2024';
+const IS_TEST = process.env.NODE_ENV === 'development' || process.env.WEBPAY_TEST === '1';
 
-function getPasswordHash(): string {
-  return crypto.createHash('md5').update(PASSWORD).digest('hex');
-}
+const PAYMENT_URL = IS_TEST ? 'https://securesandbox.webpay.by' : 'https://payment.webpay.by';
 
-let clientPromise: Promise<soap.Client> | null = null;
+const BILLING_URL = IS_TEST ? 'https://sandbox.webpay.by' : 'https://billing.webpay.by';
 
-async function getClient(): Promise<soap.Client> {
-  if (!clientPromise) {
-    clientPromise = soap.createClientAsync(WSDL_URL);
-  }
-  return clientPromise;
-}
+// SOAP WSDL для проверки статуса
+const WSDL_URL = IS_TEST
+  ? 'https://sandbox.webpay.by/WSBApi2'
+  : 'https://billing.webpay.by/WSBApi2';
 
-// ====================== СОЗДАНИЕ ПЛАТЕЖА ======================
+// ====================== ФОРМИРОВАНИЕ ПЛАТЕЖНОЙ ФОРМЫ ======================
 
-export function getWebPayFormParams(
-  orderNum: string,
-  amount: number,
-  description: string,
-  returnUrl: string,
-  cancelUrl: string,
-  customerEmail?: string,
-  customerName?: string
-): Record<string, string> {
+/**
+ * Генерирует параметры для POST-формы перенаправления на WEBPAY
+ */
+export function getWebPayFormParams(params: {
+  orderNum: string;
+  amount: number;
+  description: string;
+  returnUrl: string;
+  cancelUrl: string;
+  customerEmail?: string;
+  customerName?: string;
+  customerPhone?: string;
+}): Record<string, string> {
+  const {
+    orderNum,
+    amount,
+    description,
+    returnUrl,
+    cancelUrl,
+    customerEmail,
+    customerName,
+    customerPhone,
+  } = params;
+
+  // Очищаем номер заказа от #
   const cleanOrderNum = orderNum.replace('#', '');
+
+  // Генерируем seed (случайная строка)
   const seed = Date.now().toString();
 
-  const params: Record<string, string> = {
+  const formParams: Record<string, string> = {
+    '*scart': '',
+    wsb_version: '2',
     wsb_storeid: STORE_ID,
     wsb_order_num: cleanOrderNum,
     wsb_currency_id: 'BYN',
     wsb_amount: amount.toFixed(2),
     wsb_seed: seed,
-    wsb_test: '1',
+    wsb_test: IS_TEST ? '1' : '0',
+    wsb_invoice_item_name: description,
     wsb_return_url: returnUrl,
     wsb_cancel_return_url: cancelUrl,
-    wsb_version: '2',
+    wsb_notify_url: process.env.NEXT_PUBLIC_SITE_URL
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/webpay/callback`
+      : 'http://localhost:3000/api/webpay/callback',
   };
 
-  if (customerEmail) params['wsb_email'] = customerEmail;
-  if (customerName) params['wsb_customer_name'] = customerName;
+  if (customerEmail) formParams.wsb_email = customerEmail;
+  if (customerName) formParams.wsb_customer_name = customerName;
+  if (customerPhone) formParams.wsb_phone = customerPhone;
 
-  // Подпись: sha1(seed + store_id + order_num + test + currency_id + amount + secret_key)
-  const signature = crypto
-    .createHash('sha1')
-    .update(seed + STORE_ID + cleanOrderNum + '1' + 'BYN' + amount.toFixed(2) + SECRET_KEY)
-    .digest('hex');
-  params['wsb_signature'] = signature;
+  // Формируем подпись
+  const signature = generateSignature(
+    seed,
+    cleanOrderNum,
+    IS_TEST ? '1' : '0',
+    'BYN',
+    amount.toFixed(2)
+  );
 
-  console.log('💳 WebPay form params:', params);
+  formParams.wsb_signature = signature;
 
-  return params;
+  console.log('💳 WebPay form params:', {
+    storeId: STORE_ID,
+    orderNum: cleanOrderNum,
+    amount: amount.toFixed(2),
+    seed,
+    isTest: IS_TEST,
+    signature: signature.substring(0, 10) + '...',
+  });
+
+  return formParams;
 }
 
-// ====================== SOAP МЕТОДЫ ======================
+/**
+ * Генерирует цифровую подпись для формы оплаты
+ * Формат: SHA1(seed + storeid + order_num + test + currency_id + amount + secret_key)
+ */
+function generateSignature(
+  seed: string,
+  orderNum: string,
+  test: string,
+  currencyId: string,
+  amount: string
+): string {
+  const signatureString = seed + STORE_ID + orderNum + test + currencyId + amount + SECRET_KEY;
+  return crypto.createHash('sha1').update(signatureString).digest('hex');
+}
 
-export async function getTransactionStatus(
-  orderNum: string
-): Promise<TransactionStatusResponse | null> {
-  try {
-    const client = await getClient();
-    const cleanOrderNum = orderNum.replace('#', '');
-    const params = {
-      store_id: STORE_ID,
-      login: LOGIN,
-      password: getPasswordHash(),
-      order_num: cleanOrderNum,
-    };
+/**
+ * Проверяет подпись от WEBPAY (для callback)
+ */
+export function verifyWebPaySignature(params: Record<string, string>): boolean {
+  const { wsb_seed, wsb_order_num, wsb_test, wsb_currency_id, wsb_amount, wsb_signature } = params;
 
-    const result = await client.GetTransactionStatusAsync(params);
-    return result?.[0] as TransactionStatusResponse | null;
-  } catch (error) {
-    console.error('❌ WebPay GetTransactionStatus error:', error);
-    return null;
+  if (
+    !wsb_seed ||
+    !wsb_order_num ||
+    !wsb_test ||
+    !wsb_currency_id ||
+    !wsb_amount ||
+    !wsb_signature
+  ) {
+    return false;
   }
+
+  const expectedSignature = generateSignature(
+    wsb_seed,
+    wsb_order_num,
+    wsb_test,
+    wsb_currency_id,
+    wsb_amount
+  );
+
+  return expectedSignature === wsb_signature;
 }
 
-export async function completeTransaction(
-  transactionId: string,
-  amount: number,
-  currency: string = 'BYN'
-): Promise<TransactionCompleteResponse | null> {
-  try {
-    const client = await getClient();
-    const params = {
-      store_id: STORE_ID,
-      login: LOGIN,
-      password: getPasswordHash(),
-      transaction_id: transactionId,
-      amount,
-      currency,
-    };
-    const result = await client.TransactionCompleteAsync(params);
-    return result?.[0] as TransactionCompleteResponse | null;
-  } catch (error) {
-    console.error('❌ WebPay TransactionComplete error:', error);
-    return null;
-  }
+// ====================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ======================
+
+/**
+ * Возвращает URL платежной страницы
+ */
+export function getPaymentUrl(): string {
+  return PAYMENT_URL;
 }
 
-export async function cancelTransaction(
-  transactionId: string,
-  amount: number,
-  reason?: string
-): Promise<TransactionCancelResponse | null> {
-  try {
-    const client = await getClient();
-    const params = {
-      store_id: STORE_ID,
-      login: LOGIN,
-      password: getPasswordHash(),
-      transaction_id: transactionId,
-      amount,
-      currency: 'BYN',
-      cancel_reason: reason || '',
-    };
-    const result = await client.TransactionCancelAsync(params);
-    return result?.[0] as TransactionCancelResponse | null;
-  } catch (error) {
-    console.error('❌ WebPay TransactionCancel error:', error);
-    return null;
-  }
+/**
+ * Возвращает URL биллинга
+ */
+export function getBillingUrl(): string {
+  return BILLING_URL;
 }
 
-export async function refundTransaction(
-  transactionId: string,
-  amount: number,
-  reason?: string
-): Promise<TransactionRefundResponse | null> {
-  try {
-    const client = await getClient();
-    const params = {
-      store_id: STORE_ID,
-      login: LOGIN,
-      password: getPasswordHash(),
-      transaction_id: transactionId,
-      amount,
-      currency: 'BYN',
-      refund_reason: reason || '',
-    };
-    const result = await client.TransactionRefundAsync(params);
-    return result?.[0] as TransactionRefundResponse | null;
-  } catch (error) {
-    console.error('❌ WebPay TransactionRefund error:', error);
-    return null;
-  }
-}
-
-// ====================== ТИПЫ ======================
-
-export interface TransactionStatusResponse {
-  transactions?: {
-    transaction?: TransactionStatusStruct | TransactionStatusStruct[];
-  };
-  error_code?: string;
-  error_comment?: string;
-}
-
-export interface TransactionStatusStruct {
-  order_num?: string;
-  transaction_id?: string;
-  date?: string;
-  status?: string;
-  amount?: string;
-  currency?: string;
-  response_code?: string;
-  response_text?: string;
-  approval_code?: string;
-  card_type?: string;
-  card_number?: string;
-  card_country?: string;
-  payer_name?: string;
-  payer_email?: string;
-  payer_ip?: string;
-  payment_type?: string;
-  comment?: string;
-}
-
-export interface TransactionCompleteResponse {
-  transaction_id?: string;
-  error_code?: string;
-  error_comment?: string;
-}
-
-export interface TransactionCancelResponse {
-  transaction_id?: string;
-  error_code?: string;
-  error_comment?: string;
-}
-
-export interface TransactionRefundResponse {
-  transaction_id?: string;
-  error_code?: string;
-  error_comment?: string;
+/**
+ * Проверяет, используется ли тестовая среда
+ */
+export function isTestMode(): boolean {
+  return IS_TEST;
 }
 
 
@@ -33439,331 +33938,153 @@ export default function HeroSlider({ featuredNews }: HeroSliderProps) {
 
 
 === File: src/modules/shared/ui/MatchSection.tsx ===
-// src/modules/shared/ui/MatchSection.tsx - Секция матчей (glassmorphism, динамические данные)
+// src/modules/shared/ui/MatchSection.tsx - Секция матчей с вкладками (glassmorphism)
 import { prisma } from '@/lib/prisma';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRight, faMapMarkerAlt, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import CountdownTimer from './CountdownTimer';
-import MatchStadiumButton from './MatchStadiumButton.tsx';
+import MatchTabsClient from './MatchTabsClient';
 
-function getResultColor(homeScore: number, awayScore: number, isHome: boolean): string {
-  const ourScore = isHome ? homeScore : awayScore;
-  const theirScore = isHome ? awayScore : homeScore;
-  if (ourScore > theirScore) return 'border-t-[#22c55e]';
-  if (ourScore === theirScore) return 'border-t-[#f0ac74]';
-  return 'border-t-[#ef4444]';
-}
-
-async function getOpponentLogo(teamId: number | null) {
-  if (!teamId) return null;
-  const opp = await prisma.opponentTeam.findUnique({ where: { cometId: teamId } });
-  return opp?.logoUrl || null;
+interface SerializedMatch {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeTeamId: number | null;
+  awayTeamId: number | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  matchDate: string;
+  stadium: string | null;
+  facilityId: number | null;
+  tournament: string | null;
+  round: string | null;
+  status: string;
+  isHome: boolean;
+  matchType: string | null;
+  attendance: number | null;
 }
 
 export default async function MatchSection() {
-  const nextMatch = await prisma.match.findFirst({
-    where: { matchType: 'osnova', status: 'scheduled', matchDate: { gt: new Date('2000-01-01') } },
-    orderBy: { matchDate: 'asc' },
-  });
+  const now = new Date();
+  const pastCutoff = new Date('2000-01-01');
 
-  const lastMatch = await prisma.match.findFirst({
-    where: { matchType: 'osnova', status: 'finished' },
-    orderBy: { matchDate: 'desc' },
-  });
-
-  if (!nextMatch && !lastMatch) return null;
-
-  const ourLogo = '/images/logos/logo-white.png';
-
-  const nextOppId = nextMatch
-    ? nextMatch.isHome
-      ? nextMatch.awayTeamId
-      : nextMatch.homeTeamId
-    : null;
-  const lastOppId = lastMatch
-    ? lastMatch.isHome
-      ? lastMatch.awayTeamId
-      : lastMatch.homeTeamId
-    : null;
-
-  const [nextOppLogo, lastOppLogo] = await Promise.all([
-    getOpponentLogo(nextOppId),
-    getOpponentLogo(lastOppId),
+  const [osnovaNext, osnovaLast, dublNext, dublLast, womenNext, womenLast] = await Promise.all([
+    prisma.match.findFirst({
+      where: {
+        matchType: 'osnova',
+        status: 'scheduled',
+        matchDate: { gt: pastCutoff },
+      },
+      orderBy: { matchDate: 'asc' },
+    }),
+    prisma.match.findFirst({
+      where: { matchType: 'osnova', status: 'finished' },
+      orderBy: { matchDate: 'desc' },
+    }),
+    prisma.match.findFirst({
+      where: {
+        matchType: 'dubl',
+        status: 'scheduled',
+        matchDate: { gt: pastCutoff },
+      },
+      orderBy: { matchDate: 'asc' },
+    }),
+    prisma.match.findFirst({
+      where: { matchType: 'dubl', status: 'finished' },
+      orderBy: { matchDate: 'desc' },
+    }),
+    prisma.match.findFirst({
+      where: {
+        matchType: 'women',
+        status: 'scheduled',
+        matchDate: { gt: pastCutoff },
+      },
+      orderBy: { matchDate: 'asc' },
+    }),
+    prisma.match.findFirst({
+      where: { matchType: 'women', status: 'finished' },
+      orderBy: { matchDate: 'desc' },
+    }),
   ]);
 
-  // NEXT MATCH
-  const nextHomeLogo = nextMatch?.isHome ? ourLogo : nextOppLogo || ourLogo;
-  const nextAwayLogo = nextMatch?.isHome ? nextOppLogo || '/images/placeholder.jpg' : ourLogo;
-  const nextHomeTeam = nextMatch?.isHome ? 'Динамо-Брест' : nextMatch?.homeTeam || '';
-  const nextAwayTeam = nextMatch?.isHome ? nextMatch?.awayTeam || '' : 'Динамо-Брест';
+  const allMatches = [osnovaNext, osnovaLast, dublNext, dublLast, womenNext, womenLast];
 
-  // LAST MATCH
-  const lastHomeLogo = lastMatch?.isHome ? ourLogo : lastOppLogo || ourLogo;
-  const lastAwayLogo = lastMatch?.isHome ? lastOppLogo || '/images/placeholder.jpg' : ourLogo;
-  const lastHomeTeam = lastMatch?.isHome ? 'Динамо-Брест' : lastMatch?.homeTeam || '';
-  const lastAwayTeam = lastMatch?.isHome ? lastMatch?.awayTeam || '' : 'Динамо-Брест';
+  const opponentIds = new Set<number>();
+  for (const match of allMatches) {
+    if (match) {
+      if (match.homeTeamId) opponentIds.add(match.homeTeamId);
+      if (match.awayTeamId) opponentIds.add(match.awayTeamId);
+    }
+  }
 
-  const resultBorderColor =
-    lastMatch && lastMatch.homeScore !== null && lastMatch.awayScore !== null
-      ? getResultColor(lastMatch.homeScore, lastMatch.awayScore, lastMatch.isHome)
-      : 'border-t-gray-600';
+  const opponents = await prisma.opponentTeam.findMany({
+    where: { cometId: { in: Array.from(opponentIds) } },
+    select: { cometId: true, logoUrl: true },
+  });
 
-  return (
-    <section className="match relative flex min-h-screen flex-col md:flex-row">
-      <div className="match__background absolute inset-0">
-        <img
-          src="/images/stadium.jpg"
-          alt=""
-          className="match__background-image h-full w-full object-cover"
-        />
-        <div className="match__background-overlay absolute inset-0 bg-[#0B0F1C]/85" />
-      </div>
+  const logoMap = new Map<number, string | null>();
+  for (const o of opponents) {
+    if (o.cometId) logoMap.set(o.cometId, o.logoUrl);
+  }
 
-      <div className="match__container relative flex w-full flex-col md:flex-row mx-auto max-w-[1200px]">
-        {/* ========== NEXT MATCH ========== */}
-        <div className="match__next flex flex-1 items-center justify-center p-8 md:p-12">
-          {nextMatch ? (
-            <div className="match__card relative flex w-full max-w-[560px] flex-col border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl p-10 md:p-14 overflow-hidden">
-              <div
-                className="match__card-bg-logo absolute pointer-events-none"
-                style={{ left: '0%', top: '70%', transform: 'translate(-50%, -50%)' }}
-              >
-                <img
-                  src={nextHomeLogo}
-                  alt=""
-                  className="h-72 w-auto md:h-96 max-w-none opacity-20"
-                />
-              </div>
-              <div
-                className="match__card-bg-logo absolute pointer-events-none"
-                style={{ right: '0%', top: '70%', transform: 'translate(50%, -50%)' }}
-              >
-                <img
-                  src={nextAwayLogo}
-                  alt=""
-                  className="h-72 w-auto md:h-96 max-w-none opacity-20"
-                />
-              </div>
+  const getOpponentLogo = (teamId: number | null) => {
+    if (!teamId) return null;
+    return logoMap.get(teamId) || null;
+  };
 
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 hidden md:flex flex-col items-center">
-                <span
-                  className="text-sm uppercase tracking-[0.3em] text-[#a5b3d5]"
-                  style={{
-                    writingMode: 'vertical-lr',
-                    transform: 'rotate(180deg)',
-                    fontFamily: "'Roboto', sans-serif",
-                    fontWeight: 900,
-                  }}
-                >
-                  {nextHomeTeam}
-                </span>
-              </div>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10 hidden md:flex flex-col items-center">
-                <span
-                  className="text-sm uppercase tracking-[0.3em] text-[#a5b3d5]"
-                  style={{
-                    writingMode: 'vertical-lr',
-                    fontFamily: "'Roboto', sans-serif",
-                    fontWeight: 900,
-                  }}
-                >
-                  {nextAwayTeam}
-                </span>
-              </div>
+  const serializeMatch = (match: typeof osnovaNext): SerializedMatch | null => {
+    if (!match) return null;
+    return {
+      id: match.id,
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      homeTeamId: match.homeTeamId,
+      awayTeamId: match.awayTeamId,
+      homeScore: match.homeScore,
+      awayScore: match.awayScore,
+      matchDate: match.matchDate.toISOString(),
+      stadium: match.stadium,
+      facilityId: match.facilityId,
+      tournament: match.tournament,
+      round: match.round,
+      status: match.status,
+      isHome: match.isHome,
+      matchType: match.matchType,
+      attendance: match.attendance,
+    };
+  };
 
-              <div className="match__card-header relative z-10 flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#ee862c]">
-                    {nextMatch.tournament || 'ТОВАРИЩЕСКИЙ МАТЧ'}
-                  </p>
-                  {nextMatch.round && (
-                    <p className="mt-1 text-sm font-medium text-white/60">{nextMatch.round} тур</p>
-                  )}
-                </div>
-                <p className="flex items-center gap-2 text-right text-sm text-white/70">
-                  <FontAwesomeIcon icon={faCalendarAlt} className="text-xs text-[#ee862c]" />
-                  {new Date(nextMatch.matchDate).toLocaleDateString('ru-RU', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                  {' | '}
-                  {new Date(nextMatch.matchDate).toLocaleTimeString('ru-RU', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
+  const serializedMatches = {
+    osnova: {
+      next: serializeMatch(osnovaNext),
+      last: serializeMatch(osnovaLast),
+      nextOppLogo: osnovaNext
+        ? getOpponentLogo(osnovaNext.isHome ? osnovaNext.awayTeamId : osnovaNext.homeTeamId)
+        : null,
+      lastOppLogo: osnovaLast
+        ? getOpponentLogo(osnovaLast.isHome ? osnovaLast.awayTeamId : osnovaLast.homeTeamId)
+        : null,
+    },
+    dubl: {
+      next: serializeMatch(dublNext),
+      last: serializeMatch(dublLast),
+      nextOppLogo: dublNext
+        ? getOpponentLogo(dublNext.isHome ? dublNext.awayTeamId : dublNext.homeTeamId)
+        : null,
+      lastOppLogo: dublLast
+        ? getOpponentLogo(dublLast.isHome ? dublLast.awayTeamId : dublLast.homeTeamId)
+        : null,
+    },
+    women: {
+      next: serializeMatch(womenNext),
+      last: serializeMatch(womenLast),
+      nextOppLogo: womenNext
+        ? getOpponentLogo(womenNext.isHome ? womenNext.awayTeamId : womenNext.homeTeamId)
+        : null,
+      lastOppLogo: womenLast
+        ? getOpponentLogo(womenLast.isHome ? womenLast.awayTeamId : womenLast.homeTeamId)
+        : null,
+    },
+  };
 
-              <div className="mt-8 h-[1px] w-full bg-white/10" />
-              <div className="mt-8 flex items-center justify-center gap-8 md:hidden">
-                <span
-                  className="text-base uppercase text-[#a5b3d5]"
-                  style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 900 }}
-                >
-                  {nextHomeTeam}
-                </span>
-                <img src="/images/vs.png" alt="VS" className="w-8 h-auto opacity-40" />
-                <span
-                  className="text-base uppercase text-[#a5b3d5]"
-                  style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 900 }}
-                >
-                  {nextAwayTeam}
-                </span>
-              </div>
-
-              <div className="mt-8 flex justify-center">
-                <CountdownTimer targetDate={new Date(nextMatch.matchDate)} />
-              </div>
-
-              <div className="mt-8 hidden items-center justify-center md:flex">
-                <img src="/images/vs.png" alt="VS" className="w-16 h-auto opacity-40" />
-              </div>
-
-              <div className="mt-10 h-[1px] w-full bg-white/10" />
-              <div className="mt-6 flex items-center justify-between">
-                <MatchStadiumButton
-                  facilityId={nextMatch.facilityId}
-                  stadiumName={nextMatch.stadium}
-                />
-                <button className="inline-flex items-center gap-2 bg-[#ee862c] px-6 py-3 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#f0ac74]">
-                  БИЛЕТЫ <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="match__card relative flex w-full max-w-[560px] flex-col border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl p-10 md:p-14 items-center justify-center">
-              <p className="text-gray-500 text-lg">Нет запланированных матчей</p>
-            </div>
-          )}
-        </div>
-
-        {/* ========== LAST MATCH ========== */}
-        <div className="match__last flex flex-1 items-center justify-center p-8 md:p-12">
-          {lastMatch ? (
-            <div
-              className={`match__card relative flex w-full max-w-[560px] flex-col border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl p-10 md:p-14 overflow-hidden border-t-[6px] ${resultBorderColor}`}
-            >
-              <div
-                className="match__card-bg-logo absolute pointer-events-none"
-                style={{ left: '0%', top: '70%', transform: 'translate(-50%, -50%)' }}
-              >
-                <img
-                  src={lastHomeLogo}
-                  alt=""
-                  className="h-72 w-auto md:h-96 max-w-none opacity-20"
-                />
-              </div>
-              <div
-                className="match__card-bg-logo absolute pointer-events-none"
-                style={{ right: '0%', top: '70%', transform: 'translate(50%, -50%)' }}
-              >
-                <img
-                  src={lastAwayLogo}
-                  alt=""
-                  className="h-72 w-auto md:h-96 max-w-none opacity-20"
-                />
-              </div>
-
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 hidden md:flex flex-col items-center">
-                <span
-                  className="text-sm uppercase tracking-[0.3em] text-[#a5b3d5]"
-                  style={{
-                    writingMode: 'vertical-lr',
-                    transform: 'rotate(180deg)',
-                    fontFamily: "'Roboto', sans-serif",
-                    fontWeight: 900,
-                  }}
-                >
-                  {lastHomeTeam}
-                </span>
-              </div>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10 hidden md:flex flex-col items-center">
-                <span
-                  className="text-sm uppercase tracking-[0.3em] text-[#a5b3d5]"
-                  style={{
-                    writingMode: 'vertical-lr',
-                    fontFamily: "'Roboto', sans-serif",
-                    fontWeight: 900,
-                  }}
-                >
-                  {lastAwayTeam}
-                </span>
-              </div>
-
-              <div className="match__card-header relative z-10 flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#ee862c]">
-                    {lastMatch.tournament || 'ТОВАРИЩЕСКИЙ МАТЧ'}
-                  </p>
-                  {lastMatch.round && (
-                    <p className="mt-1 text-sm font-medium text-white/60">{lastMatch.round} тур</p>
-                  )}
-                </div>
-                <p className="flex items-center gap-2 text-right text-sm text-white/70">
-                  <FontAwesomeIcon icon={faCalendarAlt} className="text-xs text-[#ee862c]" />
-                  {new Date(lastMatch.matchDate).toLocaleDateString('ru-RU', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </p>
-              </div>
-
-              <div className="mt-8 h-[1px] w-full bg-white/10" />
-
-              <div className="mt-8 flex justify-center">
-                <div className="flex items-center gap-4">
-                  <span
-                    className="text-7xl text-white md:text-[120px] leading-none"
-                    style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
-                  >
-                    {lastMatch.homeScore ?? '—'}
-                  </span>
-                  <span className="text-4xl text-white/10 md:text-5xl">:</span>
-                  <span
-                    className="text-7xl text-white md:text-[120px] leading-none"
-                    style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
-                  >
-                    {lastMatch.awayScore ?? '—'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-10 h-[1px] w-full bg-white/10" />
-              <div className="mt-6 flex items-center justify-between">
-                <MatchStadiumButton
-                  facilityId={lastMatch.facilityId}
-                  stadiumName={lastMatch.stadium}
-                />
-                <button className="inline-flex items-center gap-2 border border-white/20 px-6 py-3 text-xs font-bold uppercase tracking-wider text-white hover:border-[#ee862c] hover:text-[#ee862c]">
-                  ПРОТОКОЛ <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="match__card relative flex w-full max-w-[560px] flex-col border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl p-10 md:p-14 items-center justify-center">
-              <p className="text-gray-500 text-lg">Нет сыгранных матчей</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="match__title absolute left-0 bottom-0 pointer-events-none select-none">
-        <span
-          className="block text-[80px] font-black uppercase tracking-[0.1em] text-white/[0.15] md:text-[120px] leading-none"
-          style={{
-            writingMode: 'vertical-lr',
-            transform: 'rotate(180deg)',
-            fontFamily: "'Inter Tight', sans-serif",
-            fontWeight: 900,
-          }}
-        >
-          МАТЧИ
-        </span>
-      </div>
-    </section>
-  );
+  return <MatchTabsClient matches={serializedMatches} />;
 }
 
 

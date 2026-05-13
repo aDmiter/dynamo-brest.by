@@ -8,9 +8,10 @@ import { faUpload, faTimes } from '@fortawesome/free-solid-svg-icons';
 interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
+  folder?: string; // 'news', 'logos', 'products'
 }
 
-export default function ImageUpload({ value, onChange }: ImageUploadProps) {
+export default function ImageUpload({ value, onChange, folder = 'news' }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -22,6 +23,7 @@ export default function ImageUpload({ value, onChange }: ImageUploadProps) {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('folder', folder); // передаём папку
 
       const res = await fetch('/api/upload', {
         method: 'POST',

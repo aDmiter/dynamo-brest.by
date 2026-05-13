@@ -5,10 +5,19 @@ import { getWebPayFormParams } from '@/lib/webpay';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { orderId, amount, description, customerEmail, customerName, customerPhone } = body;
+    const {
+      orderId,
+      items,
+      total,
+      deliveryPrice,
+      customerEmail,
+      customerName,
+      customerPhone,
+      customerAddress,
+    } = body;
 
-    if (!orderId || !amount) {
-      return NextResponse.json({ error: 'orderId and amount are required' }, { status: 400 });
+    if (!orderId || !items || !total) {
+      return NextResponse.json({ error: 'orderId, items and total are required' }, { status: 400 });
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -18,19 +27,22 @@ export async function POST(request: NextRequest) {
 
     const params = getWebPayFormParams({
       orderNum: orderId,
-      amount,
-      description: description || `Заказ ${orderId}`,
+      items,
+      total,
+      shippingName: deliveryPrice ? 'Доставка' : undefined,
+      shippingPrice: deliveryPrice || undefined,
       returnUrl,
       cancelUrl,
       customerEmail,
       customerName,
       customerPhone,
+      customerAddress,
     });
 
     return NextResponse.json({
       success: true,
       params,
-      paymentUrl: 'https://securesandbox.webpay.by', // тестовая среда
+      paymentUrl: 'https://securesandbox.webpay.by',
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';

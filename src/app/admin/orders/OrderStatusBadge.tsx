@@ -5,9 +5,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const statuses = [
-  { value: 'received', label: 'Получен', color: 'text-blue-400 bg-blue-400/10' },
+  { value: 'paid', label: 'Оплачен', color: 'text-green-400 bg-green-400/10' },
+  { value: 'unpaid', label: 'Не оплачен', color: 'text-yellow-400 bg-yellow-400/10' },
   { value: 'shipped', label: 'Отправлен', color: 'text-purple-400 bg-purple-400/10' },
-  { value: 'delivered', label: 'Доставлен', color: 'text-green-400 bg-green-400/10' },
+  { value: 'delivered', label: 'Доставлен', color: 'text-blue-400 bg-blue-400/10' },
   { value: 'cancelled', label: 'Отменён', color: 'text-red-400 bg-red-400/10' },
 ];
 

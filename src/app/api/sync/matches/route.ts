@@ -46,12 +46,13 @@ function getMatchType(
 
 function cleanTeamName(rawName: string): string {
   return rawName
-    .replace(/\d+\s*:\s*\d+/, '') // убираем счёт (например "0:3" или "1 : 2")
-    .replace(/\d+\s*-\s*\d+/, '') // убираем счёт через дефис (например "0-3")
-    .replace(/\([^)]*\)/g, '') // убираем всё в скобках
-    .replace(/[""]/g, '') // убираем кавычки
-    .replace(/\s+/g, ' ') // схлопываем множественные пробелы
-    .trim(); // обрезаем пробелы по краям
+    .replace(/\d+\s*:\s*\d+/, '')
+    .replace(/\d+\s*-\s*\d+/, '')
+    .replace(/-:-/g, '')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/[""]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 async function ensureOurTeams() {
@@ -59,7 +60,6 @@ async function ensureOurTeams() {
     const existing = await prisma.opponentTeam.findUnique({ where: { cometId: id } });
 
     if (!existing) {
-      // Создаём только если клуба ещё нет
       await prisma.opponentTeam.create({
         data: {
           cometId: id,
@@ -71,14 +71,13 @@ async function ensureOurTeams() {
         },
       });
     }
-    // Если клуб уже существует — НЕ трогаем название
   }
 }
 
 async function syncAll() {
   const logs: string[] = [];
 
-  // 0. Сначала создаём наши клубы если их нет
+  // 0. Проверка наших клубов
   logs.push('🏠 Проверка наших клубов...');
   await ensureOurTeams();
   logs.push('✅ Наши клубы проверены');
@@ -191,14 +190,12 @@ async function syncAll() {
       let awayScore: number | null = null;
       const desc = (m.matchDescription as string) || '';
 
-      // Извлекаем счёт
       const scoreMatch = desc.match(/(\d+)\s*:\s*(\d+)/);
       if (scoreMatch) {
         homeScore = parseInt(scoreMatch[1]);
         awayScore = parseInt(scoreMatch[2]);
       }
 
-      // Парсим названия команд из описания
       const parts = desc
         .split(' - ')
         .map((s) => s.trim())
@@ -206,7 +203,6 @@ async function syncAll() {
       let homeTeamName = parts[0] || `Команда ${homeTeamId}`;
       let awayTeamName = parts[1] || `Команда ${awayTeamId}`;
 
-      // Очищаем названия от счёта и лишних символов
       homeTeamName = cleanTeamName(homeTeamName);
       awayTeamName = cleanTeamName(awayTeamName);
 
@@ -245,12 +241,28 @@ async function syncAll() {
 
       const cometId = m.matchId ? String(m.matchId) : null;
       const existing = cometId ? await prisma.match.findFirst({ where: { cometId } }) : null;
+
       if (existing) {
-        await prisma.match.update({ where: { id: existing.id }, data: matchData });
-        updated++;
+        try {
+          await prisma.match.update({ where: { id: existing.id }, data: matchData });
+          updated++;
+        } catch (err) {
+          console.warn(`⚠️ Ошибка обновления матча ${existing.id}, пробуем без facilityId`);
+          await prisma.match.update({
+            where: { id: existing.id },
+            data: { ...matchData, facilityId: null },
+          });
+          updated++;
+        }
       } else {
-        await prisma.match.create({ data: { ...matchData, cometId } });
-        created++;
+        try {
+          await prisma.match.create({ data: { ...matchData, cometId } });
+          created++;
+        } catch (err) {
+          console.warn(`⚠️ Ошибка создания матча, пробуем без facilityId`);
+          await prisma.match.create({ data: { ...matchData, cometId, facilityId: null } });
+          created++;
+        }
       }
       totalMatches++;
     }
@@ -259,10 +271,9 @@ async function syncAll() {
   }
   logs.push(`⚽ Матчей: ${totalMatches} (создано: ${created}, обновлено: ${updated})`);
 
-  // 4. Обновляем названия клубов (только для новых, без названий)
+  // 4. Обновляем названия клубов
   for (const id of opponentIds) {
     const team = await prisma.opponentTeam.findUnique({ where: { cometId: id } });
-    // Обновляем название только если оно всё ещё "Клуб #..."
     if (team && team.name.startsWith('Клуб #')) {
       const match = await prisma.match.findFirst({
         where: { OR: [{ homeTeamId: id }, { awayTeamId: id }] },
@@ -270,7 +281,6 @@ async function syncAll() {
       });
       if (match) {
         const name = match.homeTeamId === id ? match.homeTeam : match.awayTeam;
-        // Очищаем название перед сохранением
         const cleanedName = cleanTeamName(name);
         if (cleanedName) {
           await prisma.opponentTeam.update({

@@ -68,14 +68,17 @@ export default function CheckoutPage() {
   const deliveryPrice = selectedCountry?.price ? Number(selectedCountry.price) : 0;
   const total = subtotal + deliveryPrice;
 
-  // ИЗМЕНИТЬ только функцию submitToWebPay в src/app/shop/checkout/page.tsx
-
   const submitToWebPay = (params: Record<string, string>) => {
     console.log('📤 WebPay POST params:', params);
 
+    // Сохраняем параметры для отладки
+    try {
+      sessionStorage.setItem('webpay_params', JSON.stringify(params));
+    } catch {}
+
     const formElement = document.createElement('form');
     formElement.method = 'POST';
-    formElement.action = 'https://securesandbox.webpay.by'; // тестовая среда
+    formElement.action = 'https://securesandbox.webpay.by';
     formElement.style.display = 'none';
     formElement.acceptCharset = 'UTF-8';
 
@@ -83,16 +86,11 @@ export default function CheckoutPage() {
       const input = document.createElement('input');
       input.type = 'hidden';
       input.name = key;
-      input.value = value;
+      input.value = String(value);
       formElement.appendChild(input);
     });
 
     document.body.appendChild(formElement);
-
-    // Небольшая задержка для отладки
-    console.log('📤 Submit to:', formElement.action);
-    console.log('📤 Params:', params);
-
     formElement.submit();
   };
 
@@ -102,6 +100,7 @@ export default function CheckoutPage() {
     setError('');
 
     try {
+      // Создаём заказ
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -133,15 +132,24 @@ export default function CheckoutPage() {
         localStorage.removeItem('cart');
         window.dispatchEvent(new Event('cartUpdated'));
 
+        // Формируем корзину для WebPay — ТОЛЬКО товары, без доставки
+        const cartItems = cart.map((item) => ({
+          name: item.productName + (item.size ? ` (${item.size})` : ''),
+          quantity: item.quantity,
+          price: item.price,
+        }));
+
         const signRes = await fetch('/api/webpay/create-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderId: orderNumber,
-            amount: total,
-            description: 'Заказ в интернет-магазине Динамо-Брест',
+            items: cartItems,
+            total,
+            deliveryPrice: deliveryPrice > 0 ? deliveryPrice : undefined,
             customerEmail: form.customerEmail,
             customerName: form.customerName,
+            customerAddress: form.address,
           }),
         });
 
@@ -151,7 +159,7 @@ export default function CheckoutPage() {
           setProcessingPayment(true);
           submitToWebPay(signData.params);
         } else {
-          setError('Не удалось создать платёж');
+          setError(signData.error || 'Не удалось создать платёж');
         }
       } else {
         setError(orderData.error || 'Ошибка при создании заказа');

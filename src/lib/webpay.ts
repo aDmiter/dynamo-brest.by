@@ -1,4 +1,4 @@
-// src/lib/webpay.ts - Клиент для работы с WEBPAY (прямая форма + SOAP API)
+// src/lib/webpay.ts - Клиент для работы с WEBPAY (прямая форма)
 import crypto from 'crypto';
 
 // ====================== КОНФИГУРАЦИЯ ======================
@@ -9,43 +9,56 @@ const IS_TEST = process.env.NODE_ENV === 'development' || process.env.WEBPAY_TES
 
 const PAYMENT_URL = IS_TEST ? 'https://securesandbox.webpay.by' : 'https://payment.webpay.by';
 
-const BILLING_URL = IS_TEST ? 'https://sandbox.webpay.by' : 'https://billing.webpay.by';
-
-// SOAP WSDL для проверки статуса
-const WSDL_URL = IS_TEST
-  ? 'https://sandbox.webpay.by/WSBApi2'
-  : 'https://billing.webpay.by/WSBApi2';
-
 // ====================== ФОРМИРОВАНИЕ ПЛАТЕЖНОЙ ФОРМЫ ======================
 
-/**
- * Генерирует параметры для POST-формы перенаправления на WEBPAY
- */
-export function getWebPayFormParams(params: {
+export interface CartItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+export interface PaymentParams {
   orderNum: string;
-  amount: number;
-  description: string;
+  items: CartItem[];
+  total: number;
+  shippingName?: string;
+  shippingPrice?: number;
+  discountName?: string;
+  discountPrice?: number;
+  tax?: number;
   returnUrl: string;
   cancelUrl: string;
   customerEmail?: string;
   customerName?: string;
   customerPhone?: string;
-}): Record<string, string> {
+  customerAddress?: string;
+}
+
+/**
+ * Генерирует параметры для POST-формы перенаправления на WEBPAY
+ */
+export function getWebPayFormParams(params: PaymentParams): Record<string, string> {
   const {
     orderNum,
-    amount,
-    description,
+    items,
+    total,
+    shippingName,
+    shippingPrice,
+    discountName,
+    discountPrice,
+    tax,
     returnUrl,
     cancelUrl,
     customerEmail,
     customerName,
     customerPhone,
+    customerAddress,
   } = params;
 
   // Очищаем номер заказа от #
   const cleanOrderNum = orderNum.replace('#', '');
 
-  // Генерируем seed (случайная строка)
+  // Генерируем seed
   const seed = Date.now().toString();
 
   const formParams: Record<string, string> = {
@@ -54,20 +67,33 @@ export function getWebPayFormParams(params: {
     wsb_storeid: STORE_ID,
     wsb_order_num: cleanOrderNum,
     wsb_currency_id: 'BYN',
-    wsb_amount: amount.toFixed(2),
     wsb_seed: seed,
     wsb_test: IS_TEST ? '1' : '0',
-    wsb_invoice_item_name: description,
     wsb_return_url: returnUrl,
     wsb_cancel_return_url: cancelUrl,
     wsb_notify_url: process.env.NEXT_PUBLIC_SITE_URL
       ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/webpay/callback`
       : 'http://localhost:3000/api/webpay/callback',
+    wsb_total: total.toFixed(2),
   };
 
+  // Корзина товаров
+  items.forEach((item, index) => {
+    formParams[`wsb_invoice_item_name[${index}]`] = item.name;
+    formParams[`wsb_invoice_item_quantity[${index}]`] = item.quantity.toString();
+    formParams[`wsb_invoice_item_price[${index}]`] = item.price.toFixed(2);
+  });
+
+  // Необязательные поля
   if (customerEmail) formParams.wsb_email = customerEmail;
   if (customerName) formParams.wsb_customer_name = customerName;
   if (customerPhone) formParams.wsb_phone = customerPhone;
+  if (customerAddress) formParams.wsb_customer_address = customerAddress;
+  if (shippingName) formParams.wsb_shipping_name = shippingName;
+  if (shippingPrice && shippingPrice > 0) formParams.wsb_shipping_price = shippingPrice.toFixed(2);
+  if (discountName) formParams.wsb_discount_name = discountName;
+  if (discountPrice && discountPrice > 0) formParams.wsb_discount_price = discountPrice.toFixed(2);
+  if (tax && tax > 0) formParams.wsb_tax = tax.toFixed(2);
 
   // Формируем подпись
   const signature = generateSignature(
@@ -75,7 +101,7 @@ export function getWebPayFormParams(params: {
     cleanOrderNum,
     IS_TEST ? '1' : '0',
     'BYN',
-    amount.toFixed(2)
+    total.toFixed(2)
   );
 
   formParams.wsb_signature = signature;
@@ -83,7 +109,8 @@ export function getWebPayFormParams(params: {
   console.log('💳 WebPay form params:', {
     storeId: STORE_ID,
     orderNum: cleanOrderNum,
-    amount: amount.toFixed(2),
+    items: items.length,
+    total: total.toFixed(2),
     seed,
     isTest: IS_TEST,
     signature: signature.substring(0, 10) + '...',
@@ -94,16 +121,16 @@ export function getWebPayFormParams(params: {
 
 /**
  * Генерирует цифровую подпись для формы оплаты
- * Формат: SHA1(seed + storeid + order_num + test + currency_id + amount + secret_key)
+ * Формат: SHA1(seed + storeid + order_num + test + currency_id + total + secret_key)
  */
 function generateSignature(
   seed: string,
   orderNum: string,
   test: string,
   currencyId: string,
-  amount: string
+  total: string
 ): string {
-  const signatureString = seed + STORE_ID + orderNum + test + currencyId + amount + SECRET_KEY;
+  const signatureString = seed + STORE_ID + orderNum + test + currencyId + total + SECRET_KEY;
   return crypto.createHash('sha1').update(signatureString).digest('hex');
 }
 
@@ -111,14 +138,14 @@ function generateSignature(
  * Проверяет подпись от WEBPAY (для callback)
  */
 export function verifyWebPaySignature(params: Record<string, string>): boolean {
-  const { wsb_seed, wsb_order_num, wsb_test, wsb_currency_id, wsb_amount, wsb_signature } = params;
+  const { wsb_seed, wsb_order_num, wsb_test, wsb_currency_id, wsb_total, wsb_signature } = params;
 
   if (
     !wsb_seed ||
     !wsb_order_num ||
     !wsb_test ||
     !wsb_currency_id ||
-    !wsb_amount ||
+    !wsb_total ||
     !wsb_signature
   ) {
     return false;
@@ -129,26 +156,17 @@ export function verifyWebPaySignature(params: Record<string, string>): boolean {
     wsb_order_num,
     wsb_test,
     wsb_currency_id,
-    wsb_amount
+    wsb_total
   );
 
   return expectedSignature === wsb_signature;
 }
-
-// ====================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ======================
 
 /**
  * Возвращает URL платежной страницы
  */
 export function getPaymentUrl(): string {
   return PAYMENT_URL;
-}
-
-/**
- * Возвращает URL биллинга
- */
-export function getBillingUrl(): string {
-  return BILLING_URL;
 }
 
 /**

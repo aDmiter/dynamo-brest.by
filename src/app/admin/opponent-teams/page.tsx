@@ -33,18 +33,12 @@ interface OpponentTeam {
   logoUrl: string | null;
   city: string | null;
   country: string | null;
+  gender: string | null;
   isActive: boolean;
 }
 
 const PAGE_SIZE = 50;
 const OUR_CLUB_IDS = [68812, 102734, 101132];
-
-// Карта пола для наших команд
-const TEAM_GENDER_MAP: Record<number, { label: string; color: string; icon: typeof faMars }> = {
-  68812: { label: 'Муж', color: 'text-blue-400', icon: faMars },
-  102734: { label: 'Муж', color: 'text-blue-400', icon: faMars },
-  101132: { label: 'Жен', color: 'text-pink-400', icon: faVenus },
-};
 
 export default function OpponentTeamsPage() {
   const [teams, setTeams] = useState<OpponentTeam[]>([]);
@@ -62,6 +56,7 @@ export default function OpponentTeamsPage() {
     city: '',
     country: '',
     logoUrl: '',
+    gender: '',
   });
   const [showAddModal, setShowAddModal] = useState(false);
   const [newForm, setNewForm] = useState({
@@ -79,16 +74,17 @@ export default function OpponentTeamsPage() {
     return await res.json();
   }, []);
 
-  const getTeamGender = (cometId: number | null) => {
-    if (!cometId) return null;
-    return TEAM_GENDER_MAP[cometId] || null;
+  const getTeamGender = (gender: string | null) => {
+    if (!gender) return null;
+    if (gender === 'male') return { label: 'Муж', color: 'text-blue-400', icon: faMars };
+    if (gender === 'female') return { label: 'Жен', color: 'text-pink-400', icon: faVenus };
+    return null;
   };
 
   const sortTeamsWithPinned = useCallback((teamsList: OpponentTeam[]) => {
     const ourClubs = teamsList.filter((t) => t.cometId && OUR_CLUB_IDS.includes(t.cometId));
     const otherClubs = teamsList.filter((t) => !t.cometId || !OUR_CLUB_IDS.includes(t.cometId));
 
-    // Сортируем наши клубы: основной, дубль, женская
     ourClubs.sort((a, b) => {
       const order = [68812, 102734, 101132];
       const aIndex = order.indexOf(a.cometId!);
@@ -125,7 +121,6 @@ export default function OpponentTeamsPage() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -183,17 +178,31 @@ export default function OpponentTeamsPage() {
       city: team.city || '',
       country: team.country || '',
       logoUrl: team.logoUrl || '',
+      gender: team.gender || '',
     });
   };
 
   const saveEdit = async () => {
     if (!editingId) return;
+
+    const payload = { ...editForm };
+    console.log('📤 Отправляемые данные:', payload);
+
     try {
-      await fetch(`/api/opponent-teams/${editingId}`, {
+      const response = await fetch(`/api/opponent-teams/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify(payload),
       });
+
+      const result = await response.json();
+      console.log('📥 Ответ сервера:', result);
+
+      if (!response.ok) {
+        alert('Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+        return;
+      }
+
       setEditingId(null);
       await refreshData();
     } catch (error) {
@@ -325,7 +334,7 @@ export default function OpponentTeamsPage() {
             <tbody>
               {teams.map((team, index) => {
                 const isOurClub = team.cometId && OUR_CLUB_IDS.includes(team.cometId);
-                const gender = getTeamGender(team.cometId);
+                const gender = getTeamGender(team.gender);
                 return (
                   <tr
                     key={team.id}
@@ -369,7 +378,15 @@ export default function OpponentTeamsPage() {
                           />
                         </td>
                         <td className="p-3 text-center">
-                          <span className="text-sm text-gray-500">—</span>
+                          <select
+                            value={editForm.gender}
+                            onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
+                            className="border border-white/10 bg-[#1a1a2e] p-1.5 text-xs text-white"
+                          >
+                            <option value="">—</option>
+                            <option value="male">Муж</option>
+                            <option value="female">Жен</option>
+                          </select>
                         </td>
                         <td className="p-3 text-center">
                           <button
@@ -394,6 +411,7 @@ export default function OpponentTeamsPage() {
                             <ImageUpload
                               value={editForm.logoUrl}
                               onChange={(url) => setEditForm({ ...editForm, logoUrl: url })}
+                              folder="logos"
                             />
                             <div className="flex items-center gap-1">
                               <button
@@ -543,6 +561,7 @@ export default function OpponentTeamsPage() {
                   <ImageUpload
                     value={newForm.logoUrl}
                     onChange={(url) => setNewForm({ ...newForm, logoUrl: url })}
+                    folder="logos"
                   />
                 </div>
                 <Input

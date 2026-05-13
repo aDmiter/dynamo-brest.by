@@ -5,6 +5,7 @@ import '@/styles/globals.scss';
 import Header from '@/modules/shared/ui/Header';
 import Footer from '@/modules/shared/ui/Footer';
 import { headers } from 'next/headers';
+import BurgerMenu from '@/modules/shared/ui/BurgerMenu';
 
 export const metadata: Metadata = {
   title: 'Динамо-Брест',
@@ -30,6 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="min-h-screen bg-[#242C41] text-white antialiased">
         {!isAdmin && <Header />}
+        {!isAdmin && <BurgerMenu />}
         <main>{children}</main>
         {!isAdmin && <Footer />}
       </body>

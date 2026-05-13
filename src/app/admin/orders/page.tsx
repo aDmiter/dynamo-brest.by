@@ -5,6 +5,24 @@ import { faEye } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import OrderStatusBadge from './OrderStatusBadge';
 
+const statusLabels: Record<string, string> = {
+  paid: 'Оплачен',
+  unpaid: 'Не оплачен',
+  pending_payment: 'Ожидает оплаты',
+  shipped: 'Отправлен',
+  delivered: 'Доставлен',
+  cancelled: 'Отменён',
+};
+
+const statusColors: Record<string, string> = {
+  paid: 'text-green-400 bg-green-400/10',
+  unpaid: 'text-yellow-400 bg-yellow-400/10',
+  pending_payment: 'text-gray-400 bg-gray-400/10',
+  shipped: 'text-purple-400 bg-purple-400/10',
+  delivered: 'text-blue-400 bg-blue-400/10',
+  cancelled: 'text-red-400 bg-red-400/10',
+};
+
 export default async function OrdersAdminPage() {
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: 'desc' },
@@ -51,7 +69,7 @@ export default async function OrdersAdminPage() {
                     {order.orderNumber || `#${order.id.slice(-6)}`}
                   </td>
                   <td className="p-3 text-sm text-white">{order.customerName}</td>
-                  <td className="p-3 text-sm text-gray-400">{order.customerPhone}</td>
+                  <td className="p-3 text-sm text-gray-400">{order.customerPhone || '—'}</td>
                   <td className="p-3 text-center text-sm text-white">{order.orderitem.length}</td>
                   <td className="p-3 text-right text-sm text-white font-medium">
                     {Number(order.total).toFixed(2)} BYN

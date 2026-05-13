@@ -20,6 +20,7 @@ import {
   faChevronDown,
   faShieldHalved,
   faFutbol,
+  faCog,
   IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import { useState } from 'react';
@@ -90,6 +91,11 @@ const menuItems: MenuItem[] = [
   { title: 'Спонсоры', href: '/admin/sponsors', icon: faHandshake },
   { title: 'Титулы', href: '/admin/titles', icon: faTrophy },
   { title: 'Переводы', href: '/admin/translations', icon: faLanguage },
+  {
+    title: 'Настройки',
+    icon: faCog,
+    children: [{ title: 'Главное меню', href: '/admin/settings/menu' }],
+  },
 ];
 
 export default function AdminSidebar() {
@@ -169,6 +175,7 @@ export default function AdminSidebar() {
               if (item.title === 'Игроки') menuKey = 'players';
               else if (item.title === 'Матчи') menuKey = 'matches';
               else if (item.title === 'Интернет-магазин') menuKey = 'shop';
+              else if (item.title === 'Настройки') menuKey = 'settings';
               const active = item.children ? isChildActive(item.children) : false;
               return (
                 <div key={item.title}>
