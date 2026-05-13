@@ -1,0 +1,1 @@
+ALTER TABLE `product` ADD COLUMN `useSizes` BOOLEAN NOT NULL DEFAULT false;

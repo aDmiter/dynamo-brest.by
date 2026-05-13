@@ -5,7 +5,7 @@ import { getWebPayFormParams } from '@/lib/webpay';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { orderId, amount, description, customerEmail, customerName } = body;
+    const { orderId, amount, description, customerEmail, customerName, customerPhone } = body;
 
     if (!orderId || !amount) {
       return NextResponse.json({ error: 'orderId and amount are required' }, { status: 400 });
@@ -16,17 +16,22 @@ export async function POST(request: NextRequest) {
     const returnUrl = `${baseUrl}/shop/checkout/success?orderId=${cleanOrderId}`;
     const cancelUrl = `${baseUrl}/shop/checkout?orderId=${cleanOrderId}&cancelled=1`;
 
-    const params = getWebPayFormParams(
-      orderId,
+    const params = getWebPayFormParams({
+      orderNum: orderId,
       amount,
-      description || `Заказ ${orderId}`,
+      description: description || `Заказ ${orderId}`,
       returnUrl,
       cancelUrl,
       customerEmail,
-      customerName || 'Покупатель'
-    );
+      customerName,
+      customerPhone,
+    });
 
-    return NextResponse.json({ success: true, params });
+    return NextResponse.json({
+      success: true,
+      params,
+      paymentUrl: 'https://securesandbox.webpay.by', // тестовая среда
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('❌ WebPay create payment error:', message);

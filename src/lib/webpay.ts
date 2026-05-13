@@ -1,205 +1,159 @@
-// src/lib/webpay.ts - Клиент для работы с WEBPAY SOAP API
-import * as soap from 'soap';
+// src/lib/webpay.ts - Клиент для работы с WEBPAY (прямая форма + SOAP API)
 import crypto from 'crypto';
 
-const WSDL_URL = process.env.WEBPAY_WSDL_URL || 'https://sandbox.webpay.by/WSBApi2';
+// ====================== КОНФИГУРАЦИЯ ======================
+
 const STORE_ID = process.env.WEBPAY_STORE_ID || '584426783';
-const LOGIN = process.env.WEBPAY_LOGIN || 'dynamo';
-const PASSWORD = process.env.WEBPAY_PASSWORD || 'TUFbS4vO';
-const SECRET_KEY = process.env.WEBPAY_SECRET_KEY || PASSWORD;
+const SECRET_KEY = process.env.WEBPAY_SECRET_KEY || 'dynamo-brest-secret-key-2024';
+const IS_TEST = process.env.NODE_ENV === 'development' || process.env.WEBPAY_TEST === '1';
 
-function getPasswordHash(): string {
-  return crypto.createHash('md5').update(PASSWORD).digest('hex');
-}
+const PAYMENT_URL = IS_TEST ? 'https://securesandbox.webpay.by' : 'https://payment.webpay.by';
 
-let clientPromise: Promise<soap.Client> | null = null;
+const BILLING_URL = IS_TEST ? 'https://sandbox.webpay.by' : 'https://billing.webpay.by';
 
-async function getClient(): Promise<soap.Client> {
-  if (!clientPromise) {
-    clientPromise = soap.createClientAsync(WSDL_URL);
-  }
-  return clientPromise;
-}
+// SOAP WSDL для проверки статуса
+const WSDL_URL = IS_TEST
+  ? 'https://sandbox.webpay.by/WSBApi2'
+  : 'https://billing.webpay.by/WSBApi2';
 
-// ====================== СОЗДАНИЕ ПЛАТЕЖА ======================
+// ====================== ФОРМИРОВАНИЕ ПЛАТЕЖНОЙ ФОРМЫ ======================
 
-export function getWebPayFormParams(
-  orderNum: string,
-  amount: number,
-  description: string,
-  returnUrl: string,
-  cancelUrl: string,
-  customerEmail?: string,
-  customerName?: string
-): Record<string, string> {
+/**
+ * Генерирует параметры для POST-формы перенаправления на WEBPAY
+ */
+export function getWebPayFormParams(params: {
+  orderNum: string;
+  amount: number;
+  description: string;
+  returnUrl: string;
+  cancelUrl: string;
+  customerEmail?: string;
+  customerName?: string;
+  customerPhone?: string;
+}): Record<string, string> {
+  const {
+    orderNum,
+    amount,
+    description,
+    returnUrl,
+    cancelUrl,
+    customerEmail,
+    customerName,
+    customerPhone,
+  } = params;
+
+  // Очищаем номер заказа от #
   const cleanOrderNum = orderNum.replace('#', '');
+
+  // Генерируем seed (случайная строка)
   const seed = Date.now().toString();
 
-  const params: Record<string, string> = {
+  const formParams: Record<string, string> = {
+    '*scart': '',
+    wsb_version: '2',
     wsb_storeid: STORE_ID,
     wsb_order_num: cleanOrderNum,
     wsb_currency_id: 'BYN',
     wsb_amount: amount.toFixed(2),
     wsb_seed: seed,
-    wsb_test: '1',
+    wsb_test: IS_TEST ? '1' : '0',
+    wsb_invoice_item_name: description,
     wsb_return_url: returnUrl,
     wsb_cancel_return_url: cancelUrl,
-    wsb_version: '2',
+    wsb_notify_url: process.env.NEXT_PUBLIC_SITE_URL
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/webpay/callback`
+      : 'http://localhost:3000/api/webpay/callback',
   };
 
-  if (customerEmail) params['wsb_email'] = customerEmail;
-  if (customerName) params['wsb_customer_name'] = customerName;
+  if (customerEmail) formParams.wsb_email = customerEmail;
+  if (customerName) formParams.wsb_customer_name = customerName;
+  if (customerPhone) formParams.wsb_phone = customerPhone;
 
-  // Подпись: sha1(seed + store_id + order_num + test + currency_id + amount + secret_key)
-  const signature = crypto
-    .createHash('sha1')
-    .update(seed + STORE_ID + cleanOrderNum + '1' + 'BYN' + amount.toFixed(2) + SECRET_KEY)
-    .digest('hex');
-  params['wsb_signature'] = signature;
+  // Формируем подпись
+  const signature = generateSignature(
+    seed,
+    cleanOrderNum,
+    IS_TEST ? '1' : '0',
+    'BYN',
+    amount.toFixed(2)
+  );
 
-  console.log('💳 WebPay form params:', params);
+  formParams.wsb_signature = signature;
 
-  return params;
+  console.log('💳 WebPay form params:', {
+    storeId: STORE_ID,
+    orderNum: cleanOrderNum,
+    amount: amount.toFixed(2),
+    seed,
+    isTest: IS_TEST,
+    signature: signature.substring(0, 10) + '...',
+  });
+
+  return formParams;
 }
 
-// ====================== SOAP МЕТОДЫ ======================
+/**
+ * Генерирует цифровую подпись для формы оплаты
+ * Формат: SHA1(seed + storeid + order_num + test + currency_id + amount + secret_key)
+ */
+function generateSignature(
+  seed: string,
+  orderNum: string,
+  test: string,
+  currencyId: string,
+  amount: string
+): string {
+  const signatureString = seed + STORE_ID + orderNum + test + currencyId + amount + SECRET_KEY;
+  return crypto.createHash('sha1').update(signatureString).digest('hex');
+}
 
-export async function getTransactionStatus(
-  orderNum: string
-): Promise<TransactionStatusResponse | null> {
-  try {
-    const client = await getClient();
-    const cleanOrderNum = orderNum.replace('#', '');
-    const params = {
-      store_id: STORE_ID,
-      login: LOGIN,
-      password: getPasswordHash(),
-      order_num: cleanOrderNum,
-    };
+/**
+ * Проверяет подпись от WEBPAY (для callback)
+ */
+export function verifyWebPaySignature(params: Record<string, string>): boolean {
+  const { wsb_seed, wsb_order_num, wsb_test, wsb_currency_id, wsb_amount, wsb_signature } = params;
 
-    const result = await client.GetTransactionStatusAsync(params);
-    return result?.[0] as TransactionStatusResponse | null;
-  } catch (error) {
-    console.error('❌ WebPay GetTransactionStatus error:', error);
-    return null;
+  if (
+    !wsb_seed ||
+    !wsb_order_num ||
+    !wsb_test ||
+    !wsb_currency_id ||
+    !wsb_amount ||
+    !wsb_signature
+  ) {
+    return false;
   }
+
+  const expectedSignature = generateSignature(
+    wsb_seed,
+    wsb_order_num,
+    wsb_test,
+    wsb_currency_id,
+    wsb_amount
+  );
+
+  return expectedSignature === wsb_signature;
 }
 
-export async function completeTransaction(
-  transactionId: string,
-  amount: number,
-  currency: string = 'BYN'
-): Promise<TransactionCompleteResponse | null> {
-  try {
-    const client = await getClient();
-    const params = {
-      store_id: STORE_ID,
-      login: LOGIN,
-      password: getPasswordHash(),
-      transaction_id: transactionId,
-      amount,
-      currency,
-    };
-    const result = await client.TransactionCompleteAsync(params);
-    return result?.[0] as TransactionCompleteResponse | null;
-  } catch (error) {
-    console.error('❌ WebPay TransactionComplete error:', error);
-    return null;
-  }
+// ====================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ======================
+
+/**
+ * Возвращает URL платежной страницы
+ */
+export function getPaymentUrl(): string {
+  return PAYMENT_URL;
 }
 
-export async function cancelTransaction(
-  transactionId: string,
-  amount: number,
-  reason?: string
-): Promise<TransactionCancelResponse | null> {
-  try {
-    const client = await getClient();
-    const params = {
-      store_id: STORE_ID,
-      login: LOGIN,
-      password: getPasswordHash(),
-      transaction_id: transactionId,
-      amount,
-      currency: 'BYN',
-      cancel_reason: reason || '',
-    };
-    const result = await client.TransactionCancelAsync(params);
-    return result?.[0] as TransactionCancelResponse | null;
-  } catch (error) {
-    console.error('❌ WebPay TransactionCancel error:', error);
-    return null;
-  }
+/**
+ * Возвращает URL биллинга
+ */
+export function getBillingUrl(): string {
+  return BILLING_URL;
 }
 
-export async function refundTransaction(
-  transactionId: string,
-  amount: number,
-  reason?: string
-): Promise<TransactionRefundResponse | null> {
-  try {
-    const client = await getClient();
-    const params = {
-      store_id: STORE_ID,
-      login: LOGIN,
-      password: getPasswordHash(),
-      transaction_id: transactionId,
-      amount,
-      currency: 'BYN',
-      refund_reason: reason || '',
-    };
-    const result = await client.TransactionRefundAsync(params);
-    return result?.[0] as TransactionRefundResponse | null;
-  } catch (error) {
-    console.error('❌ WebPay TransactionRefund error:', error);
-    return null;
-  }
-}
-
-// ====================== ТИПЫ ======================
-
-export interface TransactionStatusResponse {
-  transactions?: {
-    transaction?: TransactionStatusStruct | TransactionStatusStruct[];
-  };
-  error_code?: string;
-  error_comment?: string;
-}
-
-export interface TransactionStatusStruct {
-  order_num?: string;
-  transaction_id?: string;
-  date?: string;
-  status?: string;
-  amount?: string;
-  currency?: string;
-  response_code?: string;
-  response_text?: string;
-  approval_code?: string;
-  card_type?: string;
-  card_number?: string;
-  card_country?: string;
-  payer_name?: string;
-  payer_email?: string;
-  payer_ip?: string;
-  payment_type?: string;
-  comment?: string;
-}
-
-export interface TransactionCompleteResponse {
-  transaction_id?: string;
-  error_code?: string;
-  error_comment?: string;
-}
-
-export interface TransactionCancelResponse {
-  transaction_id?: string;
-  error_code?: string;
-  error_comment?: string;
-}
-
-export interface TransactionRefundResponse {
-  transaction_id?: string;
-  error_code?: string;
-  error_comment?: string;
+/**
+ * Проверяет, используется ли тестовая среда
+ */
+export function isTestMode(): boolean {
+  return IS_TEST;
 }

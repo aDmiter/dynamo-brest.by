@@ -204,6 +204,8 @@ model product {
   composition       String?           @db.Text
   quantity          Int               @default(0)
   hasCustomization  Boolean           @default(false)
+  useSizes  Boolean  @default(false)  // ← новое поле
+  totalSold  Int     @default(0)
   orderitem         orderitem[]
   productsize       ProductSize[]
   productcategory   productcategory   @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")

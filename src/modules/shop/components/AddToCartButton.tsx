@@ -23,29 +23,49 @@ export default function AddToCartButton({
   const [added, setAdded] = useState(false);
 
   const handleAddToCart = () => {
-    if (!selectedSize) {
-      alert('Выберите размер');
-      return;
-    }
-
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const cartKey = `${productId}_${selectedSize}`;
-    const existing = cart.find((item: { cartKey: string }) => item.cartKey === cartKey);
+    const cartKey = selectedSize
+      ? `${productId}_${selectedSize}`
+      : `${productId}_nosize_${Date.now()}`;
 
-    if (existing) {
-      existing.quantity += 1;
+    // Если выбран размер — проверяем нет ли уже такого же
+    if (selectedSize) {
+      const existing = cart.find((item: { cartKey: string }) => item.cartKey === cartKey);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({
+          cartKey,
+          productId,
+          productName,
+          quantity: 1,
+          price: price || 0,
+          image: image || '',
+          size: selectedSize,
+          customization: null,
+        });
+      }
     } else {
-      cart.push({
-        cartKey,
-        productId,
-        productName,
-        quantity: 1,
-        price: price || 0,
-        image: image || '',
-        size: selectedSize,
-        customization: null,
-      });
+      // Без размеров — всегда добавляем новую позицию (можно объединять по productId)
+      const existing = cart.find(
+        (item: { productId: string; size?: string }) => item.productId === productId && !item.size
+      );
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({
+          cartKey,
+          productId,
+          productName,
+          quantity: 1,
+          price: price || 0,
+          image: image || '',
+          size: null,
+          customization: null,
+        });
+      }
     }
+
     localStorage.setItem('cart', JSON.stringify(cart));
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);

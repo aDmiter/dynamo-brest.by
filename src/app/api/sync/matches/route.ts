@@ -6,7 +6,19 @@ const COMET_API_KEY_MATCHES = process.env.COMET_API_KEY_MATCHES || '';
 const COMET_API_KEY_FACILITIES = process.env.COMET_API_KEY_FACILITIES || '';
 const COMET_BASE_URL = process.env.COMET_API_BASE_URL || 'https://comet.abff.by';
 
-const OUR_TEAM_IDS = [68812];
+const OUR_TEAM_IDS = [68812, 102734, 101132];
+
+const OUR_CLUB_NAMES: Record<number, string> = {
+  68812: 'Динамо-Брест',
+  102734: 'Динамо-Брест (дубль)',
+  101132: 'Динамо-Брест (жен)',
+};
+
+const OUR_CLUB_SHORT_NAMES: Record<number, string> = {
+  68812: 'Динамо-Брест',
+  102734: 'Динамо-Брест-2',
+  101132: 'Динамо-Брест-Ж',
+};
 
 async function fetchCometPage(
   apiKey: string,
@@ -23,26 +35,55 @@ async function fetchCometPage(
   return data.results || [];
 }
 
-function getMatchType(match: Record<string, unknown>): 'osnova' | 'dubl' | 'women' {
-  const name = ((match.name as string) || '').toLowerCase();
-  const gender = ((match.gender as string) || '').toLowerCase();
-  if (gender.includes('жен')) return 'women';
-  if (name.includes('дублирующих составов') || name.includes('дубль') || name.includes('дублёр'))
-    return 'dubl';
-  if (
-    name.includes('высшая лига') ||
-    name.includes('кубок') ||
-    name.includes('суперкубок') ||
-    name.includes('лига конференций')
-  )
-    return 'osnova';
+function getMatchType(
+  match: Record<string, unknown>,
+  ourTeamId: number
+): 'osnova' | 'dubl' | 'women' {
+  if (ourTeamId === 101132) return 'women';
+  if (ourTeamId === 102734) return 'dubl';
   return 'osnova';
+}
+
+function cleanTeamName(rawName: string): string {
+  return rawName
+    .replace(/\d+\s*:\s*\d+/, '') // убираем счёт (например "0:3" или "1 : 2")
+    .replace(/\d+\s*-\s*\d+/, '') // убираем счёт через дефис (например "0-3")
+    .replace(/\([^)]*\)/g, '') // убираем всё в скобках
+    .replace(/[""]/g, '') // убираем кавычки
+    .replace(/\s+/g, ' ') // схлопываем множественные пробелы
+    .trim(); // обрезаем пробелы по краям
+}
+
+async function ensureOurTeams() {
+  for (const id of OUR_TEAM_IDS) {
+    const existing = await prisma.opponentTeam.findUnique({ where: { cometId: id } });
+
+    if (!existing) {
+      // Создаём только если клуба ещё нет
+      await prisma.opponentTeam.create({
+        data: {
+          cometId: id,
+          name: OUR_CLUB_NAMES[id] || `Динамо-Брест #${id}`,
+          shortName: OUR_CLUB_SHORT_NAMES[id] || `ДБ-${id}`,
+          city: 'Брест',
+          country: 'Беларусь',
+          isActive: true,
+        },
+      });
+    }
+    // Если клуб уже существует — НЕ трогаем название
+  }
 }
 
 async function syncAll() {
   const logs: string[] = [];
 
-  // 1. Стадионы из отчёта Competition Team Facilities
+  // 0. Сначала создаём наши клубы если их нет
+  logs.push('🏠 Проверка наших клубов...');
+  await ensureOurTeams();
+  logs.push('✅ Наши клубы проверены');
+
+  // 1. Стадионы
   logs.push('🏟️ Стадионы...');
   let page = 0;
   let totalFacilities = 0;
@@ -64,7 +105,7 @@ async function syncAll() {
       await prisma.facility.upsert({
         where: { cometId: facilityId },
         update: {
-          name: facilityName || facilityName,
+          name: facilityName,
           shortName: facilityName,
           address: facilityAddress || null,
           city: (f['facilityPlace'] as string) || null,
@@ -100,16 +141,17 @@ async function syncAll() {
     const matches = await fetchCometPage(COMET_API_KEY_MATCHES, page);
     if (matches.length === 0) break;
     for (const m of matches) {
-      const homeTeam = m.homeTeam as number;
-      const awayTeam = m.awayTeam as number;
-      if (OUR_TEAM_IDS.includes(homeTeam) && !OUR_TEAM_IDS.includes(awayTeam))
-        opponentIds.add(awayTeam);
-      if (OUR_TEAM_IDS.includes(awayTeam) && !OUR_TEAM_IDS.includes(homeTeam))
-        opponentIds.add(homeTeam);
+      const homeTeamId = m.homeTeam as number;
+      const awayTeamId = m.awayTeam as number;
+      if (OUR_TEAM_IDS.includes(homeTeamId) && !OUR_TEAM_IDS.includes(awayTeamId))
+        opponentIds.add(awayTeamId);
+      if (OUR_TEAM_IDS.includes(awayTeamId) && !OUR_TEAM_IDS.includes(homeTeamId))
+        opponentIds.add(homeTeamId);
     }
     page++;
     if (matches.length < 500) break;
   }
+
   let totalOpponents = 0;
   for (const id of opponentIds) {
     const exists = await prisma.opponentTeam.findUnique({ where: { cometId: id } });
@@ -139,25 +181,40 @@ async function syncAll() {
     const matches = await fetchCometPage(COMET_API_KEY_MATCHES, page);
     if (matches.length === 0) break;
     for (const m of matches) {
-      const homeTeam = m.homeTeam as number;
-      const awayTeam = m.awayTeam as number;
-      const isOurHome = OUR_TEAM_IDS.includes(homeTeam);
-      const isOurAway = OUR_TEAM_IDS.includes(awayTeam);
+      const homeTeamId = m.homeTeam as number;
+      const awayTeamId = m.awayTeam as number;
+      const isOurHome = OUR_TEAM_IDS.includes(homeTeamId);
+      const isOurAway = OUR_TEAM_IDS.includes(awayTeamId);
       if (!isOurHome && !isOurAway) continue;
 
       let homeScore: number | null = null;
       let awayScore: number | null = null;
       const desc = (m.matchDescription as string) || '';
+
+      // Извлекаем счёт
       const scoreMatch = desc.match(/(\d+)\s*:\s*(\d+)/);
       if (scoreMatch) {
         homeScore = parseInt(scoreMatch[1]);
         awayScore = parseInt(scoreMatch[2]);
       }
 
+      // Парсим названия команд из описания
+      const parts = desc
+        .split(' - ')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      let homeTeamName = parts[0] || `Команда ${homeTeamId}`;
+      let awayTeamName = parts[1] || `Команда ${awayTeamId}`;
+
+      // Очищаем названия от счёта и лишних символов
+      homeTeamName = cleanTeamName(homeTeamName);
+      awayTeamName = cleanTeamName(awayTeamName);
+
       const rawDate = (m.matchDate as number) || 0;
       const matchDate = rawDate > 946684800000 ? new Date(rawDate) : TBD_DATE;
 
-      const matchType = getMatchType(m);
+      const ourTeamId = isOurHome ? homeTeamId : awayTeamId;
+      const matchType = getMatchType(m, ourTeamId);
       const status = (m.matchStatus as string) === 'СЫГРАНО' ? 'finished' : 'scheduled';
       const slug = ourTeamSlugs[matchType];
       const ourTeam = await prisma.team.findUnique({ where: { slug } });
@@ -168,17 +225,12 @@ async function syncAll() {
 
       const matchData = {
         matchDate,
-        homeTeam: desc.split(' - ')[0]?.trim() || `Команда ${homeTeam}`,
-        awayTeam:
-          desc
-            .split(' - ')
-            .pop()
-            ?.replace(/\d+:\d+/, '')
-            .trim() || `Команда ${awayTeam}`,
+        homeTeam: homeTeamName,
+        awayTeam: awayTeamName,
         homeScore,
         awayScore,
-        homeTeamId: homeTeam,
-        awayTeamId: awayTeam,
+        homeTeamId: homeTeamId,
+        awayTeamId: awayTeamId,
         stadium: (m.facility as string) || null,
         facilityId: facilityIdFromMatch ? facilityIdFromMatch : null,
         tournament: (m.name as string) || null,
@@ -207,15 +259,26 @@ async function syncAll() {
   }
   logs.push(`⚽ Матчей: ${totalMatches} (создано: ${created}, обновлено: ${updated})`);
 
-  // 4. Обновляем названия клубов
+  // 4. Обновляем названия клубов (только для новых, без названий)
   for (const id of opponentIds) {
-    const match = await prisma.match.findFirst({
-      where: { OR: [{ homeTeamId: id }, { awayTeamId: id }] },
-      orderBy: { matchDate: 'desc' },
-    });
-    if (match) {
-      const name = match.homeTeamId === id ? match.homeTeam : match.awayTeam;
-      await prisma.opponentTeam.update({ where: { cometId: id }, data: { name, shortName: name } });
+    const team = await prisma.opponentTeam.findUnique({ where: { cometId: id } });
+    // Обновляем название только если оно всё ещё "Клуб #..."
+    if (team && team.name.startsWith('Клуб #')) {
+      const match = await prisma.match.findFirst({
+        where: { OR: [{ homeTeamId: id }, { awayTeamId: id }] },
+        orderBy: { matchDate: 'desc' },
+      });
+      if (match) {
+        const name = match.homeTeamId === id ? match.homeTeam : match.awayTeam;
+        // Очищаем название перед сохранением
+        const cleanedName = cleanTeamName(name);
+        if (cleanedName) {
+          await prisma.opponentTeam.update({
+            where: { cometId: id },
+            data: { name: cleanedName, shortName: cleanedName },
+          });
+        }
+      }
     }
   }
   logs.push('✅ Названия клубов обновлены');

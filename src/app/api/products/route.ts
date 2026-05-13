@@ -60,11 +60,14 @@ export async function POST(request: NextRequest) {
         images: data.images ? JSON.stringify(data.images) : '[]',
         inStock: Boolean(data.inStock),
         isFeatured: Boolean(data.isFeatured),
+        useSizes: Boolean(data.useSizes),
+        quantity: data.useSizes ? 0 : data.quantity || 0,
+        hasCustomization: Boolean(data.hasCustomization),
       },
     });
 
-    // Создаём размеры с количеством
-    if (data.sizes && Array.isArray(data.sizes) && data.sizes.length > 0) {
+    // Создаём размеры если useSizes = true
+    if (data.useSizes && data.sizes && Array.isArray(data.sizes) && data.sizes.length > 0) {
       for (const sizeItem of data.sizes) {
         await prisma.productSize.create({
           data: {

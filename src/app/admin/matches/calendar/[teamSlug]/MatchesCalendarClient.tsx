@@ -42,6 +42,17 @@ interface Props {
   allTeams: OpponentInfo[];
 }
 
+function cleanTeamName(name: string): string {
+  return name
+    .replace(/\d+\s*:\s*\d+/, '')
+    .replace(/\d+\s*-\s*\d+/, '')
+    .replace(/-:-/g, '')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/[""]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export default function MatchesCalendarClient({ initialMatches, teamSlug, allTeams }: Props) {
   const [stadiumModal, setStadiumModal] = useState<number | null>(null);
 
@@ -127,7 +138,9 @@ export default function MatchesCalendarClient({ initialMatches, teamSlug, allTea
 
                 <div className="flex-1 flex items-center justify-center gap-4">
                   <div className="flex items-center gap-2 text-right flex-1 justify-end">
-                    <span className="text-white font-medium text-sm">{match.homeTeam}</span>
+                    <span className="text-white font-medium text-sm">
+                      {cleanTeamName(match.homeTeam)}
+                    </span>
                     {match.homeTeamId && getLogo(match.homeTeamId) && (
                       <Image
                         src={getLogo(match.homeTeamId)!}
@@ -151,7 +164,9 @@ export default function MatchesCalendarClient({ initialMatches, teamSlug, allTea
                         className="object-contain"
                       />
                     )}
-                    <span className="text-white font-medium text-sm">{match.awayTeam}</span>
+                    <span className="text-white font-medium text-sm">
+                      {cleanTeamName(match.awayTeam)}
+                    </span>
                   </div>
                 </div>
 
@@ -162,7 +177,7 @@ export default function MatchesCalendarClient({ initialMatches, teamSlug, allTea
                       onClick={() =>
                         match.facilityId ? setStadiumModal(match.facilityId) : undefined
                       }
-                      className={`text-xs mt-1 flex items-center gap-1 ${match.facilityId ? 'hover:text-[#ee862c] cursor-pointer transition-colors' : 'text-gray-400'}`}
+                      className={`text-xs mt-1 flex items-center gap-1 ml-auto ${match.facilityId ? 'text-gray-300 hover:text-white cursor-pointer transition-colors' : 'text-gray-500'}`}
                     >
                       <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-1" />
                       {match.stadium}

@@ -10,7 +10,7 @@ import {
   faTrash,
   faPlus,
   faTimes,
-  faEdit,
+  faChartBar,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,9 @@ interface Product {
   inStock: boolean;
   isFeatured: boolean;
   hasCustomization?: boolean;
+  useSizes?: boolean;
+  quantity?: number;
+  totalSold?: number;
   productcategory?: { id: string; name: string } | null;
   productsize: { id: string; size: string; quantity: number }[];
 }
@@ -53,20 +56,18 @@ export default function EditProductForm({ product }: { product: Product }) {
     images: (product.images ? JSON.parse(product.images) : []) as string[],
     inStock: product.inStock,
     isFeatured: product.isFeatured,
+    useSizes: product.useSizes || false,
+    quantity: product.quantity || 0,
   });
 
-  // Состояние для размеров - добавляем поддержку редактирования quantity
   const [sizes, setSizes] = useState<{ size: string; quantity: number }[]>(
     product.productsize?.map((s) => ({ size: s.size, quantity: s.quantity })) || []
   );
-
-  // Состояние для отслеживания, какой размер редактируется
-  const [editingSize, setEditingSize] = useState<string | null>(null);
-  const [editingQuantity, setEditingQuantity] = useState<number>(0);
-
   const [newSize, setNewSize] = useState('');
   const [newSizeQty, setNewSizeQty] = useState(1);
   const [hasCustomization, setHasCustomization] = useState(product.hasCustomization || false);
+  const [totalSold, setTotalSold] = useState(product.totalSold || 0);
+  const [resettingSold, setResettingSold] = useState(false);
 
   useEffect(() => {
     fetch('/api/categories')
@@ -78,29 +79,6 @@ export default function EditProductForm({ product }: { product: Product }) {
   const addImage = (url: string) => setForm({ ...form, images: [...form.images, url] });
   const removeImage = (i: number) =>
     setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) });
-
-  // Начать редактирование количества
-  const startEditQuantity = (size: string, currentQuantity: number) => {
-    setEditingSize(size);
-    setEditingQuantity(currentQuantity);
-  };
-
-  // Сохранить изменённое количество
-  const saveQuantityEdit = () => {
-    if (editingSize !== null && editingQuantity >= 0) {
-      setSizes(
-        sizes.map((s) => (s.size === editingSize ? { ...s, quantity: editingQuantity } : s))
-      );
-      setEditingSize(null);
-      setEditingQuantity(0);
-    }
-  };
-
-  // Отменить редактирование
-  const cancelEdit = () => {
-    setEditingSize(null);
-    setEditingQuantity(0);
-  };
 
   const addSize = () => {
     if (newSize.trim() && newSizeQty > 0) {
@@ -133,8 +111,9 @@ export default function EditProductForm({ product }: { product: Product }) {
           ...form,
           price: parseFloat(form.price),
           oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : null,
-          sizes,
+          sizes: form.useSizes ? sizes : [],
           hasCustomization,
+          quantity: form.useSizes ? 0 : form.quantity,
         }),
       });
 
@@ -159,6 +138,26 @@ export default function EditProductForm({ product }: { product: Product }) {
       router.push('/admin/products');
     } catch {
       setError('Ошибка при удалении');
+    }
+  };
+
+  const handleResetSold = async () => {
+    if (!confirm('Сбросить счётчик продаж?')) return;
+    setResettingSold(true);
+    try {
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resetSold: true }),
+      });
+      if (res.ok) {
+        setTotalSold(0);
+        router.refresh();
+      }
+    } catch {
+      console.error('Ошибка сброса счётчика');
+    } finally {
+      setResettingSold(false);
     }
   };
 
@@ -189,6 +188,27 @@ export default function EditProductForm({ product }: { product: Product }) {
             </div>
           )}
 
+          {/* Статистика продаж */}
+          <div className="mb-6 border border-white/10 bg-white/[0.03] p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FontAwesomeIcon icon={faChartBar} className="text-[#ee862c]" />
+              <div>
+                <p className="text-xs text-gray-400">Продано за всё время</p>
+                <p className="text-xl font-bold text-white">{totalSold}</p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={resettingSold}
+              onClick={handleResetSold}
+              className="border-white/10 text-gray-400 hover:text-white text-xs"
+            >
+              {resettingSold ? '...' : 'Сбросить счётчик'}
+            </Button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-sm text-gray-400 mb-2 block">Фотографии</label>
@@ -199,7 +219,7 @@ export default function EditProductForm({ product }: { product: Product }) {
                     <button
                       type="button"
                       onClick={() => removeImage(i)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full"
+                      className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center"
                     >
                       ×
                     </button>
@@ -213,7 +233,6 @@ export default function EditProductForm({ product }: { product: Product }) {
                 }}
               />
             </div>
-
             <div>
               <label className="text-sm text-gray-400">Название *</label>
               <Input
@@ -289,99 +308,80 @@ export default function EditProductForm({ product }: { product: Product }) {
               />
             </div>
 
-            {/* Размеры - обновлённая секция с редактируемым количеством */}
-            <div>
-              <label className="text-sm text-gray-400 mb-2 block">Размеры и количество</label>
-              <div className="flex gap-2 mb-3">
-                <Input
-                  value={newSize}
-                  onChange={(e) => setNewSize(e.target.value)}
-                  className="border-white/10 bg-white/5 text-white flex-1"
-                  placeholder="Размер"
+            {/* Чекбокс размеров / общее количество */}
+            <div className="border-t border-white/10 pt-4">
+              <label className="flex items-center gap-3 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.useSizes}
+                  onChange={(e) => setForm({ ...form, useSizes: e.target.checked })}
+                  className="h-4 w-4 accent-[#ee862c]"
                 />
-                <Input
-                  type="number"
-                  value={newSizeQty}
-                  onChange={(e) => setNewSizeQty(parseInt(e.target.value) || 1)}
-                  className="border-white/10 bg-white/5 text-white w-20"
-                  placeholder="Кол-во"
-                />
-                <Button
-                  type="button"
-                  onClick={addSize}
-                  size="sm"
-                  variant="outline"
-                  className="border-white/10 text-gray-400"
-                >
-                  <FontAwesomeIcon icon={faPlus} />
-                </Button>
-              </div>
-
-              {sizes.map((s) => (
-                <div
-                  key={s.size}
-                  className="flex items-center gap-4 border border-white/10 bg-white/5 px-3 py-2 mb-1"
-                >
-                  <span className="text-white text-sm font-bold w-12">{s.size}</span>
-
-                  {/* Редактируемое количество */}
-                  {editingSize === s.size ? (
-                    <div className="flex items-center gap-2 flex-1">
-                      <Input
-                        type="number"
-                        min="0"
-                        value={editingQuantity}
-                        onChange={(e) => setEditingQuantity(parseInt(e.target.value) || 0)}
-                        className="border-white/10 bg-white/10 text-white w-24 text-center"
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={saveQuantityEdit}
-                        className="text-green-400 text-sm px-2"
-                      >
-                        ✓
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelEdit}
-                        className="text-red-400 text-sm px-2"
-                      >
-                        ✗
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <span className="text-gray-400 text-sm flex-1">×{s.quantity} шт.</span>
-                      <button
-                        type="button"
-                        onClick={() => startEditQuantity(s.size, s.quantity)}
-                        className="text-[#ee862c] hover:text-[#f0ac74] transition-colors"
-                        title="Редактировать количество"
-                      >
-                        <FontAwesomeIcon icon={faEdit} />
-                      </button>
-                    </>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => removeSize(s.size)}
-                    className="text-red-400 hover:text-red-300 transition-colors"
-                  >
-                    <FontAwesomeIcon icon={faTimes} />
-                  </button>
-                </div>
-              ))}
-
-              {sizes.length === 0 && (
-                <p className="text-gray-500 text-sm text-center py-4 border border-white/10 bg-white/5">
-                  Нет добавленных размеров
-                </p>
-              )}
+                <span className="text-white font-medium">Добавить размеры</span>
+              </label>
             </div>
 
-            {/* Нанесение */}
+            {form.useSizes ? (
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Размеры и количество</label>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    value={newSize}
+                    onChange={(e) => setNewSize(e.target.value)}
+                    className="border-white/10 bg-white/5 text-white flex-1"
+                    placeholder="Размер"
+                  />
+                  <Input
+                    type="number"
+                    value={newSizeQty}
+                    onChange={(e) => setNewSizeQty(parseInt(e.target.value) || 1)}
+                    className="border-white/10 bg-white/5 text-white w-20"
+                    placeholder="Кол-во"
+                    min="1"
+                  />
+                  <Button
+                    type="button"
+                    onClick={addSize}
+                    size="sm"
+                    variant="outline"
+                    className="border-white/10 text-gray-400"
+                  >
+                    <FontAwesomeIcon icon={faPlus} />
+                  </Button>
+                </div>
+                {sizes.map((s) => (
+                  <div
+                    key={s.size}
+                    className="flex items-center gap-4 border border-white/10 bg-white/5 px-3 py-2 mb-1"
+                  >
+                    <span className="text-white text-sm font-bold w-10">{s.size}</span>
+                    <span className="text-gray-400 text-sm flex-1">×{s.quantity} шт.</span>
+                    <button
+                      type="button"
+                      onClick={() => removeSize(s.size)}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
+                  </div>
+                ))}
+                {sizes.length === 0 && (
+                  <p className="text-xs text-gray-600">Добавьте хотя бы один размер</p>
+                )}
+              </div>
+            ) : (
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Количество на складе</label>
+                <Input
+                  type="number"
+                  value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })}
+                  className="border-white/10 bg-white/5 text-white w-32"
+                  min="0"
+                />
+              </div>
+            )}
+
             <div className="border-t border-white/10 pt-4">
               <label className="flex items-center gap-3 text-sm text-gray-400 cursor-pointer">
                 <input

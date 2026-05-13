@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
         address: data.address || null,
         comment: data.comment || null,
         deliveryPrice: data.deliveryPrice || 0,
-        status: 'received',
+        status: data.status || 'received',
         total: Number(data.total),
         orderitem: {
           create: data.items.map(
@@ -50,9 +50,10 @@ export async function POST(request: NextRequest) {
       include: { orderitem: { include: { product: true } } },
     });
 
-    // Списываем остатки
+    // Списываем остатки и увеличиваем счётчик продаж
     if (data.items && Array.isArray(data.items)) {
       for (const item of data.items) {
+        // Списываем остатки
         if (item.size) {
           const productSize = await prisma.productSize.findFirst({
             where: { productId: item.productId, size: item.size },
@@ -69,10 +70,15 @@ export async function POST(request: NextRequest) {
             data: { quantity: { decrement: item.quantity } },
           });
         }
+
+        // Увеличиваем счётчик продаж
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: { totalSold: { increment: item.quantity } },
+        });
       }
     }
 
-    // Преобразуем Decimal в number для всего объекта
     const orderForEmail = {
       id: order.id,
       orderNumber: order.orderNumber,
@@ -88,21 +94,12 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity,
         price: Number(item.price),
         size: item.size,
-        product: {
-          name: item.product.name,
-        },
+        product: { name: item.product.name },
       })),
     };
 
-    console.log('📧 Пытаюсь отправить письмо для заказа:', {
-      id: order.id,
-      email: order.customerEmail,
-      orderNumber: order.orderNumber,
-    });
-
     try {
       await sendOrderEmails(orderForEmail);
-      console.log('✅ sendOrderEmails успешно выполнен');
     } catch (err) {
       console.error('❌ Ошибка в sendOrderEmails:', err);
     }

@@ -46,7 +46,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.inStock !== undefined) updateData.inStock = data.inStock;
     if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
     if (data.hasCustomization !== undefined) updateData.hasCustomization = data.hasCustomization;
+    if (data.useSizes !== undefined) updateData.useSizes = data.useSizes;
     if (data.quantity !== undefined) updateData.quantity = data.quantity;
+    if (data.resetSold === true) updateData.totalSold = 0;
 
     const product = await prisma.product.update({ where: { id }, data: updateData });
 

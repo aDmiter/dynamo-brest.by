@@ -1,4 +1,4 @@
-// src/app/shop/product/[slug]/ProductPageClient.tsx - Клиентская обёртка
+// src/app/shop/product/[slug]/ProductPageClient.tsx - Клиентская обёртка карточки товара
 'use client';
 
 import { useState } from 'react';
@@ -23,6 +23,7 @@ interface Product {
   images: string | null;
   quantity: number;
   hasCustomization?: boolean;
+  useSizes?: boolean;
   productcategory?: { name: string } | null;
   productsize: { size: string; quantity: number }[];
 }
@@ -52,15 +53,19 @@ export default function ProductPageClient({ product, customizations, players }: 
 
   const images: string[] = product.images ? JSON.parse(product.images) : [];
   const productSizes = product.productsize || [];
-  const hasAvailableSizes =
-    productSizes.length > 0 ? productSizes.some((s) => s.quantity > 0) : product.quantity > 0;
   const hasCustomization = product.hasCustomization === true;
+  const useSizes = product.useSizes === true;
   const basePrice = Number(product.price);
   const oldPrice = product.oldPrice ? Number(product.oldPrice) : null;
 
+  // Доступность
+  const hasAvailable = useSizes ? productSizes.some((s) => s.quantity > 0) : product.quantity > 0;
+
   // Максимальное доступное количество
-  const maxQuantity = selectedSize
-    ? productSizes.find((s) => s.size === selectedSize)?.quantity || 0
+  const maxQuantity = useSizes
+    ? selectedSize
+      ? productSizes.find((s) => s.size === selectedSize)?.quantity || 0
+      : 0
     : product.quantity;
 
   return (
@@ -83,21 +88,25 @@ export default function ProductPageClient({ product, customizations, players }: 
               players={players}
               basePrice={basePrice}
             />
-            {productSizes.length > 0 && (
+            {useSizes && productSizes.length > 0 && (
               <ProductSizes sizes={productSizes} onSelect={setSelectedSize} />
             )}
-            {(selectedSize || productSizes.length === 0) && maxQuantity > 0 && (
-              <AddToCartButtonWithPrice
-                productId={product.id}
-                productName={product.name}
-                image={images.length > 0 ? images[0] : ''}
-                selectedSize={selectedSize || null}
-              />
-            )}
-            {productSizes.length > 0 && !selectedSize && (
+            {(useSizes ? selectedSize : true) &&
+              (useSizes ? maxQuantity > 0 : product.quantity > 0) && (
+                <AddToCartButtonWithPrice
+                  productId={product.id}
+                  productName={product.name}
+                  image={images.length > 0 ? images[0] : ''}
+                  selectedSize={useSizes ? selectedSize || null : null}
+                />
+              )}
+            {useSizes && !selectedSize && (
               <p className="mt-4 text-right text-xs text-red-500">Выберите размер</p>
             )}
-            {maxQuantity === 0 && selectedSize && (
+            {useSizes && maxQuantity === 0 && selectedSize && (
+              <p className="mt-4 text-right text-xs text-red-500">Товар закончился</p>
+            )}
+            {!useSizes && product.quantity === 0 && (
               <p className="mt-4 text-right text-xs text-red-500">Товар закончился</p>
             )}
           </ProductPrice>
@@ -113,31 +122,35 @@ export default function ProductPageClient({ product, customizations, players }: 
                 </span>
               )}
             </div>
-            {productSizes.length > 0 && (
+            {useSizes && productSizes.length > 0 && (
               <ProductSizes sizes={productSizes} onSelect={setSelectedSize} />
             )}
-            {(selectedSize || productSizes.length === 0) && maxQuantity > 0 && (
-              <div className="mt-8 flex justify-end">
-                <AddToCartButton
-                  productId={product.id}
-                  productName={product.name}
-                  price={basePrice}
-                  image={images.length > 0 ? images[0] : ''}
-                  selectedSize={productSizes.length > 0 ? selectedSize : null}
-                />
-              </div>
-            )}
-            {productSizes.length > 0 && !selectedSize && (
+            {(useSizes ? selectedSize : true) &&
+              (useSizes ? maxQuantity > 0 : product.quantity > 0) && (
+                <div className="mt-8 flex justify-end">
+                  <AddToCartButton
+                    productId={product.id}
+                    productName={product.name}
+                    price={basePrice}
+                    image={images.length > 0 ? images[0] : ''}
+                    selectedSize={useSizes ? selectedSize : null}
+                  />
+                </div>
+              )}
+            {useSizes && !selectedSize && (
               <p className="mt-4 text-right text-xs text-red-500">Выберите размер</p>
             )}
-            {maxQuantity === 0 && (
+            {useSizes && maxQuantity === 0 && selectedSize && (
+              <p className="mt-4 text-right text-xs text-red-500">Товар закончился</p>
+            )}
+            {!useSizes && product.quantity === 0 && (
               <p className="mt-4 text-right text-xs text-red-500">Товар закончился</p>
             )}
           </>
         )}
 
         <div className="mt-4 flex items-center justify-end gap-2 text-sm">
-          {product.inStock && hasAvailableSizes ? (
+          {product.inStock && hasAvailable ? (
             <span className="flex items-center gap-1 text-green-600">
               <FontAwesomeIcon icon={faCheck} className="text-xs" /> В наличии
             </span>
@@ -151,12 +164,6 @@ export default function ProductPageClient({ product, customizations, players }: 
 
         {product.description && (
           <div className="mt-12 border-t border-gray-200 pt-8">
-            <h3
-              className="mb-4 text-right text-lg font-bold uppercase tracking-wider text-[#242C41]"
-              style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
-            >
-              Описание
-            </h3>
             <div className="prose max-w-none text-right text-gray-600 leading-relaxed">
               {product.description}
             </div>

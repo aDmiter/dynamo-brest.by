@@ -68,15 +68,14 @@ export default function CheckoutPage() {
   const deliveryPrice = selectedCountry?.price ? Number(selectedCountry.price) : 0;
   const total = subtotal + deliveryPrice;
 
+  // ИЗМЕНИТЬ только функцию submitToWebPay в src/app/shop/checkout/page.tsx
+
   const submitToWebPay = (params: Record<string, string>) => {
     console.log('📤 WebPay POST params:', params);
-    try {
-      sessionStorage.setItem('webpay_params', JSON.stringify(params));
-    } catch {}
 
     const formElement = document.createElement('form');
     formElement.method = 'POST';
-    formElement.action = 'https://securesandbox.webpay.by';
+    formElement.action = 'https://securesandbox.webpay.by'; // тестовая среда
     formElement.style.display = 'none';
     formElement.acceptCharset = 'UTF-8';
 
@@ -89,6 +88,11 @@ export default function CheckoutPage() {
     });
 
     document.body.appendChild(formElement);
+
+    // Небольшая задержка для отладки
+    console.log('📤 Submit to:', formElement.action);
+    console.log('📤 Params:', params);
+
     formElement.submit();
   };
 

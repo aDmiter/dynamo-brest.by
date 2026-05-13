@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faUsers } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -27,6 +27,7 @@ interface Match {
   round: string | null;
   status: string;
   isHome: boolean;
+  attendance: number | null;
 }
 
 interface Props {
@@ -113,6 +114,12 @@ export default function MatchesResultsClient({ initialMatches, allTeams }: Props
             <div className="text-right min-w-[120px]">
               {match.tournament && <p className="text-[10px] text-[#ee862c]">{match.tournament}</p>}
               {match.round && <p className="text-[10px] text-gray-500">{match.round} тур</p>}
+              {match.attendance !== null && match.attendance !== undefined && (
+                <p className="text-[10px] text-gray-400 mt-0.5 flex items-center justify-end gap-1">
+                  <FontAwesomeIcon icon={faUsers} className="text-[9px]" />
+                  {match.attendance.toLocaleString()}
+                </p>
+              )}
             </div>
 
             <Link

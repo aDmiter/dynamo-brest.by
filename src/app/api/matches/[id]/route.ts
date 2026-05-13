@@ -6,6 +6,18 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+// GET — получить один матч
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
+  const match = await prisma.match.findUnique({ where: { id } });
+
+  if (!match) {
+    return NextResponse.json({ error: 'Матч не найден' }, { status: 404 });
+  }
+
+  return NextResponse.json(match);
+}
+
 // PUT — обновить матч
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
@@ -36,6 +48,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(match);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    console.error('Ошибка обновления матча:', message);
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

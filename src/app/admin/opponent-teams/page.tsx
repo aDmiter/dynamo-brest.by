@@ -16,6 +16,8 @@ import {
   faTrash,
   faToggleOn,
   faToggleOff,
+  faMars,
+  faVenus,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +37,14 @@ interface OpponentTeam {
 }
 
 const PAGE_SIZE = 50;
+const OUR_CLUB_IDS = [68812, 102734, 101132];
+
+// Карта пола для наших команд
+const TEAM_GENDER_MAP: Record<number, { label: string; color: string; icon: typeof faMars }> = {
+  68812: { label: 'Муж', color: 'text-blue-400', icon: faMars },
+  102734: { label: 'Муж', color: 'text-blue-400', icon: faMars },
+  101132: { label: 'Жен', color: 'text-pink-400', icon: faVenus },
+};
 
 export default function OpponentTeamsPage() {
   const [teams, setTeams] = useState<OpponentTeam[]>([]);
@@ -49,7 +59,6 @@ export default function OpponentTeamsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
-    shortName: '',
     city: '',
     country: '',
     logoUrl: '',
@@ -57,7 +66,6 @@ export default function OpponentTeamsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newForm, setNewForm] = useState({
     name: '',
-    shortName: '',
     city: '',
     country: '',
     logoUrl: '',
@@ -71,12 +79,32 @@ export default function OpponentTeamsPage() {
     return await res.json();
   }, []);
 
+  const getTeamGender = (cometId: number | null) => {
+    if (!cometId) return null;
+    return TEAM_GENDER_MAP[cometId] || null;
+  };
+
+  const sortTeamsWithPinned = useCallback((teamsList: OpponentTeam[]) => {
+    const ourClubs = teamsList.filter((t) => t.cometId && OUR_CLUB_IDS.includes(t.cometId));
+    const otherClubs = teamsList.filter((t) => !t.cometId || !OUR_CLUB_IDS.includes(t.cometId));
+
+    // Сортируем наши клубы: основной, дубль, женская
+    ourClubs.sort((a, b) => {
+      const order = [68812, 102734, 101132];
+      const aIndex = order.indexOf(a.cometId!);
+      const bIndex = order.indexOf(b.cometId!);
+      return aIndex - bIndex;
+    });
+
+    return [...ourClubs, ...otherClubs];
+  }, []);
+
   const refreshData = useCallback(async () => {
     const data = await fetchTeams(search, page);
-    setTeams(data.teams);
+    setTeams(sortTeamsWithPinned(data.teams));
     setTotal(data.total);
     setTotalPages(data.totalPages);
-  }, [search, page, fetchTeams]);
+  }, [search, page, fetchTeams, sortTeamsWithPinned]);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,7 +112,7 @@ export default function OpponentTeamsPage() {
       try {
         const data = await fetchTeams(search, page);
         if (!cancelled) {
-          setTeams(data.teams);
+          setTeams(sortTeamsWithPinned(data.teams));
           setTotal(data.total);
           setTotalPages(data.totalPages);
           setLoading(false);
@@ -111,7 +139,7 @@ export default function OpponentTeamsPage() {
       try {
         const data = await fetchTeams(search, page);
         if (!cancelled) {
-          setTeams(data.teams);
+          setTeams(sortTeamsWithPinned(data.teams));
           setTotal(data.total);
           setTotalPages(data.totalPages);
         }
@@ -125,7 +153,7 @@ export default function OpponentTeamsPage() {
     return () => {
       cancelled = true;
     };
-  }, [search, page, fetchTeams]);
+  }, [search, page, fetchTeams, sortTeamsWithPinned]);
 
   const handleSync = async () => {
     setShowSyncModal(false);
@@ -152,7 +180,6 @@ export default function OpponentTeamsPage() {
     setEditingId(team.id);
     setEditForm({
       name: team.name,
-      shortName: team.shortName || '',
       city: team.city || '',
       country: team.country || '',
       logoUrl: team.logoUrl || '',
@@ -206,7 +233,7 @@ export default function OpponentTeamsPage() {
         body: JSON.stringify(newForm),
       });
       setShowAddModal(false);
-      setNewForm({ name: '', shortName: '', city: '', country: '', logoUrl: '' });
+      setNewForm({ name: '', city: '', country: '', logoUrl: '' });
       await refreshData();
     } catch (error) {
       console.error('Ошибка создания:', error);
@@ -289,142 +316,161 @@ export default function OpponentTeamsPage() {
                 <th className="p-3 text-left text-sm font-medium text-gray-400 w-12">#</th>
                 <th className="p-3 text-left text-sm font-medium text-gray-400 w-12">Лого</th>
                 <th className="p-3 text-left text-sm font-medium text-gray-400">Название</th>
-                <th className="p-3 text-left text-sm font-medium text-gray-400">Кратко</th>
                 <th className="p-3 text-left text-sm font-medium text-gray-400">Город</th>
+                <th className="p-3 text-center text-sm font-medium text-gray-400 w-16">Пол</th>
                 <th className="p-3 text-center text-sm font-medium text-gray-400 w-14">Акт.</th>
                 <th className="p-3 text-center text-sm font-medium text-gray-400 w-24">Действия</th>
               </tr>
             </thead>
             <tbody>
-              {teams.map((team, index) => (
-                <tr
-                  key={team.id}
-                  className={`border-b border-white/5 hover:bg-white/5 transition-colors ${!team.isActive ? 'opacity-40' : ''}`}
-                >
-                  <td className="p-3 text-sm text-gray-500">
-                    {(page - 1) * PAGE_SIZE + index + 1}
-                  </td>
-                  <td className="p-3">
-                    <div className="h-8 w-8 flex items-center justify-center bg-white/5">
-                      {team.logoUrl ? (
-                        <Image
-                          src={team.logoUrl}
-                          alt={team.name}
-                          width={32}
-                          height={32}
-                          className="h-full w-full object-contain"
-                        />
-                      ) : (
-                        <FontAwesomeIcon icon={faShieldHalved} className="text-gray-600 text-sm" />
-                      )}
-                    </div>
-                  </td>
-                  {editingId === team.id ? (
-                    <>
-                      <td className="p-3">
-                        <Input
-                          value={editForm.name}
-                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                          className="border-white/10 bg-white/5 text-white text-sm"
-                        />
-                      </td>
-                      <td className="p-3">
-                        <Input
-                          value={editForm.shortName}
-                          onChange={(e) => setEditForm({ ...editForm, shortName: e.target.value })}
-                          className="border-white/10 bg-white/5 text-white text-sm"
-                        />
-                      </td>
-                      <td className="p-3">
-                        <Input
-                          value={editForm.city}
-                          onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                          className="border-white/10 bg-white/5 text-white text-sm"
-                        />
-                      </td>
-                      <td className="p-3 text-center">
-                        <button
-                          onClick={() => toggleActive(team)}
-                          className={`text-xl transition-colors ${team.isActive ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
-                        >
-                          <FontAwesomeIcon icon={team.isActive ? faToggleOn : faToggleOff} />
-                        </button>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex flex-col gap-2 items-center">
-                          <div className="flex items-center gap-2">
-                            <Input
-                              value={editForm.logoUrl}
-                              onChange={(e) =>
-                                setEditForm({ ...editForm, logoUrl: e.target.value })
-                              }
-                              className="border-white/10 bg-white/5 text-white text-xs w-44"
-                              placeholder="URL логотипа"
-                            />
-                          </div>
-                          <ImageUpload
-                            value={editForm.logoUrl}
-                            onChange={(url) => setEditForm({ ...editForm, logoUrl: url })}
+              {teams.map((team, index) => {
+                const isOurClub = team.cometId && OUR_CLUB_IDS.includes(team.cometId);
+                const gender = getTeamGender(team.cometId);
+                return (
+                  <tr
+                    key={team.id}
+                    className={`border-b border-white/5 hover:bg-white/5 transition-colors ${!team.isActive ? 'opacity-40' : ''} ${isOurClub ? 'bg-[#ee862c]/5' : ''}`}
+                  >
+                    <td className="p-3 text-sm text-gray-500">
+                      {(page - 1) * PAGE_SIZE + index + 1}
+                    </td>
+                    <td className="p-3">
+                      <div className="h-8 w-8 flex items-center justify-center bg-white/5">
+                        {team.logoUrl ? (
+                          <Image
+                            src={team.logoUrl}
+                            alt={team.name}
+                            width={32}
+                            height={32}
+                            className="h-full w-full object-contain"
                           />
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={saveEdit}
-                              className="px-2 py-1 text-xs bg-green-600 text-white hover:bg-green-500"
+                        ) : (
+                          <FontAwesomeIcon
+                            icon={faShieldHalved}
+                            className="text-gray-600 text-sm"
+                          />
+                        )}
+                      </div>
+                    </td>
+                    {editingId === team.id ? (
+                      <>
+                        <td className="p-3">
+                          <Input
+                            value={editForm.name}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                            className="border-white/10 bg-white/5 text-white text-sm"
+                          />
+                        </td>
+                        <td className="p-3">
+                          <Input
+                            value={editForm.city}
+                            onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                            className="border-white/10 bg-white/5 text-white text-sm"
+                          />
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className="text-sm text-gray-500">—</span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <button
+                            onClick={() => toggleActive(team)}
+                            className={`text-xl transition-colors ${team.isActive ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
+                          >
+                            <FontAwesomeIcon icon={team.isActive ? faToggleOn : faToggleOff} />
+                          </button>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex flex-col gap-2 items-center">
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={editForm.logoUrl}
+                                onChange={(e) =>
+                                  setEditForm({ ...editForm, logoUrl: e.target.value })
+                                }
+                                className="border-white/10 bg-white/5 text-white text-xs w-44"
+                                placeholder="URL логотипа"
+                              />
+                            </div>
+                            <ImageUpload
+                              value={editForm.logoUrl}
+                              onChange={(url) => setEditForm({ ...editForm, logoUrl: url })}
+                            />
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={saveEdit}
+                                className="px-2 py-1 text-xs bg-green-600 text-white hover:bg-green-500"
+                              >
+                                <FontAwesomeIcon icon={faSave} className="mr-1" />
+                                Сохр.
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="px-2 py-1 text-xs border border-white/10 text-gray-400 hover:text-white"
+                              >
+                                Отм.
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="p-3">
+                          <div>
+                            <p className="text-white text-sm font-medium">{team.name}</p>
+                            {team.cometId && (
+                              <p className="text-xs text-gray-500 mt-0.5 font-mono">
+                                ID: {team.cometId}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <p className="text-gray-400 text-sm">{team.city || '—'}</p>
+                        </td>
+                        <td className="p-3 text-center">
+                          {gender ? (
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold uppercase border ${gender.label === 'Муж' ? 'text-blue-400 border-blue-400/30 bg-blue-400/10' : 'text-pink-400 border-pink-400/30 bg-pink-400/10'}`}
                             >
-                              <FontAwesomeIcon icon={faSave} className="mr-1" />
-                              Сохр.
+                              <FontAwesomeIcon icon={gender.icon} className="text-[10px]" />
+                              {gender.label}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-gray-600">—</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-center">
+                          <button
+                            onClick={() => toggleActive(team)}
+                            className={`text-xl transition-colors ${team.isActive ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
+                          >
+                            <FontAwesomeIcon icon={team.isActive ? faToggleOn : faToggleOff} />
+                          </button>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => startEdit(team)}
+                              className="text-sm text-[#ee862c] hover:underline"
+                              title="Редактировать"
+                            >
+                              <FontAwesomeIcon icon={faEdit} />
                             </button>
                             <button
-                              onClick={() => setEditingId(null)}
-                              className="px-2 py-1 text-xs border border-white/10 text-gray-400 hover:text-white"
+                              onClick={() => deleteTeam(team)}
+                              className="text-sm text-red-400 hover:text-red-300"
+                              title="Удалить"
                             >
-                              Отм.
+                              <FontAwesomeIcon icon={faTrash} />
                             </button>
                           </div>
-                        </div>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="p-3">
-                        <p className="text-white text-sm font-medium">{team.name}</p>
-                      </td>
-                      <td className="p-3">
-                        <p className="text-gray-400 text-sm">{team.shortName || '—'}</p>
-                      </td>
-                      <td className="p-3">
-                        <p className="text-gray-400 text-sm">{team.city || '—'}</p>
-                      </td>
-                      <td className="p-3 text-center">
-                        <button
-                          onClick={() => toggleActive(team)}
-                          className={`text-xl transition-colors ${team.isActive ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
-                        >
-                          <FontAwesomeIcon icon={team.isActive ? faToggleOn : faToggleOff} />
-                        </button>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => startEdit(team)}
-                            className="text-sm text-[#ee862c] hover:underline"
-                            title="Редактировать"
-                          >
-                            <FontAwesomeIcon icon={faEdit} />
-                          </button>
-                          <button
-                            onClick={() => deleteTeam(team)}
-                            className="text-sm text-red-400 hover:text-red-300"
-                            title="Удалить"
-                          >
-                            <FontAwesomeIcon icon={faTrash} />
-                          </button>
-                        </div>
-                      </td>
-                    </>
-                  )}
-                </tr>
-              ))}
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -513,14 +559,6 @@ export default function OpponentTeamsPage() {
                   onChange={(e) => setNewForm({ ...newForm, name: e.target.value })}
                   className="border-white/10 bg-white/5 text-white"
                   placeholder="БАТЭ"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Краткое</label>
-                <Input
-                  value={newForm.shortName}
-                  onChange={(e) => setNewForm({ ...newForm, shortName: e.target.value })}
-                  className="border-white/10 bg-white/5 text-white"
                 />
               </div>
               <div>

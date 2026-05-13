@@ -29,6 +29,8 @@ export default function NewProductPage() {
     images: [] as string[],
     inStock: true,
     isFeatured: false,
+    useSizes: false,
+    quantity: 0,
   });
 
   const [sizes, setSizes] = useState<{ size: string; quantity: number }[]>([]);
@@ -71,6 +73,12 @@ export default function NewProductPage() {
     setLoading(true);
     setError('');
 
+    if (!form.name || !form.price || !form.categoryId) {
+      setError('Название, цена и категория обязательны');
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/products', {
         method: 'POST',
@@ -80,12 +88,14 @@ export default function NewProductPage() {
           slug: transliterate(form.name),
           price: parseFloat(form.price),
           oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : null,
-          sizes,
+          sizes: form.useSizes ? sizes : [],
           hasCustomization,
+          quantity: form.useSizes ? 0 : form.quantity,
         }),
       });
-      if (res.ok) router.push('/admin/products');
-      else {
+      if (res.ok) {
+        router.push('/admin/products');
+      } else {
         const data = await res.json();
         setError(data.error || 'Ошибка');
       }
@@ -181,7 +191,7 @@ export default function NewProductPage() {
               </div>
             </div>
             <div>
-              <label className="text-sm text-gray-400">Категория</label>
+              <label className="text-sm text-gray-400">Категория *</label>
               <select
                 value={form.categoryId}
                 onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
@@ -215,58 +225,84 @@ export default function NewProductPage() {
               />
             </div>
 
-            {/* Размеры с количеством */}
-            <div>
-              <label className="text-sm text-gray-400 mb-2 block">Размеры и количество</label>
-              <div className="flex gap-2 mb-3">
-                <Input
-                  value={newSize}
-                  onChange={(e) => setNewSize(e.target.value)}
-                  className="border-white/10 bg-white/5 text-white flex-1"
-                  placeholder="Размер (S, M, L...)"
+            {/* Чекбокс "Добавить размеры" */}
+            <div className="border-t border-white/10 pt-4">
+              <label className="flex items-center gap-3 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.useSizes}
+                  onChange={(e) => setForm({ ...form, useSizes: e.target.checked })}
+                  className="h-4 w-4 accent-[#ee862c]"
                 />
+                <span className="text-white font-medium">Добавить размеры</span>
+              </label>
+            </div>
+
+            {/* Размеры (если чекбокс выбран) */}
+            {form.useSizes ? (
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Размеры и количество</label>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    value={newSize}
+                    onChange={(e) => setNewSize(e.target.value)}
+                    className="border-white/10 bg-white/5 text-white flex-1"
+                    placeholder="Размер (S, M, L...)"
+                  />
+                  <Input
+                    type="number"
+                    value={newSizeQty}
+                    onChange={(e) => setNewSizeQty(parseInt(e.target.value) || 1)}
+                    className="border-white/10 bg-white/5 text-white w-20"
+                    placeholder="Кол-во"
+                    min="1"
+                  />
+                  <Button
+                    type="button"
+                    onClick={addSize}
+                    size="sm"
+                    variant="outline"
+                    className="border-white/10 text-gray-400"
+                  >
+                    <FontAwesomeIcon icon={faPlus} />
+                  </Button>
+                </div>
+                {sizes.length > 0 && (
+                  <div className="space-y-2">
+                    {sizes.map((s) => (
+                      <div
+                        key={s.size}
+                        className="flex items-center gap-4 border border-white/10 bg-white/5 px-3 py-2"
+                      >
+                        <span className="text-white text-sm font-bold w-10">{s.size}</span>
+                        <span className="text-gray-400 text-sm">×{s.quantity} шт.</span>
+                        <button
+                          type="button"
+                          onClick={() => removeSize(s.size)}
+                          className="ml-auto text-red-400 hover:text-red-300"
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {sizes.length === 0 && (
+                  <p className="text-xs text-gray-600">Добавьте хотя бы один размер</p>
+                )}
+              </div>
+            ) : (
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Количество на складе</label>
                 <Input
                   type="number"
-                  value={newSizeQty}
-                  onChange={(e) => setNewSizeQty(parseInt(e.target.value) || 1)}
-                  className="border-white/10 bg-white/5 text-white w-20"
-                  placeholder="Кол-во"
-                  min="1"
+                  value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })}
+                  className="border-white/10 bg-white/5 text-white w-32"
+                  min="0"
                 />
-                <Button
-                  type="button"
-                  onClick={addSize}
-                  size="sm"
-                  variant="outline"
-                  className="border-white/10 text-gray-400"
-                >
-                  <FontAwesomeIcon icon={faPlus} />
-                </Button>
               </div>
-              {sizes.length > 0 && (
-                <div className="space-y-2">
-                  {sizes.map((s) => (
-                    <div
-                      key={s.size}
-                      className="flex items-center gap-4 border border-white/10 bg-white/5 px-3 py-2"
-                    >
-                      <span className="text-white text-sm font-bold w-10">{s.size}</span>
-                      <span className="text-gray-400 text-sm">×{s.quantity} шт.</span>
-                      <button
-                        type="button"
-                        onClick={() => removeSize(s.size)}
-                        className="ml-auto text-red-400 hover:text-red-300"
-                      >
-                        <FontAwesomeIcon icon={faTimes} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {sizes.length === 0 && (
-                <p className="text-xs text-gray-600">Без размеров — товар без учёта остатков</p>
-              )}
-            </div>
+            )}
 
             {/* Нанесение */}
             <div className="border-t border-white/10 pt-4">
