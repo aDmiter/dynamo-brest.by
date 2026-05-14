@@ -54,7 +54,7 @@ model match {
   round           String?
   status          String       @default("scheduled")
   isHome          Boolean      @default(true)
-  matchType       String?      // "osnova", "dubl", "women"
+  matchType       String?
   gender          String?
   attendance      Int?
   customFields    Json?
@@ -77,7 +77,7 @@ model OpponentTeam {
   logoUrl   String?
   city      String?
   country   String?
-  gender      String?
+  gender    String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -150,32 +150,33 @@ model orderitem {
 }
 
 model player {
-  id                 String         @id @default(cuid())
-  cometId            String?        @unique(map: "Player_cometId_key")
-  firstName          String
-  lastName           String
-  middleName         String?
-  shortName          String?
-  number             Int?
-  position           String?
-  birthDate          DateTime?
-  nationality        String?
-  country            String?
-  city               String?
-  gender             String?
-  level              String?
-  height             Int?
-  weight             Int?
-  photoUrl           String?
-  bio                String?        @db.Text
-  isActive           Boolean        @default(true)
-  isPublished        Boolean        @default(true)
-  isManuallyCreated  Boolean        @default(false)
-  order              Int            @default(0)
-  customFields       Json?
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-  playerTeams        PlayerTeam[]
+  id                String       @id @default(cuid())
+  cometId           String?      @unique(map: "Player_cometId_key")
+  firstName         String
+  lastName          String
+  middleName        String?
+  shortName         String?
+  number            Int?
+  position          String?
+  birthDate         DateTime?
+  nationality       String?
+  country           String?
+  city              String?
+  gender            String?
+  level             String?
+  height            Int?
+  weight            Int?
+  photoUrl          String?
+  bio               String?      @db.Text
+  isActive          Boolean      @default(true)
+  isPublished       Boolean      @default(true)
+  isManuallyCreated Boolean      @default(false)
+  order             Int          @default(0)
+  customFields      Json?
+  gallery           String?      @db.LongText
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  playerTeams       PlayerTeam[]
 }
 
 model PlayerTeam {
@@ -185,6 +186,40 @@ model PlayerTeam {
   team     team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@id([playerId, teamId])
+}
+
+model coach {
+  id                String       @id @default(cuid())
+  cometId           String?      @unique
+  firstName         String
+  lastName          String
+  middleName        String?
+  shortName         String?
+  position          String?
+  birthDate         DateTime?
+  nationality       String?
+  country           String?
+  city              String?
+  gender            String?
+  photoUrl          String?
+  bio               String?      @db.Text
+  gallery           String?      @db.LongText
+  isActive          Boolean      @default(true)
+  isPublished       Boolean      @default(true)
+  isManuallyCreated Boolean      @default(false)
+  order             Int          @default(0)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  coachTeams        CoachTeam[]
+}
+
+model CoachTeam {
+  coachId String
+  teamId  String
+  coach   coach @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  team    team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([coachId, teamId])
 }
 
 model product {
@@ -205,8 +240,8 @@ model product {
   composition       String?           @db.Text
   quantity          Int               @default(0)
   hasCustomization  Boolean           @default(false)
-  useSizes  Boolean  @default(false)  // ← новое поле
-  totalSold  Int     @default(0)
+  useSizes          Boolean           @default(false)
+  totalSold         Int               @default(0)
   orderitem         orderitem[]
   productsize       ProductSize[]
   productcategory   productcategory   @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
@@ -264,6 +299,7 @@ model team {
   updatedAt   DateTime     @updatedAt
   match       match[]
   playerTeams PlayerTeam[]
+  coachTeams  CoachTeam[]
 }
 
 model title {
@@ -340,6 +376,8 @@ model menuitem {
   type        String    @default("link")
   linkUrl     String?
   pageContent String?   @db.LongText
+  imageUrl    String?
+  subtitle    String?
   parentId    String?
   parent      menuitem? @relation("MenuChildren", fields: [parentId], references: [id])
   children    menuitem[] @relation("MenuChildren")
@@ -349,6 +387,4 @@ model menuitem {
   icon        String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  imageUrl   String?
-  subtitle   String?
 }

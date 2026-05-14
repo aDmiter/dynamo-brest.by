@@ -1,4 +1,4 @@
-// src/app/admin/players/edit/[id]/EditPlayerForm.tsx - Форма редактирования игрока
+// src/app/admin/coaches/edit/[id]/EditCoachForm.tsx - Форма редактирования тренера
 'use client';
 
 import { useState } from 'react';
@@ -17,23 +17,19 @@ interface Team {
   slug: string;
 }
 
-interface PlayerData {
+interface CoachData {
   id: string;
   cometId: string | null;
   firstName: string;
   lastName: string;
   middleName: string | null;
   shortName: string | null;
-  number: number | null;
   position: string | null;
   birthDate: string | null;
   nationality: string | null;
   country: string | null;
   city: string | null;
   gender: string | null;
-  level: string | null;
-  height: number | null;
-  weight: number | null;
   photoUrl: string | null;
   bio: string | null;
   gallery: string | null;
@@ -44,23 +40,11 @@ interface PlayerData {
 }
 
 interface Props {
-  player: PlayerData;
+  coach: CoachData;
   allTeams: Team[];
 }
 
-const POSITIONS = ['Вратарь', 'Защитник', 'Полузащитник', 'Нападающий'];
-
-const LEVELS = [
-  { value: 'professional', label: 'Профессионал' },
-  { value: 'amateur', label: 'Любитель' },
-];
-
-const GENDERS = [
-  { value: 'male', label: 'Мужской' },
-  { value: 'female', label: 'Женский' },
-];
-
-export default function EditPlayerForm({ player, allTeams }: Props) {
+export default function EditCoachForm({ coach, allTeams }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromTeam = searchParams.get('from');
@@ -69,30 +53,24 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
   const [success, setSuccess] = useState('');
 
   const [form, setForm] = useState({
-    firstName: player.firstName || '',
-    lastName: player.lastName || '',
-    middleName: player.middleName || '',
-    shortName: player.shortName || '',
-    number: player.number?.toString() || '',
-    position: player.position || '',
-    birthDate: player.birthDate ? player.birthDate.split('T')[0] : '',
-    nationality: player.nationality || '',
-    country: player.country || '',
-    city: player.city || '',
-    gender: player.gender || '',
-    level: player.level || '',
-    height: player.height?.toString() || '',
-    weight: player.weight?.toString() || '',
-    photoUrl: player.photoUrl || '',
-    bio: player.bio || '',
-    isActive: player.isActive,
-    isPublished: player.isPublished,
-    selectedTeamIds: player.teams.map((t) => t.id),
+    firstName: coach.firstName || '',
+    lastName: coach.lastName || '',
+    middleName: coach.middleName || '',
+    shortName: coach.shortName || '',
+    position: coach.position || '',
+    birthDate: coach.birthDate ? coach.birthDate.split('T')[0] : '',
+    nationality: coach.nationality || '',
+    country: coach.country || '',
+    city: coach.city || '',
+    gender: coach.gender || '',
+    photoUrl: coach.photoUrl || '',
+    bio: coach.bio || '',
+    isActive: coach.isActive,
+    isPublished: coach.isPublished,
+    selectedTeamIds: coach.teams.map((t) => t.id),
   });
 
-  const [gallery, setGallery] = useState<string[]>(
-    player.gallery ? JSON.parse(player.gallery) : []
-  );
+  const [gallery, setGallery] = useState<string[]>(coach.gallery ? JSON.parse(coach.gallery) : []);
 
   const removeGalleryImage = (index: number) => {
     setGallery(gallery.filter((_, i) => i !== index));
@@ -105,7 +83,7 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
     setSuccess('');
 
     try {
-      const res = await fetch(`/api/players/${player.id}`, {
+      const res = await fetch(`/api/coaches/${coach.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -113,16 +91,12 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
           lastName: form.lastName,
           middleName: form.middleName || null,
           shortName: form.shortName || null,
-          number: form.number ? parseInt(form.number) : null,
           position: form.position || null,
           birthDate: form.birthDate || null,
           nationality: form.nationality || null,
           country: form.country || null,
           city: form.city || null,
           gender: form.gender || null,
-          level: form.level || null,
-          height: form.height ? parseInt(form.height) : null,
-          weight: form.weight ? parseInt(form.weight) : null,
           photoUrl: form.photoUrl || null,
           bio: form.bio || null,
           gallery: gallery.length > 0 ? JSON.stringify(gallery) : null,
@@ -133,12 +107,11 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
       });
 
       if (res.ok) {
-        setSuccess('Игрок обновлён');
+        setSuccess('Тренер обновлён');
         router.refresh();
-        // Если пришли со страницы команды — возвращаемся туда
         if (fromTeam) {
           setTimeout(() => {
-            router.push(`/admin/players/${fromTeam}`);
+            router.push(`/admin/coaches`);
           }, 500);
         }
       } else {
@@ -153,15 +126,11 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Удалить игрока "${player.lastName} ${player.firstName}"?`)) return;
+    if (!confirm(`Удалить тренера "${coach.lastName} ${coach.firstName}"?`)) return;
     try {
-      const res = await fetch(`/api/players/${player.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/coaches/${coach.id}`, { method: 'DELETE' });
       if (res.ok) {
-        if (fromTeam) {
-          router.push(`/admin/players/${fromTeam}`);
-        } else {
-          router.push('/admin/players');
-        }
+        router.push('/admin/coaches');
       } else {
         const data = await res.json();
         setError(data.error || 'Ошибка при удалении');
@@ -180,12 +149,10 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
     }));
   };
 
-  const backUrl = fromTeam ? `/admin/players/${fromTeam}` : '/admin/players';
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href={backUrl}>
+        <Link href="/admin/coaches">
           <Button
             variant="outline"
             size="sm"
@@ -199,12 +166,12 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
       <Card className="max-w-3xl border-white/10 bg-white/5 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-white">
-            {player.lastName} {player.firstName} {player.middleName || ''}
+            {coach.lastName} {coach.firstName} {coach.middleName || ''}
           </CardTitle>
           <p className="text-sm text-gray-500">
-            {player.isManuallyCreated
+            {coach.isManuallyCreated
               ? 'Создан вручную'
-              : `COMET ID: ${player.cometId || 'не указан'}`}
+              : `COMET ID: ${coach.cometId || 'не указан'}`}
           </p>
         </CardHeader>
         <CardContent>
@@ -228,7 +195,7 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
                   {form.photoUrl ? (
                     <img
                       src={form.photoUrl}
-                      alt="Фото игрока"
+                      alt="Фото тренера"
                       className="h-full w-full object-cover"
                     />
                   ) : (
@@ -239,16 +206,8 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
                   <ImageUpload
                     value={form.photoUrl}
                     onChange={(url) => setForm({ ...form, photoUrl: url })}
-                    folder="players"
+                    folder="coaches"
                   />
-                  {player.photoUrl && player.photoUrl !== form.photoUrl && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Фото из COMET будет заменено при сохранении
-                    </p>
-                  )}
-                  {!player.photoUrl && form.photoUrl && (
-                    <p className="text-xs text-green-500 mt-2">Фото загружено вручную</p>
-                  )}
                 </div>
               </div>
             </div>
@@ -280,10 +239,10 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
                 onChange={(url) => {
                   if (url) setGallery([...gallery, url]);
                 }}
-                folder="players/gallery"
+                folder="coaches/gallery"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Загрузите несколько фото для галереи игрока
+                Загрузите несколько фото для галереи тренера
               </p>
             </div>
 
@@ -317,34 +276,16 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
               </div>
             </div>
 
-            {/* Игровой номер, Позиция, Дата рождения */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Позиция, Дата рождения */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm text-gray-400">Игровой номер</label>
+                <label className="mb-1 block text-sm text-gray-400">Должность</label>
                 <Input
-                  type="number"
-                  value={form.number}
-                  onChange={(e) => setForm({ ...form, number: e.target.value })}
-                  className="border-white/10 bg-white/5 text-white"
-                  min="1"
-                  max="99"
-                  placeholder="10"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm text-gray-400">Позиция</label>
-                <select
                   value={form.position}
                   onChange={(e) => setForm({ ...form, position: e.target.value })}
-                  className="w-full border border-white/10 bg-white/5 p-2 text-sm text-white"
-                >
-                  <option value="">— Выберите —</option>
-                  {POSITIONS.map((pos) => (
-                    <option key={pos} value={pos}>
-                      {pos}
-                    </option>
-                  ))}
-                </select>
+                  className="border-white/10 bg-white/5 text-white"
+                  placeholder="Главный тренер"
+                />
               </div>
               <div>
                 <label className="mb-1 block text-sm text-gray-400">Дата рождения</label>
@@ -354,40 +295,6 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
                   onChange={(e) => setForm({ ...form, birthDate: e.target.value })}
                   className="border-white/10 bg-white/5 text-white"
                 />
-              </div>
-            </div>
-
-            {/* Уровень, Пол */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1 block text-sm text-gray-400">Уровень</label>
-                <select
-                  value={form.level}
-                  onChange={(e) => setForm({ ...form, level: e.target.value })}
-                  className="w-full border border-white/10 bg-white/5 p-2 text-sm text-white"
-                >
-                  <option value="">— Не указан —</option>
-                  {LEVELS.map((l) => (
-                    <option key={l.value} value={l.value}>
-                      {l.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm text-gray-400">Пол</label>
-                <select
-                  value={form.gender}
-                  onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                  className="w-full border border-white/10 bg-white/5 p-2 text-sm text-white"
-                >
-                  <option value="">— Не указан —</option>
-                  {GENDERS.map((g) => (
-                    <option key={g.value} value={g.value}>
-                      {g.label}
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
 
@@ -422,32 +329,18 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
               </div>
             </div>
 
-            {/* Рост, Вес */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1 block text-sm text-gray-400">Рост (см)</label>
-                <Input
-                  type="number"
-                  value={form.height}
-                  onChange={(e) => setForm({ ...form, height: e.target.value })}
-                  className="border-white/10 bg-white/5 text-white"
-                  placeholder="185"
-                  min="100"
-                  max="250"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm text-gray-400">Вес (кг)</label>
-                <Input
-                  type="number"
-                  value={form.weight}
-                  onChange={(e) => setForm({ ...form, weight: e.target.value })}
-                  className="border-white/10 bg-white/5 text-white"
-                  placeholder="80"
-                  min="30"
-                  max="150"
-                />
-              </div>
+            {/* Пол */}
+            <div>
+              <label className="mb-1 block text-sm text-gray-400">Пол</label>
+              <select
+                value={form.gender}
+                onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                className="w-full border border-white/10 bg-white/5 p-2 text-sm text-white"
+              >
+                <option value="">— Не указан —</option>
+                <option value="male">Мужской</option>
+                <option value="female">Женский</option>
+              </select>
             </div>
 
             {/* Биография */}
@@ -456,13 +349,13 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
               <textarea
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                className="w-full border border-white/10 bg-white/5 p-3 text-sm text-white min-h-[80px]"
-                rows={3}
-                placeholder="Информация о игроке..."
+                className="w-full border border-white/10 bg-white/5 p-3 text-sm text-white min-h-[120px]"
+                rows={5}
+                placeholder="Информация о тренере..."
               />
             </div>
 
-            {/* Команды — toggler'ы */}
+            {/* Команды */}
             <div>
               <label className="mb-2 block text-sm text-gray-400">
                 Команды (можно выбрать несколько)
@@ -517,7 +410,7 @@ export default function EditPlayerForm({ player, allTeams }: Props) {
                 <FontAwesomeIcon icon={faSave} className="mr-2" />
                 {loading ? 'Сохранение...' : 'Сохранить'}
               </Button>
-              {player.isManuallyCreated && (
+              {coach.isManuallyCreated && (
                 <Button variant="destructive" type="button" onClick={handleDelete}>
                   <FontAwesomeIcon icon={faTrash} className="mr-2" /> Удалить
                 </Button>

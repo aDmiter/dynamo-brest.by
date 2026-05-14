@@ -10,15 +10,14 @@ import {
   faUser,
   faVenusMars,
   faLayerGroup,
-  faToggleOn,
-  faToggleOff,
   faChevronLeft,
   faChevronRight,
-  faUsers,
+  faSave,
+  faToggleOn,
+  faToggleOff,
 } from '@fortawesome/free-solid-svg-icons';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import DeleteButton from '@/modules/admin/components/DeleteButton';
 import Image from 'next/image';
 
 interface Team {
@@ -39,9 +38,9 @@ interface Player {
   gender: string | null;
   photoUrl: string | null;
   isActive: boolean;
+  isPublished: boolean;
   isManuallyCreated: boolean;
   teamIds: string[];
-  teams: Team[];
 }
 
 const levelLabels: Record<string, string> = {
@@ -54,121 +53,88 @@ const genderLabels: Record<string, string> = {
   female: 'Жен.',
 };
 
-const teamShortLabels: Record<string, string> = {
-  'osnovnoy-sostav': 'Основа',
-  'dubliruyushchiy-sostav': 'Дубль',
-  'zhenskaya-komanda': 'Женщины',
-};
+const positionOptions = ['', 'Вратарь', 'Защитник', 'Полузащитник', 'Нападающий'];
 
 const PAGE_SIZE = 50;
 
 interface Props {
   initialPlayers: Player[];
-  allTeams: Team[];
   currentTeamSlug: string;
+  currentTeamName: string;
 }
 
 export default function PlayersByTeamPageClient({
   initialPlayers,
-  allTeams,
   currentTeamSlug,
+  currentTeamName,
 }: Props) {
   const [players, setPlayers] = useState<Player[]>(initialPlayers);
   const [search, setSearch] = useState('');
-  const [togglingTeam, setTogglingTeam] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [localToggles, setLocalToggles] = useState<Record<string, string[]>>({});
+  const [editingField, setEditingField] = useState<{
+    playerId: string;
+    field: 'number' | 'position';
+  } | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [togglingPublished, setTogglingPublished] = useState<string | null>(null);
 
-  const teamToggles = useMemo(() => {
-    const toggles: Record<string, Record<string, boolean>> = {};
-    players.forEach((p) => {
-      const ids = localToggles[p.id] !== undefined ? localToggles[p.id] : p.teamIds;
-      toggles[p.id] = {};
-      allTeams.forEach((t) => {
-        toggles[p.id][t.id] = ids.includes(t.id);
-      });
-    });
-    return toggles;
-  }, [players, allTeams, localToggles]);
-
-  const toggleTeam = useCallback(
-    async (playerId: string, teamId: string) => {
-      const key = `${playerId}_${teamId}`;
-      setTogglingTeam(key);
-
-      const current = teamToggles[playerId]?.[teamId] || false;
-      const newValue = !current;
-
-      setLocalToggles((prev) => {
-        const currentIds =
-          prev[playerId] !== undefined
-            ? prev[playerId]
-            : players.find((p) => p.id === playerId)?.teamIds || [];
-        return {
-          ...prev,
-          [playerId]: newValue ? [...currentIds, teamId] : currentIds.filter((id) => id !== teamId),
-        };
-      });
-
-      try {
-        const player = players.find((p) => p.id === playerId);
-        const newTeamIds = newValue
-          ? [...(player?.teamIds || []), teamId]
-          : (player?.teamIds || []).filter((id) => id !== teamId);
-
-        await fetch(`/api/players/${playerId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ teamIds: newTeamIds }),
-        });
-
-        setPlayers((prev) =>
-          prev.map((p) => (p.id === playerId ? { ...p, teamIds: newTeamIds } : p))
-        );
-        setLocalToggles((prev) => {
-          const copy = { ...prev };
-          delete copy[playerId];
-          return copy;
-        });
-      } catch (error) {
-        console.error('Ошибка переключения команды:', error);
-        setLocalToggles((prev) => ({
-          ...prev,
-          [playerId]: players.find((p) => p.id === playerId)?.teamIds || [],
-        }));
-      } finally {
-        setTogglingTeam(null);
+  // Быстрое сохранение поля
+  const saveField = async (playerId: string, field: 'number' | 'position', value: string) => {
+    setSaving(true);
+    try {
+      const body: Record<string, unknown> = {};
+      if (field === 'number') {
+        body.number = value ? parseInt(value) : null;
+      } else {
+        body.position = value || null;
       }
-    },
-    [players, teamToggles]
-  );
 
-  const getLevelBadge = (level: string | null) => {
-    if (!level) return null;
-    const isPro = level === 'professional';
-    return (
-      <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase ${isPro ? 'bg-[#ee862c]/20 text-[#ee862c] border border-[#ee862c]/30' : 'bg-white/5 text-gray-400 border border-white/10'}`}
-      >
-        <FontAwesomeIcon icon={faLayerGroup} className="text-[8px]" />
-        {levelLabels[level] || level}
-      </span>
-    );
+      await fetch(`/api/players/${playerId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      setPlayers((prev) =>
+        prev.map((p) =>
+          p.id === playerId
+            ? {
+                ...p,
+                [field]: field === 'number' ? (value ? parseInt(value) : null) : value || null,
+              }
+            : p
+        )
+      );
+      setEditingField(null);
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const getGenderBadge = (gender: string | null) => {
-    if (!gender) return null;
-    const isMale = gender === 'male';
-    return (
-      <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase ${isMale ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-pink-500/20 text-pink-400 border border-pink-500/30'}`}
-      >
-        <FontAwesomeIcon icon={faVenusMars} className="text-[8px]" />
-        {genderLabels[gender] || gender}
-      </span>
-    );
+  // Toggle published
+  const togglePublished = async (playerId: string, currentValue: boolean) => {
+    setTogglingPublished(playerId);
+    try {
+      const newValue = !currentValue;
+      await fetch(`/api/players/${playerId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublished: newValue }),
+      });
+      setPlayers((prev) =>
+        prev.map((p) => (p.id === playerId ? { ...p, isPublished: newValue } : p))
+      );
+    } catch (error) {
+      console.error('Ошибка переключения:', error);
+    } finally {
+      setTogglingPublished(null);
+    }
   };
 
+  // Поиск
   const filteredPlayers = search
     ? players.filter((p) => {
         const fullName = `${p.lastName} ${p.firstName} ${p.middleName || ''}`.toLowerCase();
@@ -182,15 +148,48 @@ export default function PlayersByTeamPageClient({
     currentPage * PAGE_SIZE
   );
 
+  const getLevelBadge = (level: string | null) => {
+    if (!level) return null;
+    const isPro = level === 'professional';
+    return (
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase ${
+          isPro
+            ? 'bg-[#ee862c]/20 text-[#ee862c] border border-[#ee862c]/30'
+            : 'bg-white/5 text-gray-400 border border-white/10'
+        }`}
+      >
+        <FontAwesomeIcon icon={faLayerGroup} className="text-[8px]" />
+        {levelLabels[level] || level}
+      </span>
+    );
+  };
+
+  const getGenderBadge = (gender: string | null) => {
+    if (!gender) return null;
+    const isMale = gender === 'male';
+    return (
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase ${
+          isMale
+            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+            : 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
+        }`}
+      >
+        <FontAwesomeIcon icon={faVenusMars} className="text-[8px]" />
+        {genderLabels[gender] || gender}
+      </span>
+    );
+  };
+
   return (
     <div>
-      {/* Кнопка "Все игроки клуба" */}
       <div className="mb-4">
         <Link
           href="/admin/players"
           className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-400 border border-white/10 hover:text-white hover:border-white/30 transition-colors"
         >
-          <FontAwesomeIcon icon={faUsers} className="text-xs" />
+          <FontAwesomeIcon icon={faUser} className="text-xs" />
           Показать всех игроков клуба
         </Link>
       </div>
@@ -230,28 +229,27 @@ export default function PlayersByTeamPageClient({
             {search ? 'Ничего не найдено' : 'Нет игроков в этой команде'}
           </div>
         ) : (
-          <table className="w-full min-w-[900px]">
+          <table className="w-full min-w-[700px]">
             <thead className="border-b border-white/10 bg-white/5">
               <tr>
                 <th className="p-3 text-left text-sm font-medium text-gray-400 w-10">#</th>
                 <th className="p-3 text-left text-sm font-medium text-gray-400 w-12">Фото</th>
                 <th className="p-3 text-left text-sm font-medium text-gray-400">Фамилия Имя</th>
+                <th className="p-3 text-center text-sm font-medium text-gray-400 w-16">Номер</th>
+                <th className="p-3 text-center text-sm font-medium text-gray-400">Поз.</th>
                 <th className="p-3 text-center text-sm font-medium text-gray-400">Уровень</th>
                 <th className="p-3 text-center text-sm font-medium text-gray-400">Пол</th>
-                <th className="p-3 text-center text-sm font-medium text-gray-400">Поз.</th>
-                {allTeams.map((team) => (
-                  <th key={team.id} className="p-3 text-center text-sm font-medium text-gray-400">
-                    {teamShortLabels[team.slug] || team.name}
-                  </th>
-                ))}
-                <th className="p-3 text-center text-sm font-medium text-gray-400">Действия</th>
+                <th className="p-3 text-center text-sm font-medium text-gray-400 w-20">Опубл.</th>
+                <th className="p-3 text-center text-sm font-medium text-gray-400 w-16">Ред.</th>
               </tr>
             </thead>
             <tbody>
               {paginatedPlayers.map((player, index) => (
                 <tr
                   key={player.id}
-                  className={`border-b border-white/5 hover:bg-white/5 transition-colors ${!player.isActive ? 'opacity-50' : ''}`}
+                  className={`border-b border-white/5 hover:bg-white/5 transition-colors ${
+                    !player.isActive ? 'opacity-50' : ''
+                  }`}
                 >
                   <td className="p-3 text-sm text-gray-500">
                     {(currentPage - 1) * PAGE_SIZE + index + 1}
@@ -279,48 +277,106 @@ export default function PlayersByTeamPageClient({
                       {player.middleName && (
                         <p className="text-xs text-gray-500">{player.middleName}</p>
                       )}
-                      {player.number && (
-                        <p className="text-xs text-[#ee862c] font-bold">#{player.number}</p>
-                      )}
                     </div>
+                  </td>
+                  {/* Номер */}
+                  <td className="p-3 text-center">
+                    {editingField?.playerId === player.id && editingField?.field === 'number' ? (
+                      <div className="flex items-center gap-1 justify-center">
+                        <Input
+                          type="number"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="w-16 h-7 text-xs border-white/10 bg-white/5 text-white text-center"
+                          min="1"
+                          max="99"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveField(player.id, 'number', editValue);
+                            if (e.key === 'Escape') setEditingField(null);
+                          }}
+                        />
+                        <button
+                          onClick={() => saveField(player.id, 'number', editValue)}
+                          disabled={saving}
+                          className="text-green-500 hover:text-green-400"
+                        >
+                          <FontAwesomeIcon icon={faSave} className="text-xs" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setEditingField({ playerId: player.id, field: 'number' });
+                          setEditValue(player.number?.toString() || '');
+                        }}
+                        className="text-[#ee862c] font-bold hover:underline text-sm"
+                      >
+                        {player.number || '—'}
+                      </button>
+                    )}
+                  </td>
+                  {/* Позиция */}
+                  <td className="p-3 text-center">
+                    {editingField?.playerId === player.id && editingField?.field === 'position' ? (
+                      <div className="flex items-center gap-1 justify-center">
+                        <select
+                          value={editValue}
+                          onChange={(e) => {
+                            setEditValue(e.target.value);
+                            saveField(player.id, 'position', e.target.value);
+                            setEditingField(null);
+                          }}
+                          className="h-7 text-xs border border-white/10 bg-[#1a1a2e] text-white"
+                          autoFocus
+                          onBlur={() => setEditingField(null)}
+                        >
+                          {positionOptions.map((pos) => (
+                            <option key={pos} value={pos}>
+                              {pos || '—'}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setEditingField({ playerId: player.id, field: 'position' });
+                          setEditValue(player.position || '');
+                        }}
+                        className="text-gray-400 hover:text-white text-sm"
+                      >
+                        {player.position || '—'}
+                      </button>
+                    )}
                   </td>
                   <td className="p-3 text-center">{getLevelBadge(player.level)}</td>
                   <td className="p-3 text-center">{getGenderBadge(player.gender)}</td>
-                  <td className="p-3 text-center text-sm text-gray-400">
-                    {player.position || '—'}
+                  {/* Опубликован */}
+                  <td className="p-3 text-center">
+                    <button
+                      onClick={() => togglePublished(player.id, player.isPublished)}
+                      disabled={togglingPublished === player.id}
+                      className={`text-xl transition-colors ${
+                        togglingPublished === player.id ? 'opacity-50' : ''
+                      } ${
+                        player.isPublished
+                          ? 'text-green-500 hover:text-green-400'
+                          : 'text-gray-600 hover:text-gray-400'
+                      }`}
+                      title={player.isPublished ? 'Скрыть' : 'Опубликовать'}
+                    >
+                      <FontAwesomeIcon icon={player.isPublished ? faToggleOn : faToggleOff} />
+                    </button>
                   </td>
-                  {allTeams.map((team) => {
-                    const isOn = teamToggles[player.id]?.[team.id] || false;
-                    const isToggling = togglingTeam === `${player.id}_${team.id}`;
-                    return (
-                      <td key={team.id} className="p-3 text-center">
-                        <button
-                          onClick={() => toggleTeam(player.id, team.id)}
-                          disabled={isToggling}
-                          className={`text-xl transition-colors ${isToggling ? 'opacity-50' : ''} ${isOn ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
-                          title={isOn ? `Убрать из ${team.name}` : `Добавить в ${team.name}`}
-                        >
-                          <FontAwesomeIcon icon={isOn ? faToggleOn : faToggleOff} />
-                        </button>
-                      </td>
-                    );
-                  })}
-                  <td className="p-3">
-                    <div className="flex items-center justify-center gap-2">
-                      <Link
-                        href={`/admin/players/edit/${player.id}`}
-                        className="text-sm text-[#ee862c] hover:underline"
-                      >
-                        <FontAwesomeIcon icon={faEdit} />
-                      </Link>
-                      {player.isManuallyCreated && (
-                        <DeleteButton
-                          id={player.id}
-                          apiUrl="/api/players"
-                          name={`${player.lastName} ${player.firstName}`}
-                        />
-                      )}
-                    </div>
+                  {/* Редактировать */}
+                  <td className="p-3 text-center">
+                    <Link
+                      href={`/admin/players/edit/${player.id}?from=${currentTeamSlug}`}
+                      className="text-sm text-[#ee862c] hover:underline"
+                    >
+                      <FontAwesomeIcon icon={faEdit} />
+                    </Link>
                   </td>
                 </tr>
               ))}
@@ -343,7 +399,11 @@ export default function PlayersByTeamPageClient({
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`px-3 py-1 text-sm border ${page === currentPage ? 'border-[#ee862c] text-[#ee862c] bg-[#ee862c]/10' : 'border-white/10 text-gray-400 hover:text-white hover:border-white/30'}`}
+              className={`px-3 py-1 text-sm border ${
+                page === currentPage
+                  ? 'border-[#ee862c] text-[#ee862c] bg-[#ee862c]/10'
+                  : 'border-white/10 text-gray-400 hover:text-white hover:border-white/30'
+              }`}
             >
               {page}
             </button>

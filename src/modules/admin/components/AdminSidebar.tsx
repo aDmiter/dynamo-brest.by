@@ -9,6 +9,7 @@ import {
   faHome,
   faNewspaper,
   faUsers,
+  faUserTie,
   faCalendarDays,
   faTableList,
   faAd,
@@ -51,6 +52,7 @@ const menuItems: MenuItem[] = [
       { title: 'Женская команда', href: '/admin/players/zhenskaya-komanda' },
     ],
   },
+  { title: 'Тренеры', href: '/admin/coaches', icon: faUserTie },
   { title: 'Клубы', href: '/admin/opponent-teams', icon: faShieldHalved },
   {
     title: 'Матчи',

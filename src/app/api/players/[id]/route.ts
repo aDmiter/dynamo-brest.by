@@ -31,21 +31,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 // PUT — обновить данные игрока
-// Ключевой момент: этот роут используется и для ручного редактирования,
-// и для синхронизации из COMET. При синхронизации из COMET мы НЕ перезаписываем
-// поля, которые админ мог изменить вручную (photoUrl, bio, country, city, height, weight, number, isPublished, order)
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const data = await request.json();
 
-    // Определяем, кто вызывает: ручное редактирование или синхронизация из COMET
     const isSync = data._sync === true;
 
-    // Собираем поля для обновления
     const updateData: Record<string, unknown> = {};
 
-    // Поля, которые ВСЕГДА обновляются (и из COMET, и вручную)
+    // Поля, которые ВСЕГДА обновляются
     if (data.firstName !== undefined) updateData.firstName = data.firstName;
     if (data.lastName !== undefined) updateData.lastName = data.lastName;
     if (data.middleName !== undefined) updateData.middleName = data.middleName;
@@ -58,8 +53,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.level !== undefined) updateData.level = data.level;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-    // Поля, которые обновляются ТОЛЬКО при ручном редактировании (не из COMET)
-    // При синхронизации они не перезаписываются, сохраняя ручные правки админа
+    // Поля, которые обновляются ТОЛЬКО при ручном редактировании
     if (!isSync) {
       if (data.number !== undefined) updateData.number = data.number;
       if (data.photoUrl !== undefined) updateData.photoUrl = data.photoUrl;
@@ -70,6 +64,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       if (data.weight !== undefined) updateData.weight = data.weight;
       if (data.isPublished !== undefined) updateData.isPublished = data.isPublished;
       if (data.order !== undefined) updateData.order = data.order;
+      if (data.gallery !== undefined) updateData.gallery = data.gallery;
     }
 
     // Обновляем игрока
@@ -78,11 +73,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data: updateData,
     });
 
-    // Обновляем связи с командами (только если передан teamIds и это не синхронизация)
+    // Обновляем связи с командами
     if (data.teamIds !== undefined && !isSync) {
-      // Удаляем старые связи
       await prisma.playerTeam.deleteMany({ where: { playerId: id } });
-      // Создаём новые
       const teamIds: string[] = data.teamIds || [];
       if (teamIds.length > 0) {
         await prisma.playerTeam.createMany({
@@ -91,7 +84,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Возвращаем обновлённого игрока с командами
     const updatedPlayer = await prisma.player.findUnique({
       where: { id },
       include: {
@@ -123,8 +115,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Игрок не найден' }, { status: 404 });
     }
 
-    // Разрешаем удалять только вручную созданных игроков
-    // Игроки из COMET должны деактивироваться через isActive = false, а не удаляться
     if (!player.isManuallyCreated) {
       return NextResponse.json(
         { error: 'Нельзя удалить игрока из COMET. Используйте деактивацию (isActive = false)' },
@@ -132,9 +122,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Удаляем связи с командами
     await prisma.playerTeam.deleteMany({ where: { playerId: id } });
-    // Удаляем игрока
     await prisma.player.delete({ where: { id } });
 
     return NextResponse.json({ success: true });

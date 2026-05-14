@@ -1,11 +1,11 @@
-// src/app/team/main/players/page.tsx - Основной состав
+// src/app/team/women/players/page.tsx - Женская команда
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import PlayersGrid from '@/modules/team/components/PlayersGrid';
 
-export default async function MainPlayersPage() {
+export default async function WomenPlayersPage() {
   const team = await prisma.team.findUnique({
-    where: { slug: 'osnovnoy-sostav' },
+    where: { slug: 'zhenskaya-komanda' },
   });
 
   if (!team) notFound();
@@ -25,7 +25,6 @@ export default async function MainPlayersPage() {
     },
   });
 
-  // Сортируем по позициям и номерам
   const positionOrder: Record<string, number> = {
     Вратарь: 1,
     Защитник: 2,
@@ -48,7 +47,7 @@ export default async function MainPlayersPage() {
       <div className="relative h-[40vh] w-full overflow-hidden">
         <img
           src="/images/stadium.jpg"
-          alt="Основной состав"
+          alt="Женская команда"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-black/60" />
@@ -61,7 +60,7 @@ export default async function MainPlayersPage() {
               className="text-4xl leading-tight text-white md:text-6xl lg:text-7xl"
               style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
             >
-              Основной состав
+              Женская команда
             </h1>
           </div>
         </div>

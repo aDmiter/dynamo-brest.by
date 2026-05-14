@@ -1,6 +1,6 @@
 // src/app/admin/players/[teamSlug]/page.tsx - Игроки конкретной команды
 import { prisma } from '@/lib/prisma';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import PlayersByTeamPageClient from './PlayersByTeamPageClient';
 
 interface Props {
@@ -31,12 +31,6 @@ export default async function PlayersByTeamPage({ params }: Props) {
   if (!team) {
     notFound();
   }
-
-  // Все активные команды для toggler'ов в таблице
-  const allTeams = await prisma.team.findMany({
-    where: { isActive: true },
-    orderBy: { order: 'asc' },
-  });
 
   // Игроки этой команды
   const players = team.playerTeams.map((pt) => pt.player);
@@ -78,8 +72,8 @@ export default async function PlayersByTeamPage({ params }: Props) {
       </div>
       <PlayersByTeamPageClient
         initialPlayers={serializedPlayers}
-        allTeams={allTeams}
         currentTeamSlug={teamSlug}
+        currentTeamName={team.name}
       />
     </div>
   );
