@@ -8,7 +8,7 @@ export default function Loading() {
           src="/images/spinner-2.png"
           alt="Загрузка..."
           className="absolute h-72 w-auto"
-          style={{ animation: 'spin 2s linear infinite' }}
+          style={{ animation: 'spin 3s linear infinite' }}
         />
       </div>
     </div>

@@ -30,7 +30,6 @@ export default function BurgerMenu() {
       .then((data) => setMenu(data.filter((item: MenuItem) => item.isActive)));
   }, []);
 
-  // Блокировка скролла при открытии меню
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -58,7 +57,23 @@ export default function BurgerMenu() {
       {/* Кнопка бургера */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed right-6 top-6 z-40 flex h-12 w-12 items-center justify-center border border-white/20 bg-white/5 backdrop-blur-md text-white hover:border-[#ee862c] hover:text-[#ee862c] transition-all lg:right-8 lg:top-8"
+        className="fixed right-6 top-6 z-40 flex h-12 w-12 items-center justify-center transition-all lg:right-8 lg:top-8"
+        style={{
+          border: '1px solid var(--color-border)',
+          background: 'transparent',
+          backdropFilter: 'blur(12px)',
+          color: '#ffffff',
+        }}
+        onMouseEnter={(e) => {
+          const el = e.currentTarget as HTMLButtonElement;
+          el.style.borderColor = 'var(--color-accent)';
+          el.style.color = 'var(--color-accent)';
+        }}
+        onMouseLeave={(e) => {
+          const el = e.currentTarget as HTMLButtonElement;
+          el.style.borderColor = 'var(--color-border)';
+          el.style.color = '#ffffff';
+        }}
         aria-label="Меню"
       >
         <FontAwesomeIcon icon={faBars} className="text-xl" />
@@ -66,16 +81,22 @@ export default function BurgerMenu() {
 
       {/* Меню */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-[#242C41] flex">
+        <div className="fixed inset-0 z-50 flex" style={{ background: 'var(--color-bg-main)' }}>
           {/* Левая панель с логотипом */}
-          <div className="hidden lg:flex w-20 border-r border-white/10 flex-col items-center pt-8">
+          <div
+            className="hidden lg:flex w-20 flex-col items-center pt-8"
+            style={{ borderRight: '1px solid var(--color-border)' }}
+          >
             <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-12 w-auto" />
           </div>
 
           {/* Основное меню */}
           <div className="flex-1 overflow-y-auto">
             {/* Шапка */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
+            <div
+              className="flex items-center justify-between p-6"
+              style={{ borderBottom: '1px solid var(--color-border)' }}
+            >
               <img
                 src="/images/logos/logo-white.png"
                 alt="Динамо-Брест"
@@ -83,7 +104,21 @@ export default function BurgerMenu() {
               />
               <button
                 onClick={handleClose}
-                className="flex h-12 w-12 items-center justify-center border border-white/20 text-white hover:border-[#ee862c] hover:text-[#ee862c] transition-all ml-auto"
+                className="flex h-12 w-12 items-center justify-center ml-auto transition-all"
+                style={{
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text-nav)',
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLButtonElement;
+                  el.style.borderColor = 'var(--color-accent)';
+                  el.style.color = 'var(--color-accent)';
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLButtonElement;
+                  el.style.borderColor = 'var(--color-border)';
+                  el.style.color = 'var(--color-text-nav)';
+                }}
               >
                 <FontAwesomeIcon icon={faTimes} className="text-xl" />
               </button>
@@ -94,7 +129,10 @@ export default function BurgerMenu() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {menu.map((item) => (
                   <div key={item.id} className="space-y-3">
-                    <h3 className="font-heading text-lg font-bold text-white uppercase tracking-wider">
+                    <h3
+                      className="font-heading text-lg font-bold uppercase tracking-wider"
+                      style={{ color: 'var(--color-text-heading)' }}
+                    >
                       {item.title}
                     </h3>
                     {item.children && item.children.length > 0 && (
@@ -107,11 +145,21 @@ export default function BurgerMenu() {
                                 href={getUrl(child)}
                                 onClick={handleClose}
                                 target={child.isExternal ? '_blank' : undefined}
-                                className="flex items-center gap-2 text-sm text-gray-400 hover:text-[#ee862c] transition-colors py-1.5 group"
+                                className="flex items-center gap-2 text-sm py-1.5 group transition-colors"
+                                style={{ color: 'var(--color-text-stat)' }}
+                                onMouseEnter={(e) => {
+                                  const el = e.currentTarget as HTMLAnchorElement;
+                                  el.style.color = 'var(--color-accent)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  const el = e.currentTarget as HTMLAnchorElement;
+                                  el.style.color = 'var(--color-text-stat)';
+                                }}
                               >
                                 <FontAwesomeIcon
                                   icon={faChevronRight}
-                                  className="text-[8px] text-gray-600 group-hover:text-[#ee862c] transition-colors"
+                                  className="text-[8px] transition-colors"
+                                  style={{ color: 'var(--color-text-label)' }}
                                 />
                                 {child.title}
                               </Link>
@@ -125,8 +173,11 @@ export default function BurgerMenu() {
             </div>
 
             {/* Футер меню */}
-            <div className="border-t border-white/10 p-6 lg:p-12 mt-8">
-              <p className="text-sm text-gray-500">
+            <div
+              className="p-6 lg:p-12 mt-8"
+              style={{ borderTop: '1px solid var(--color-border)' }}
+            >
+              <p className="text-sm" style={{ color: 'var(--color-text-label)' }}>
                 © {new Date().getFullYear()} ФК «Динамо-Брест»
               </p>
             </div>

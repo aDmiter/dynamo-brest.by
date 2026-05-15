@@ -83,6 +83,15 @@ function calculateAge(birthDate: string | null): number | null {
   return age;
 }
 
+function getAgeLabel(age: number): string {
+  const lastDigit = age % 10;
+  const lastTwo = age % 100;
+  if (lastTwo >= 11 && lastTwo <= 14) return 'лет';
+  if (lastDigit === 1) return 'год';
+  if (lastDigit >= 2 && lastDigit <= 4) return 'года';
+  return 'лет';
+}
+
 function getSeason(): string {
   return String(new Date().getFullYear());
 }
@@ -182,7 +191,7 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
         </div>
 
         {/* Левая часть — информация */}
-        <div className="player-page__info-side relative z-10 flex items-center w-full md:w-1/2 lg:w-[45%] px-6 py-24 md:px-16 md:pl-24 lg:pl-32 order-2 md:order-1">
+        <div className="player-page__info-side relative z-10 flex items-center w-full md:w-1/2 lg:w-[45%] px-6 py-24 md:px-16 md:pl-28 lg:pl-40 order-2 md:order-1">
           <div className="w-full max-w-xl">
             {/* Амплуа и маленький номер */}
             <div className="player-page__badge-row flex items-center gap-3 mb-6">
@@ -226,7 +235,11 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
                   icon={faCalendarAlt}
                   className="text-[var(--color-accent)] w-3.5 h-3.5 flex-shrink-0"
                 />
-                {age && <span className="text-white/85 font-semibold">{age} года</span>}
+                {age && (
+                  <span className="text-white/85 font-semibold">
+                    {age} {getAgeLabel(age)}
+                  </span>
+                )}
                 {age && player.birthDate && <span className="text-white/30">·</span>}
                 {player.birthDate && <span>{formatDate(player.birthDate)}</span>}
               </div>

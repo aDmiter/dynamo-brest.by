@@ -231,7 +231,10 @@ def save_split_txt(files: list[tuple[str, str]], output_base: Path, max_lines: i
             toc += f"  - {f}\n"
         toc += "\n" + "=" * 50 + "\n\n"
 
-        final_content = toc + part_content
+        # Add end marker for LLM
+        end_marker = f"\n\n=== END OF PART {idx} OF {total_parts} ===\n"
+
+        final_content = toc + part_content + end_marker
         # Always save as UTF-8
         output_path.write_text(final_content, encoding='utf-8')
 
