@@ -54,9 +54,15 @@ export default async function Home() {
             bannerId={banner.id}
           />
         ) : (
-          <section className="banner relative flex h-screen items-center justify-center bg-gradient-to-br from-[#0B0F1C] via-[#0D1225] to-[#0F1529]">
+          <section
+            className="banner relative flex h-screen items-center justify-center"
+            style={{ background: 'var(--color-bg-main)' }}
+          >
             <div className="banner__container relative z-10 text-center px-4">
-              <p className="text-sm font-medium uppercase tracking-[0.3em] text-[#ee862c]">
+              <p
+                className="text-sm font-medium uppercase tracking-[0.3em]"
+                style={{ color: 'var(--color-accent)' }}
+              >
                 Реклама
               </p>
               <h2 className="mt-4 text-5xl font-bold text-white md:text-7xl">Ваш баннер здесь</h2>
@@ -78,7 +84,8 @@ export default async function Home() {
           </section>
         )}
 
-        {/* Секция 5: Товары магазина */}
+        {/* Товары магазина */}
+
         <section className="shop relative flex min-h-screen flex-col bg-white">
           <div className="shop__products flex flex-1 flex-col md:flex-row">
             {featuredProducts.length === 0
@@ -88,12 +95,21 @@ export default async function Home() {
                     className="shop__product group relative flex flex-1 items-center justify-center border-r border-b border-gray-200 transition-colors hover:bg-gray-50"
                   >
                     <div className="text-center p-8">
-                      <FontAwesomeIcon icon={faShirt} className="mb-6 text-6xl text-[#ee862c]" />
+                      <FontAwesomeIcon
+                        icon={faShirt}
+                        className="mb-6 text-6xl"
+                        style={{ color: 'var(--color-accent)' }}
+                      />
                       <p className="font-heading text-lg font-bold uppercase tracking-wider text-[#242C41]">
                         Товар {item}
                       </p>
                       <p className="mt-2 text-sm text-gray-500">Скоро в продаже</p>
-                      <p className="mt-4 font-heading text-3xl font-bold text-[#ee862c]">—</p>
+                      <p
+                        className="mt-4 font-heading text-3xl font-bold"
+                        style={{ color: 'var(--color-accent)' }}
+                      >
+                        —
+                      </p>
                     </div>
                   </div>
                 ))
@@ -118,7 +134,6 @@ export default async function Home() {
                           <FontAwesomeIcon icon={faShirt} className="text-6xl text-gray-300" />
                         </div>
                       )}
-
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-8 pt-24">
                         <p className="font-heading text-xl font-bold uppercase tracking-wider text-white line-clamp-2">
                           {product.name}
@@ -133,11 +148,14 @@ export default async function Home() {
                             </p>
                           </div>
                         ) : (
-                          <p className="mt-2 font-heading text-2xl font-bold text-[#ee862c]">
+                          <p
+                            className="mt-2 font-heading text-2xl font-bold"
+                            style={{ color: 'var(--color-accent)' }}
+                          >
                             {Number(product.price).toFixed(2)} BYN
                           </p>
                         )}
-                        <span className="mt-3 inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-white/70 transition-colors group-hover:text-[#ee862c]">
+                        <span className="mt-3 inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-white/70 transition-colors group-hover:text-[var(--color-accent)]">
                           Подробнее
                           <FontAwesomeIcon
                             icon={faArrowRight}
@@ -152,11 +170,17 @@ export default async function Home() {
 
           <div className="shop__footer flex items-center justify-between bg-[#F5F5F5] px-8 py-6">
             <h2 className="font-heading text-xl font-bold uppercase tracking-wider text-[#242C41]">
-              <FontAwesomeIcon icon={faShirt} className="mr-3 text-[#ee862c]" /> Магазин
+              <FontAwesomeIcon
+                icon={faShirt}
+                className="mr-3"
+                style={{ color: 'var(--color-accent)' }}
+              />{' '}
+              Магазин
             </h2>
             <Link
               href="/shop/catalog"
-              className="text-sm font-medium uppercase tracking-wider text-[#ee862c] hover:underline"
+              className="text-sm font-medium uppercase tracking-wider"
+              style={{ color: 'var(--color-accent)' }}
             >
               Все товары →
             </Link>

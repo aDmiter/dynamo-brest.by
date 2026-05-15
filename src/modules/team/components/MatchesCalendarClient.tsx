@@ -94,7 +94,7 @@ export default function MatchesCalendarClient({ matches, teamName }: Props) {
   const ourLogo = '/images/logos/logo-white.png';
 
   return (
-    <div className="calendar-page min-h-screen bg-[#0d1117]">
+    <div className="calendar-page min-h-screen bg-[var(--color-bg-main)]">
       <div className="calendar-page__hero relative h-[40vh] w-full overflow-hidden">
         <img
           src="/images/stadium.jpg"
@@ -104,7 +104,7 @@ export default function MatchesCalendarClient({ matches, teamName }: Props) {
         <div className="calendar-page__hero-overlay absolute inset-0 bg-black/60" />
         <div className="calendar-page__hero-content absolute inset-0 flex items-center">
           <div className="w-full pl-6 md:pl-36">
-            <p className="calendar-page__hero-subtitle mb-4 text-sm font-bold uppercase tracking-[0.3em] text-[#ee862c]">
+            <p className="calendar-page__hero-subtitle mb-4 text-sm font-bold uppercase tracking-[0.3em] text-[var(--color-accent)]">
               {teamName}
             </p>
             <h1
@@ -175,9 +175,9 @@ function CalendarCard({
   const awayLogo = match.isHome ? match.awayLogoUrl || '/images/placeholder.jpg' : ourLogo;
 
   return (
-    <div className="calendar-card relative flex flex-col border border-white/10 bg-white/5 overflow-hidden transition-all duration-300 hover:bg-white/[0.07] hover:border-[#ee862c]/20">
+    <div className="calendar-card relative flex flex-col border border-[var(--color-border)] bg-white/5 overflow-hidden transition-all duration-300 hover:bg-white/[0.07] hover:border-[var(--color-accent-20)]">
       <div className="flex flex-col md:flex-row">
-        <div className="calendar-card__date flex flex-row md:flex-col items-center justify-center gap-2 p-6 md:w-36 md:border-r border-white/10 bg-white/[0.03]">
+        <div className="calendar-card__date flex flex-row md:flex-col items-center justify-center gap-2 p-6 md:w-36 md:border-r border-[var(--color-border)] bg-white/[0.03]">
           {tbd ? (
             <span className="calendar-card__date-tbd text-sm font-bold uppercase tracking-wider text-gray-500 text-center">
               Дата
@@ -195,7 +195,7 @@ function CalendarCard({
               <span className="calendar-card__date-month text-sm font-bold uppercase tracking-wider text-gray-400">
                 {MONTHS[new Date(match.matchDate).getMonth()].substring(0, 3)}
               </span>
-              <span className="calendar-card__date-time flex items-center gap-1 text-xs text-[#ee862c]">
+              <span className="calendar-card__date-time flex items-center gap-1 text-xs text-[var(--color-accent)]">
                 <FontAwesomeIcon icon={faClock} />
                 {new Date(match.matchDate).toLocaleTimeString('ru-RU', {
                   hour: '2-digit',
@@ -241,12 +241,12 @@ function CalendarCard({
           <div className="calendar-card__info md:ml-auto flex flex-col items-end gap-2 text-xs">
             <div className="flex flex-wrap items-center gap-3 justify-end">
               {match.tournament && (
-                <span className="calendar-card__tournament border border-white/10 px-3 py-1.5 text-gray-400 font-medium uppercase tracking-wider">
+                <span className="calendar-card__tournament border border-[var(--color-border)] px-3 py-1.5 text-gray-400 font-medium uppercase tracking-wider">
                   {match.tournament}
                 </span>
               )}
               {match.round && (
-                <span className="calendar-card__round border border-white/10 px-3 py-1.5 text-[#ee862c]">
+                <span className="calendar-card__round border border-[var(--color-border)] px-3 py-1.5 text-[var(--color-accent)]">
                   {match.round} тур
                 </span>
               )}
@@ -259,12 +259,12 @@ function CalendarCard({
       </div>
 
       {match.ticketUrl && (
-        <div className="calendar-card__tickets w-full border-t border-white/10">
+        <div className="calendar-card__tickets w-full border-t border-[var(--color-border)]">
           <a
             href={match.ticketUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-[#ee862c] px-6 py-3 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#f0ac74] transition-colors"
+            className="flex items-center justify-center gap-2 bg-[var(--color-accent)] px-6 py-3 text-sm font-bold uppercase tracking-wider text-white hover:bg-[var(--color-accent-hover)] transition-colors"
           >
             <FontAwesomeIcon icon={faTicketAlt} className="text-xs" />
             Купить билет

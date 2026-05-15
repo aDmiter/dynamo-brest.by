@@ -80,7 +80,10 @@ export default function NewsPage() {
 
   if (news.length === 0 && !loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0B0F1C]">
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{ background: 'var(--color-bg-main)' }}
+      >
         <p className="text-xl text-gray-500">Новостей пока нет</p>
       </div>
     );
@@ -90,8 +93,8 @@ export default function NewsPage() {
   const restNews = news.slice(1);
 
   return (
-    <div className="news-page">
-      {/* Первая новость — 100vh как слайдер */}
+    <div className="news-page" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+      {/* Первая новость — 100vh */}
       {firstNews && (
         <section className="news-page__hero relative h-screen w-full overflow-hidden">
           <img
@@ -99,21 +102,49 @@ export default function NewsPage() {
             alt={firstNews.title}
             className="news-page__hero-image absolute inset-0 h-full w-full object-cover"
           />
-          <div className="news-page__hero-overlay absolute inset-0 bg-black/50" />
+          <div className="news-page__hero-overlay absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
 
           <div className="news-page__hero-content absolute inset-0 flex items-center">
             <div className="w-full pl-6 md:pl-36">
-              <p className="news-page__hero-category mb-4 text-sm font-bold uppercase tracking-[0.3em] text-[#ee862c]">
-                {categoryLabels[firstNews.category] || firstNews.category}
-              </p>
+              {/* Категория как позиция */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                <div
+                  style={{
+                    background: 'var(--color-accent-10)',
+                    border: '1.5px solid var(--color-accent)',
+                    borderRadius: 6,
+                    padding: '4px 12px',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: 'var(--color-accent)',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {categoryLabels[firstNews.category] || firstNews.category}
+                </div>
+                <div
+                  style={{
+                    height: 1,
+                    width: 32,
+                    background: 'linear-gradient(to right, var(--color-accent-30), transparent)',
+                  }}
+                />
+              </div>
+
               <h1
-                className="news-page__hero-title max-w-3xl text-4xl leading-tight text-white md:text-6xl lg:text-7xl"
-                style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
+                className="news-page__hero-title max-w-3xl text-4xl leading-[0.92] text-white md:text-6xl lg:text-7xl"
+                style={{
+                  fontFamily: "'Inter Tight', sans-serif",
+                  fontWeight: 900,
+                  letterSpacing: '-0.03em',
+                  textTransform: 'uppercase',
+                }}
               >
                 {firstNews.title}
               </h1>
               <p className="news-page__hero-date mt-6 flex items-center gap-2 text-sm text-white/50">
-                <FontAwesomeIcon icon={faCalendarAlt} className="text-[#ee862c]" />
+                <FontAwesomeIcon icon={faCalendarAlt} style={{ color: 'var(--color-accent)' }} />
                 {new Date(firstNews.publishedAt).toLocaleDateString('ru-RU', {
                   day: 'numeric',
                   month: 'long',
@@ -122,7 +153,32 @@ export default function NewsPage() {
               </p>
               <Link
                 href={`/news/${firstNews.slug}`}
-                className="news-page__hero-link mt-8 inline-flex items-center gap-3 border border-white/30 px-8 py-4 text-sm font-medium uppercase tracking-wider text-white transition-colors hover:border-[#ee862c] hover:bg-[#ee862c] hover:text-white"
+                className="news-page__hero-link mt-10 inline-flex items-center gap-2"
+                style={{
+                  background: 'transparent',
+                  border: '1.5px solid rgba(255,255,255,0.2)',
+                  borderRadius: 8,
+                  padding: '10px 20px',
+                  color: 'rgba(255,255,255,0.7)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  transition: 'all 0.2s ease',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={(e) => {
+                  const t = e.currentTarget as HTMLAnchorElement;
+                  t.style.borderColor = 'var(--color-accent)';
+                  t.style.color = 'var(--color-accent)';
+                  t.style.background = 'var(--color-accent-7)';
+                }}
+                onMouseLeave={(e) => {
+                  const t = e.currentTarget as HTMLAnchorElement;
+                  t.style.borderColor = 'rgba(255,255,255,0.2)';
+                  t.style.color = 'rgba(255,255,255,0.7)';
+                  t.style.background = 'transparent';
+                }}
               >
                 Читать
                 <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
@@ -130,7 +186,7 @@ export default function NewsPage() {
             </div>
           </div>
 
-          {/* Социальные сети справа */}
+          {/* Соцсети */}
           <div className="news-page__social absolute right-6 top-1/2 z-10 hidden -translate-y-1/2 flex-col items-center gap-6 md:flex">
             {socialLinks.map((social) => (
               <a
@@ -139,12 +195,29 @@ export default function NewsPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={social.label}
-                className="text-white/50 transition-colors hover:text-[#ee862c]"
+                style={{ color: 'rgba(255,255,255,0.45)', transition: 'all 0.2s ease' }}
+                onMouseEnter={(e) => {
+                  const t = e.currentTarget as HTMLAnchorElement;
+                  t.style.color = 'rgba(255,255,255,0.95)';
+                  t.style.transform = 'scale(1.15)';
+                }}
+                onMouseLeave={(e) => {
+                  const t = e.currentTarget as HTMLAnchorElement;
+                  t.style.color = 'rgba(255,255,255,0.45)';
+                  t.style.transform = 'scale(1)';
+                }}
               >
-                <FontAwesomeIcon icon={social.icon} className="text-lg" />
+                <FontAwesomeIcon icon={social.icon} style={{ width: 16, height: 16 }} />
               </a>
             ))}
-            <div className="h-12 w-[1px] bg-white/20" />
+            <div
+              style={{
+                width: 1,
+                height: 40,
+                background: 'linear-gradient(to bottom, rgba(255,255,255,0.2), transparent)',
+                marginTop: 4,
+              }}
+            />
           </div>
 
           <div className="news-page__scroll absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
@@ -156,9 +229,12 @@ export default function NewsPage() {
         </section>
       )}
 
-      {/* Остальные новости — белый фон */}
+      {/* Остальные новости */}
       {restNews.length > 0 && (
-        <section className="news-page__grid-section relative bg-white py-16">
+        <section
+          className="news-page__grid-section relative py-16"
+          style={{ background: 'var(--color-bg-main)' }}
+        >
           <div className="mx-auto max-w-[1200px] px-4 md:px-8">
             <div className="news-page__grid grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
               {restNews.map((item) => (
@@ -166,20 +242,32 @@ export default function NewsPage() {
                   key={item.id}
                   href={`/news/${item.slug}`}
                   className="news-page__card group relative flex h-[350px] md:h-[380px] overflow-hidden"
+                  style={{ borderRadius: 16 }}
                 >
                   <img
                     src={item.imageUrl || '/images/placeholder.jpg'}
                     alt={item.title}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        'linear-gradient(to top, var(--color-bg-main) 0%, rgba(13,17,23,0.55) 40%, rgba(13,17,23,0.02) 100%)',
+                    }}
+                  />
                   <div className="absolute inset-x-0 bottom-0 p-6">
-                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ee862c]">
+                    <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-accent)]">
                       {categoryLabels[item.category] || item.category}
                     </p>
                     <h3
-                      className="text-lg font-bold text-white md:text-xl line-clamp-2 leading-tight transition-colors group-hover:text-[#ee862c]"
-                      style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
+                      className="text-lg font-bold text-white md:text-xl line-clamp-2 leading-tight transition-colors group-hover:text-[var(--color-accent)]"
+                      style={{
+                        fontFamily: "'Inter Tight', sans-serif",
+                        fontWeight: 900,
+                        letterSpacing: '-0.03em',
+                        textTransform: 'uppercase',
+                      }}
                     >
                       {item.title}
                     </h3>
@@ -197,19 +285,41 @@ export default function NewsPage() {
                 <button
                   onClick={loadMore}
                   disabled={loading}
-                  className="group inline-flex items-center gap-3 px-10 py-5 text-sm font-bold uppercase tracking-wider text-gray-400 transition-all duration-300 hover:text-[#242C41] hover:scale-105 disabled:opacity-30"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    background: 'transparent',
+                    border: '1.5px solid rgba(255,255,255,0.2)',
+                    borderRadius: 8,
+                    padding: '10px 24px',
+                    color: 'rgba(255,255,255,0.7)',
+                    fontFamily: "'Inter Tight', sans-serif",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    cursor: loading ? 'default' : 'pointer',
+                    transition: 'all 0.2s ease',
+                    opacity: loading ? 0.3 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading) {
+                      const t = e.currentTarget as HTMLButtonElement;
+                      t.style.borderColor = 'var(--color-accent)';
+                      t.style.color = 'var(--color-accent)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!loading) {
+                      const t = e.currentTarget as HTMLButtonElement;
+                      t.style.borderColor = 'rgba(255,255,255,0.2)';
+                      t.style.color = 'rgba(255,255,255,0.7)';
+                    }
+                  }}
                 >
-                  {loading ? (
-                    'Загрузка...'
-                  ) : (
-                    <>
-                      Хочу еще почитать
-                      <FontAwesomeIcon
-                        icon={faChevronDown}
-                        className="text-xs transition-transform group-hover:translate-y-1"
-                      />
-                    </>
-                  )}
+                  {loading ? 'Загрузка...' : 'Хочу еще почитать'}
+                  <FontAwesomeIcon icon={faChevronDown} className="text-xs" />
                 </button>
               </div>
             )}
@@ -217,11 +327,13 @@ export default function NewsPage() {
 
           <div className="news-page__title absolute right-0 bottom-0 pointer-events-none select-none">
             <span
-              className="block text-[80px] font-black uppercase tracking-[0.1em] text-[#a5b3d5]/20 md:text-[120px] leading-none"
+              className="block text-[80px] font-black uppercase tracking-[0.1em] md:text-[120px] leading-none"
               style={{
                 writingMode: 'vertical-lr',
                 fontFamily: "'Inter Tight', sans-serif",
                 fontWeight: 900,
+                color: 'var(--color-team-names)',
+                opacity: 0.07,
               }}
             >
               НОВОСТИ

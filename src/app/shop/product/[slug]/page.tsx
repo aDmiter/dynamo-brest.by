@@ -59,6 +59,7 @@ export default async function ProductPage({ params }: Props) {
         inStock: product.inStock,
         images: product.images,
         quantity: product.quantity,
+        useSizes: product.useSizes,
         hasCustomization,
         productcategory: product.productcategory ? { name: product.productcategory.name } : null,
         productsize: product.productsize,

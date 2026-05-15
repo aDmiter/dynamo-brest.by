@@ -1,4 +1,4 @@
-// src/modules/team/components/PlayersGrid.tsx
+// src/modules/team/components/PlayersGrid.tsx - Сетка игроков с группировкой по позициям
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -67,7 +67,6 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
   const [statsMap, setStatsMap] = useState<Record<string, PlayerStats | null>>({});
   const [initDone, setInitDone] = useState(false);
 
-  // Инициализация при первом рендере
   if (!initDone) {
     setInitDone(true);
     startLoadingStats();
@@ -76,7 +75,6 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
   async function startLoadingStats() {
     const cacheKey = `ps_${teamSlug}`;
 
-    // Проверяем кэш
     try {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -86,11 +84,8 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
           return;
         }
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
 
-    // Загружаем
     const map: Record<string, PlayerStats | null> = {};
     for (const p of players) {
       if (!p.cometId) continue;
@@ -106,18 +101,14 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
             assists: data.totals.assists || 0,
           };
         }
-      } catch {
-        // skip
-      }
+      } catch {}
       setStatsMap({ ...map });
       await new Promise((r) => setTimeout(r, 100));
     }
 
     try {
       localStorage.setItem(cacheKey, JSON.stringify({ d: map, t: Date.now() }));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }
 
   const filtered = useMemo(() => {
@@ -141,7 +132,7 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
       className="players-grid"
       style={{
         fontFamily: "'Inter Tight', sans-serif",
-        background: '#0d1117',
+        background: 'var(--color-bg-main)',
         minHeight: '100vh',
         color: '#ffffff',
         overflowX: 'hidden',
@@ -175,7 +166,7 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
             fontFamily: "'Inter Tight', sans-serif",
             fontSize: 'clamp(100px, 18vw, 220px)',
             fontWeight: 900,
-            color: '#ee862c',
+            color: 'var(--color-accent)',
             opacity: 0.055,
             letterSpacing: '-0.05em',
             textTransform: 'uppercase',
@@ -186,6 +177,7 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
         >
           СОСТАВ
         </div>
+
         <div
           className="players-grid__hero-content"
           style={{

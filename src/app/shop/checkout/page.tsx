@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faShoppingCart,
@@ -31,6 +32,9 @@ interface Country {
 }
 
 export default function CheckoutPage() {
+  const searchParams = useSearchParams();
+  const cancelled = searchParams.get('cancelled');
+
   const [cart, setCart] = useState<CartItem[]>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -69,9 +73,6 @@ export default function CheckoutPage() {
   const total = subtotal + deliveryPrice;
 
   const submitToWebPay = (params: Record<string, string>) => {
-    console.log('📤 WebPay POST params:', params);
-
-    // Сохраняем параметры для отладки
     try {
       sessionStorage.setItem('webpay_params', JSON.stringify(params));
     } catch {}
@@ -100,7 +101,7 @@ export default function CheckoutPage() {
     setError('');
 
     try {
-      // Создаём заказ
+      // Создаём заказ со статусом pending_payment — без списания остатков
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,6 +122,7 @@ export default function CheckoutPage() {
           })),
           total,
           status: 'pending_payment',
+          skipStockUpdate: true, // НЕ списываем остатки до оплаты
         }),
       });
 
@@ -129,10 +131,6 @@ export default function CheckoutPage() {
       if (res.ok) {
         const orderNumber = orderData.orderNumber || orderData.id;
 
-        localStorage.removeItem('cart');
-        window.dispatchEvent(new Event('cartUpdated'));
-
-        // Формируем корзину для WebPay — ТОЛЬКО товары, без доставки
         const cartItems = cart.map((item) => ({
           name: item.productName + (item.size ? ` (${item.size})` : ''),
           quantity: item.quantity,
@@ -157,6 +155,8 @@ export default function CheckoutPage() {
 
         if (signData.success) {
           setProcessingPayment(true);
+          // Сохраняем заказ в sessionStorage, чтобы на success странице обновить статус
+          sessionStorage.setItem('pending_order_id', orderData.id);
           submitToWebPay(signData.params);
         } else {
           setError(signData.error || 'Не удалось создать платёж');
@@ -173,18 +173,26 @@ export default function CheckoutPage() {
 
   if (cart.length === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{ background: 'var(--color-bg-main)' }}
+      >
         <div className="text-center">
-          <FontAwesomeIcon icon={faShoppingCart} className="text-6xl text-gray-300 mb-6" />
+          <FontAwesomeIcon
+            icon={faShoppingCart}
+            className="text-6xl mb-6"
+            style={{ color: 'var(--color-text-stat)' }}
+          />
           <h1
-            className="font-heading text-3xl font-bold text-[#242C41]"
+            className="text-3xl font-bold text-white"
             style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
           >
             Корзина пуста
           </h1>
           <Link
             href="/shop/catalog"
-            className="mt-8 inline-flex items-center gap-3 bg-[#ee862c] px-10 py-4 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#f0ac74] transition-colors"
+            className="mt-8 inline-flex items-center gap-3 px-10 py-4 text-sm font-bold uppercase tracking-wider text-white transition-colors"
+            style={{ background: 'var(--color-accent)', borderRadius: 10 }}
           >
             В каталог <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
           </Link>
@@ -194,22 +202,49 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="checkout-page flex min-h-screen bg-white">
+    <div
+      className="checkout-page flex min-h-screen"
+      style={{ background: 'var(--color-bg-main)', fontFamily: "'Inter Tight', sans-serif" }}
+    >
       <div className="checkout-page__form flex w-full flex-col justify-center px-8 py-16 md:w-1/2 md:ml-20 md:pl-12 md:pr-16">
         <Link
           href="/shop/cart"
-          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-[#242C41] mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-sm mb-8 transition-colors"
+          style={{ color: 'var(--color-text-stat)' }}
         >
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs" /> Назад в корзину
         </Link>
         <h1
-          className="text-right text-4xl font-bold text-[#242C41] md:text-5xl"
+          className="text-right text-4xl font-bold text-white md:text-5xl"
           style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
         >
           Оформление заказа
         </h1>
+
+        {cancelled && (
+          <div
+            className="mt-4 p-3 text-sm text-right"
+            style={{
+              border: '1px solid rgba(239,68,68,0.3)',
+              background: 'rgba(239,68,68,0.1)',
+              color: 'var(--color-loss)',
+              borderRadius: 8,
+            }}
+          >
+            Платёж не был завершён. Пожалуйста, попробуйте снова.
+          </div>
+        )}
+
         {error && (
-          <div className="mt-4 border border-red-200 bg-red-50 p-3 text-sm text-red-600 text-right">
+          <div
+            className="mt-4 p-3 text-sm text-right"
+            style={{
+              border: '1px solid rgba(239,68,68,0.3)',
+              background: 'rgba(239,68,68,0.1)',
+              color: 'var(--color-loss)',
+              borderRadius: 8,
+            }}
+          >
             {error}
           </div>
         )}
@@ -220,7 +255,12 @@ export default function CheckoutPage() {
             value={form.customerName}
             onChange={(e) => setForm({ ...form, customerName: e.target.value })}
             placeholder="ФИО *"
-            className="w-full border border-gray-300 p-3 text-sm text-[#242C41] text-right bg-white outline-none focus:border-[#242C41] placeholder:text-gray-400"
+            className="w-full p-3 text-sm text-white text-right outline-none"
+            style={{
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-bg-card)',
+              borderRadius: 8,
+            }}
             required
           />
           <input
@@ -228,13 +268,23 @@ export default function CheckoutPage() {
             value={form.customerEmail}
             onChange={(e) => setForm({ ...form, customerEmail: e.target.value })}
             placeholder="Email *"
-            className="w-full border border-gray-300 p-3 text-sm text-[#242C41] text-right bg-white outline-none focus:border-[#242C41] placeholder:text-gray-400"
+            className="w-full p-3 text-sm text-white text-right outline-none"
+            style={{
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-bg-card)',
+              borderRadius: 8,
+            }}
             required
           />
           <select
             value={form.countryId}
             onChange={(e) => setForm({ ...form, countryId: e.target.value })}
-            className="w-full border border-gray-300 p-3 text-sm text-[#242C41] text-right bg-white outline-none focus:border-[#242C41]"
+            className="w-full p-3 text-sm text-white text-right outline-none"
+            style={{
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-bg-card)',
+              borderRadius: 8,
+            }}
             required
           >
             <option value="">— Выберите страну доставки —</option>
@@ -252,31 +302,41 @@ export default function CheckoutPage() {
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
             placeholder="Адрес доставки *"
-            className="w-full border border-gray-300 p-3 text-sm text-[#242C41] text-right bg-white outline-none focus:border-[#242C41] placeholder:text-gray-400"
+            className="w-full p-3 text-sm text-white text-right outline-none"
+            style={{
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-bg-card)',
+              borderRadius: 8,
+            }}
             required
           />
           <textarea
             value={form.comment}
             onChange={(e) => setForm({ ...form, comment: e.target.value })}
             placeholder="Комментарий к заказу"
-            className="w-full border border-gray-300 p-3 text-sm text-[#242C41] text-right bg-white outline-none focus:border-[#242C41] placeholder:text-gray-400"
+            className="w-full p-3 text-sm text-white text-right outline-none"
+            style={{
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-bg-card)',
+              borderRadius: 8,
+            }}
             rows={3}
           />
 
-          <div className="border-t border-gray-200 pt-6 space-y-2">
+          <div className="pt-6 space-y-2" style={{ borderTop: '1px solid var(--color-border)' }}>
             <div className="flex justify-end items-center gap-4 text-sm">
-              <span className="text-gray-500">Товары ({totalItems}):</span>
-              <span className="text-[#242C41]">{subtotal.toFixed(2)} BYN</span>
+              <span style={{ color: 'var(--color-text-stat)' }}>Товары ({totalItems}):</span>
+              <span className="text-white">{subtotal.toFixed(2)} BYN</span>
             </div>
             {deliveryPrice > 0 && (
               <div className="flex justify-end items-center gap-4 text-sm">
-                <span className="text-gray-500">Доставка:</span>
-                <span className="text-[#242C41]">{deliveryPrice.toFixed(2)} BYN</span>
+                <span style={{ color: 'var(--color-text-stat)' }}>Доставка:</span>
+                <span className="text-white">{deliveryPrice.toFixed(2)} BYN</span>
               </div>
             )}
             <div className="flex justify-end items-center gap-4 text-lg font-bold">
-              <span className="text-[#242C41]">Итого:</span>
-              <span className="text-[#242C41]">{total.toFixed(2)} BYN</span>
+              <span className="text-white">Итого:</span>
+              <span className="text-white">{total.toFixed(2)} BYN</span>
             </div>
           </div>
 
@@ -284,7 +344,8 @@ export default function CheckoutPage() {
             <button
               type="submit"
               disabled={loading || processingPayment}
-              className="inline-flex items-center gap-3 bg-[#ee862c] px-10 py-4 text-sm font-bold uppercase tracking-wider text-white hover:bg-[#f0ac74] transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-3 px-10 py-4 text-sm font-bold uppercase tracking-wider text-white transition-colors disabled:opacity-50"
+              style={{ background: 'var(--color-accent)', borderRadius: 10 }}
             >
               {processingPayment ? (
                 <>

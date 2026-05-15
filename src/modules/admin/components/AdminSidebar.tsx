@@ -99,6 +99,7 @@ const menuItems: MenuItem[] = [
     children: [
       { title: 'Главное меню', href: '/admin/settings/menu' },
       { title: 'Ключи API', href: '/admin/settings/keys' },
+      { title: 'Настройки сайта', href: '/admin/settings' },
     ],
   },
 ];

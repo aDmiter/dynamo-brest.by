@@ -20,6 +20,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'orderId, items and total are required' }, { status: 400 });
     }
 
+    // Если есть доставка — добавляем как товар
+    const allItems = [...items];
+    if (deliveryPrice && deliveryPrice > 0) {
+      allItems.push({
+        name: 'Доставка',
+        quantity: 1,
+        price: deliveryPrice,
+      });
+    }
+
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const cleanOrderId = orderId.replace('#', '');
     const returnUrl = `${baseUrl}/shop/checkout/success?orderId=${cleanOrderId}`;
@@ -27,10 +37,8 @@ export async function POST(request: NextRequest) {
 
     const params = getWebPayFormParams({
       orderNum: orderId,
-      items,
-      total,
-      shippingName: deliveryPrice ? 'Доставка' : undefined,
-      shippingPrice: deliveryPrice || undefined,
+      items: allItems,
+      total, // total уже включает доставку
       returnUrl,
       cancelUrl,
       customerEmail,

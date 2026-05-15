@@ -1,4 +1,4 @@
-// src/app/api/sync/players/route.ts
+// src/app/api/sync/players/route.ts - Синхронизация игроков из COMET
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSetting } from '@/lib/settings';
@@ -135,7 +135,9 @@ export async function POST(request: NextRequest) {
         const existing = await prisma.player.findFirst({ where: { cometId } });
 
         if (existing) {
-          await prisma.player.update({ where: { id: existing.id }, data: updateData });
+          // Не перезаписываем позицию при синхронизации существующего игрока
+          const { position, ...syncData } = updateData;
+          await prisma.player.update({ where: { id: existing.id }, data: syncData });
           updated++;
         } else {
           const slug = await generateUniqueSlug(firstName, lastName);

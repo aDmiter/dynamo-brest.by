@@ -78,7 +78,7 @@ export default function MatchTabsClient({ matches }: Props) {
                 onClick={() => setActiveTab(tab.key)}
                 className={`match__tab px-6 py-3 text-sm font-bold uppercase tracking-wider border transition-all duration-300 ${
                   activeTab === tab.key
-                    ? 'border-[#ee862c]/50 bg-[#ee862c]/20 text-[#ee862c] backdrop-blur-md shadow-lg shadow-[#ee862c]/10'
+                    ? 'border-[var(--color-accent-30)] bg-[var(--color-accent-20)] text-[var(--color-accent)] backdrop-blur-md shadow-lg shadow-[var(--color-accent-10)]'
                     : 'border-white/10 bg-white/5 text-gray-400 hover:text-white hover:border-white/30 hover:bg-white/10'
                 }`}
               >
@@ -86,7 +86,7 @@ export default function MatchTabsClient({ matches }: Props) {
               </button>
             ))}
           </div>
-          <div className="match__card match__card--empty relative flex w-full max-w-[560px] flex-col border border-white/10 bg-white/5 shadow-2xl p-10 md:p-14 items-center justify-center">
+          <div className="match__card match__card--empty relative flex w-full max-w-[560px] flex-col border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl p-10 md:p-14 items-center justify-center">
             <p className="text-gray-500 text-lg">Нет данных о матчах</p>
           </div>
         </div>
@@ -125,9 +125,9 @@ export default function MatchTabsClient({ matches }: Props) {
       ? (() => {
           const ourScore = lastMatch.isHome ? lastMatch.homeScore : lastMatch.awayScore;
           const theirScore = lastMatch.isHome ? lastMatch.awayScore : lastMatch.homeScore;
-          if (ourScore > theirScore) return 'border-t-[#22c55e]';
-          if (ourScore === theirScore) return 'border-t-[#f0ac74]';
-          return 'border-t-[#ef4444]';
+          if (ourScore > theirScore) return 'border-t-[var(--color-win)]';
+          if (ourScore === theirScore) return 'border-t-[var(--color-accent-hover)]';
+          return 'border-t-[var(--color-loss)]';
         })()
       : 'border-t-gray-600';
 
@@ -149,7 +149,7 @@ export default function MatchTabsClient({ matches }: Props) {
               onClick={() => setActiveTab(tab.key)}
               className={`match__tab px-6 py-3 text-sm font-bold uppercase tracking-wider border transition-all duration-300 ${
                 activeTab === tab.key
-                  ? 'border-[#ee862c]/50 bg-[#ee862c]/20 text-[#ee862c] backdrop-blur-md shadow-lg shadow-[#ee862c]/10'
+                  ? 'border-[var(--color-accent-30)] bg-[var(--color-accent-20)] text-[var(--color-accent)] backdrop-blur-md shadow-lg shadow-[var(--color-accent-10)]'
                   : 'border-white/10 bg-white/5 text-gray-400 hover:text-white hover:border-white/30 hover:bg-white/10'
               }`}
             >
@@ -231,9 +231,8 @@ function MatchCard({
 }) {
   return (
     <div
-      className={`match__card relative flex w-full h-full flex-col border border-white/10 bg-white/5 shadow-2xl p-6 md:p-10 overflow-hidden ${isNext ? 'match__card--next' : 'match__card--last'} ${!isNext ? `border-t-[6px] ${borderColor}` : ''}`}
+      className={`match__card relative flex w-full h-full flex-col border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl p-6 md:p-10 overflow-hidden ${isNext ? '' : borderColor} ${!isNext ? 'border-t-[6px]' : ''}`}
     >
-      {/* Фоновые логотипы */}
       <div
         className="match__card-bg-logo match__card-bg-logo--left absolute pointer-events-none"
         style={{ left: '0%', top: '70%', transform: 'translate(-50%, -50%)' }}
@@ -247,10 +246,9 @@ function MatchCard({
         <img src={awayLogo} alt="" className="h-48 w-auto md:h-72 max-w-none opacity-20" />
       </div>
 
-      {/* Названия команд вертикально */}
       <div className="match__card-team match__card-team--home absolute left-3 top-1/2 -translate-y-1/2 z-10 hidden md:flex flex-col items-center">
         <span
-          className="text-sm uppercase tracking-[0.3em] text-[#a5b3d5]"
+          className="text-sm uppercase tracking-[0.3em] text-[var(--color-team-names)]"
           style={{
             writingMode: 'vertical-lr',
             transform: 'rotate(180deg)',
@@ -263,7 +261,7 @@ function MatchCard({
       </div>
       <div className="match__card-team match__card-team--away absolute right-3 top-1/2 -translate-y-1/2 z-10 hidden md:flex flex-col items-center">
         <span
-          className="text-sm uppercase tracking-[0.3em] text-[#a5b3d5]"
+          className="text-sm uppercase tracking-[0.3em] text-[var(--color-team-names)]"
           style={{
             writingMode: 'vertical-lr',
             fontFamily: "'Roboto', sans-serif",
@@ -274,10 +272,9 @@ function MatchCard({
         </span>
       </div>
 
-      {/* Заголовок */}
       <div className="match__card-header relative z-10 grid grid-cols-[1fr_1fr] items-start gap-4">
         <div>
-          <p className="match__card-tournament text-xs font-bold uppercase tracking-[0.2em] text-[#ee862c]">
+          <p className="match__card-tournament text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-accent)]">
             {match.tournament || 'ТОВАРИЩЕСКИЙ МАТЧ'}
           </p>
           {match.round && (
@@ -287,7 +284,7 @@ function MatchCard({
           )}
         </div>
         <p className="match__card-date flex items-center gap-2 text-right text-sm text-white/70 justify-end">
-          <FontAwesomeIcon icon={faCalendarAlt} className="text-xs text-[#ee862c]" />
+          <FontAwesomeIcon icon={faCalendarAlt} className="text-xs text-[var(--color-accent)]" />
           {new Date(match.matchDate).toLocaleDateString('ru-RU', {
             day: 'numeric',
             month: 'long',
@@ -308,24 +305,22 @@ function MatchCard({
 
       <div className="match__card-divider mt-6 h-[1px] w-full bg-white/10" />
 
-      {/* Мобильные названия */}
       <div className="match__card-teams-mobile mt-6 flex items-center justify-center gap-6 md:hidden">
         <span
-          className="text-sm uppercase text-[#a5b3d5]"
+          className="text-sm uppercase text-[var(--color-team-names)]"
           style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 900 }}
         >
           {homeTeam}
         </span>
         <img src="/images/vs.png" alt="VS" className="w-8 h-auto opacity-40" />
         <span
-          className="text-sm uppercase text-[#a5b3d5]"
+          className="text-sm uppercase text-[var(--color-team-names)]"
           style={{ fontFamily: "'Roboto', sans-serif", fontWeight: 900 }}
         >
           {awayTeam}
         </span>
       </div>
 
-      {/* Счёт / Таймер */}
       {isNext ? (
         <>
           <div className="match__card-countdown mt-6 flex justify-center">
@@ -355,7 +350,6 @@ function MatchCard({
         </div>
       )}
 
-      {/* Нижняя панель */}
       <div className="match__card-footer mt-auto">
         <div className="match__card-divider mt-6 h-[1px] w-full bg-white/10" />
         <div className="match__card-actions mt-4 space-y-2">
@@ -369,12 +363,12 @@ function MatchCard({
                   href={match.ticketUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="match__card-ticket-link inline-flex items-center gap-2 bg-[#ee862c] px-5 py-3 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#f0ac74] transition-colors"
+                  className="match__card-ticket-link inline-flex items-center gap-2 bg-[var(--color-accent)] px-5 py-3 text-xs font-bold uppercase tracking-wider text-white hover:bg-[var(--color-accent-hover)] transition-colors"
                 >
                   БИЛЕТЫ <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
                 </a>
               ) : isNext ? null : (
-                <button className="match__card-protocol inline-flex items-center gap-2 border border-white/20 px-5 py-3 text-xs font-bold uppercase tracking-wider text-white hover:border-[#ee862c] hover:text-[#ee862c] transition-colors">
+                <button className="match__card-protocol inline-flex items-center gap-2 border border-white/20 px-5 py-3 text-xs font-bold uppercase tracking-wider text-white hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors">
                   ПРОТОКОЛ <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
                 </button>
               )}
@@ -394,7 +388,7 @@ function MatchCard({
 
 function EmptyCard({ message }: { message: string }) {
   return (
-    <div className="match__card match__card--empty relative flex w-full h-full flex-col border border-white/10 bg-white/5 shadow-2xl p-10 md:p-14 items-center justify-center">
+    <div className="match__card match__card--empty relative flex w-full h-full flex-col border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl p-10 md:p-14 items-center justify-center">
       <p className="match__card-empty-text text-gray-500 text-base">{message}</p>
     </div>
   );

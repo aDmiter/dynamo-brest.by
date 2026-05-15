@@ -71,7 +71,7 @@ export default function MatchesResultsClient({ matches, teamName }: Props) {
   const years = Object.keys(grouped).sort((a, b) => parseInt(b) - parseInt(a));
 
   return (
-    <div className="results-page min-h-screen bg-[#0d1117]">
+    <div className="results-page min-h-screen bg-[var(--color-bg-main)]">
       <div className="results-page__hero relative h-[40vh] w-full overflow-hidden">
         <img
           src="/images/stadium.jpg"
@@ -81,7 +81,7 @@ export default function MatchesResultsClient({ matches, teamName }: Props) {
         <div className="results-page__hero-overlay absolute inset-0 bg-black/60" />
         <div className="results-page__hero-content absolute inset-0 flex items-center">
           <div className="w-full pl-6 md:pl-36">
-            <p className="results-page__hero-subtitle mb-4 text-sm font-bold uppercase tracking-[0.3em] text-[#ee862c]">
+            <p className="results-page__hero-subtitle mb-4 text-sm font-bold uppercase tracking-[0.3em] text-[var(--color-accent)]">
               {teamName}
             </p>
             <h1
@@ -111,11 +111,11 @@ export default function MatchesResultsClient({ matches, teamName }: Props) {
               return (
                 <div
                   key={year}
-                  className="results-page__year border border-white/10 bg-white/5 overflow-hidden"
+                  className="results-page__year border border-[var(--color-border)] bg-white/5 overflow-hidden"
                 >
                   <button
                     onClick={() => toggleYear(year)}
-                    className="results-page__year-header w-full flex items-center justify-between px-6 py-4 bg-white/[0.03] hover:bg-white/[0.05] transition-colors border-b border-white/10"
+                    className="results-page__year-header w-full flex items-center justify-between px-6 py-4 bg-white/[0.03] hover:bg-white/[0.05] transition-colors border-b border-[var(--color-border)]"
                   >
                     <h2
                       className="results-page__year-title text-2xl font-black uppercase tracking-wider text-white"
@@ -125,7 +125,7 @@ export default function MatchesResultsClient({ matches, teamName }: Props) {
                     </h2>
                     <FontAwesomeIcon
                       icon={faChevronDown}
-                      className={`results-page__year-chevron text-[#ee862c] text-lg transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                      className={`results-page__year-chevron text-[var(--color-accent)] text-lg transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
                     />
                   </button>
 
@@ -167,16 +167,16 @@ function ResultCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
   const isLoss = ourScore != null && theirScore != null && ourScore < theirScore;
 
   const resultColor = isWin
-    ? 'border-l-[#22c55e]'
+    ? 'border-l-[var(--color-win)]'
     : isDraw
-      ? 'border-l-[#f0ac74]'
-      : 'border-l-[#ef4444]';
+      ? 'border-l-[var(--color-accent-hover)]'
+      : 'border-l-[var(--color-loss)]';
 
   return (
     <div
-      className={`result-card relative flex flex-col md:flex-row border border-white/10 bg-white/5 overflow-hidden transition-all duration-300 hover:bg-white/[0.07] hover:border-[#ee862c]/20 border-l-[4px] ${resultColor}`}
+      className={`result-card relative flex flex-col md:flex-row border border-[var(--color-border)] bg-white/5 overflow-hidden transition-all duration-300 hover:bg-white/[0.07] hover:border-[var(--color-accent-20)] border-l-[4px] ${resultColor}`}
     >
-      <div className="result-card__date flex flex-row md:flex-col items-center justify-center gap-2 p-5 md:w-32 md:border-r border-white/10 bg-white/[0.03]">
+      <div className="result-card__date flex flex-row md:flex-col items-center justify-center gap-2 p-5 md:w-32 md:border-r border-[var(--color-border)] bg-white/[0.03]">
         <span
           className="result-card__date-day text-2xl font-black text-white"
           style={{ fontFamily: "'Inter Tight', sans-serif" }}
@@ -206,18 +206,18 @@ function ResultCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
               className={`result-card__score-home text-3xl font-black md:text-4xl ${
                 match.isHome
                   ? isWin
-                    ? 'text-green-400'
+                    ? 'text-[var(--color-win)]'
                     : isDraw
-                      ? 'text-[#f0ac74]'
+                      ? 'text-[var(--color-accent-hover)]'
                       : isLoss
-                        ? 'text-red-400'
+                        ? 'text-[var(--color-loss)]'
                         : 'text-white'
                   : isLoss
-                    ? 'text-green-400'
+                    ? 'text-[var(--color-win)]'
                     : isDraw
-                      ? 'text-[#f0ac74]'
+                      ? 'text-[var(--color-accent-hover)]'
                       : isWin
-                        ? 'text-red-400'
+                        ? 'text-[var(--color-loss)]'
                         : 'text-white'
               }`}
               style={{ fontFamily: "'Inter Tight', sans-serif" }}
@@ -229,18 +229,18 @@ function ResultCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
               className={`result-card__score-away text-3xl font-black md:text-4xl ${
                 !match.isHome
                   ? isWin
-                    ? 'text-green-400'
+                    ? 'text-[var(--color-win)]'
                     : isDraw
-                      ? 'text-[#f0ac74]'
+                      ? 'text-[var(--color-accent-hover)]'
                       : isLoss
-                        ? 'text-red-400'
+                        ? 'text-[var(--color-loss)]'
                         : 'text-white'
                   : isLoss
-                    ? 'text-green-400'
+                    ? 'text-[var(--color-win)]'
                     : isDraw
-                      ? 'text-[#f0ac74]'
+                      ? 'text-[var(--color-accent-hover)]'
                       : isWin
-                        ? 'text-red-400'
+                        ? 'text-[var(--color-loss)]'
                         : 'text-white'
               }`}
               style={{ fontFamily: "'Inter Tight', sans-serif" }}
@@ -264,12 +264,12 @@ function ResultCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
         <div className="result-card__info md:ml-auto flex flex-col items-end gap-2 text-[11px]">
           <div className="flex flex-wrap items-center gap-3 justify-end">
             {match.tournament && (
-              <span className="result-card__tournament border border-white/10 px-2.5 py-1.5 text-gray-400 font-medium uppercase tracking-wider">
+              <span className="result-card__tournament border border-[var(--color-border)] px-2.5 py-1.5 text-gray-400 font-medium uppercase tracking-wider">
                 {match.tournament}
               </span>
             )}
             {match.round && (
-              <span className="result-card__round border border-white/10 px-2.5 py-1.5 text-[#ee862c]">
+              <span className="result-card__round border border-[var(--color-border)] px-2.5 py-1.5 text-[var(--color-accent)]">
                 {match.round} тур
               </span>
             )}

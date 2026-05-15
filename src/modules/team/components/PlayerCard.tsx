@@ -66,8 +66,8 @@ export default function PlayerCard({ player, stats }: Props) {
         borderRadius: 16,
         overflow: 'hidden',
         cursor: 'pointer',
-        border: '1px solid rgba(255,255,255,0.07)',
-        background: '#111820',
+        border: '1px solid var(--color-border)',
+        background: 'var(--color-bg-card)',
         display: 'block',
         textDecoration: 'none',
         color: 'inherit',
@@ -77,13 +77,13 @@ export default function PlayerCard({ player, stats }: Props) {
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLAnchorElement;
         el.style.transform = 'translateY(-6px) scale(1.01)';
-        el.style.borderColor = 'rgba(238,134,44,0.45)';
-        el.style.boxShadow = '0 24px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(238,134,44,0.2)';
+        el.style.borderColor = 'var(--color-accent-30)';
+        el.style.boxShadow = '0 24px 48px rgba(0,0,0,0.6), 0 0 0 1px var(--color-accent-20)';
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLAnchorElement;
         el.style.transform = 'translateY(0) scale(1)';
-        el.style.borderColor = 'rgba(255,255,255,0.07)';
+        el.style.borderColor = 'var(--color-border)';
         el.style.boxShadow = '0 6px 20px rgba(0,0,0,0.35)';
       }}
     >
@@ -114,13 +114,14 @@ export default function PlayerCard({ player, stats }: Props) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#1a1f2e',
+              background: 'var(--color-bg-photo-placeholder)',
             }}
           >
             <FontAwesomeIcon icon={faUser} style={{ fontSize: 60, color: '#4b5563' }} />
           </div>
         )}
 
+        {/* Faded jersey number */}
         {player.number && (
           <div
             className="player-card__number-bg"
@@ -132,7 +133,7 @@ export default function PlayerCard({ player, stats }: Props) {
               fontWeight: 900,
               fontSize: 'clamp(72px, 8vw, 108px)',
               lineHeight: 1,
-              color: '#ee862c',
+              color: 'var(--color-accent)',
               opacity: 0.15,
               letterSpacing: '-0.05em',
               userSelect: 'none',
@@ -144,16 +145,18 @@ export default function PlayerCard({ player, stats }: Props) {
           </div>
         )}
 
+        {/* Gradient */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             background:
-              'linear-gradient(to top, #0d1117 0%, rgba(13,17,23,0.55) 40%, rgba(13,17,23,0.02) 100%)',
+              'linear-gradient(to top, var(--color-bg-main) 0%, rgba(13,17,23,0.55) 40%, rgba(13,17,23,0.02) 100%)',
             zIndex: 2,
           }}
         />
 
+        {/* Position badge */}
         {player.position && (
           <div
             className="player-card__pos-badge"
@@ -162,14 +165,14 @@ export default function PlayerCard({ player, stats }: Props) {
               top: 12,
               left: 12,
               zIndex: 5,
-              background: 'rgba(238,134,44,0.1)',
-              border: '1.5px solid #ee862c',
+              background: 'var(--color-accent-10)',
+              border: '1.5px solid var(--color-accent)',
               borderRadius: 6,
               padding: '3px 9px',
               fontFamily: "'Inter Tight', sans-serif",
               fontSize: 10,
               fontWeight: 700,
-              color: '#ee862c',
+              color: 'var(--color-accent)',
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
               backdropFilter: 'blur(6px)',
@@ -188,6 +191,7 @@ export default function PlayerCard({ player, stats }: Props) {
           </div>
         )}
 
+        {/* Jersey # */}
         {player.number && (
           <div
             className="player-card__number"
@@ -211,7 +215,7 @@ export default function PlayerCard({ player, stats }: Props) {
       {/* Info */}
       <div
         className="player-card__info"
-        style={{ padding: '0 14px 14px', background: '#0d1117', marginTop: -2 }}
+        style={{ padding: '0 14px 14px', background: 'var(--color-bg-main)', marginTop: -2 }}
       >
         <div
           style={{
@@ -247,11 +251,12 @@ export default function PlayerCard({ player, stats }: Props) {
           style={{
             height: 1,
             width: 36,
-            background: 'linear-gradient(to right, rgba(238,134,44,0.7), transparent)',
+            background: 'linear-gradient(to right, var(--color-accent-30), transparent)',
             marginBottom: 8,
           }}
         />
 
+        {/* Nationality + age */}
         <div
           className="player-card__meta"
           style={{
@@ -278,7 +283,7 @@ export default function PlayerCard({ player, stats }: Props) {
             <div
               style={{
                 background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                border: '1px solid var(--color-border-light)',
                 borderRadius: 5,
                 padding: '2px 8px',
                 fontFamily: "'Inter Tight', sans-serif",
@@ -328,10 +333,10 @@ function StatBox({
     <div
       className={`player-card__stat${accent ? ' player-card__stat--accent' : ''}`}
       style={{
-        background: accent ? 'rgba(238,134,44,0.07)' : 'rgba(255,255,255,0.04)',
+        background: accent ? 'var(--color-accent-7)' : 'rgba(255,255,255,0.04)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        border: accent ? '1px solid rgba(238,134,44,0.35)' : '1px solid rgba(255,255,255,0.08)',
+        border: accent ? '1px solid var(--color-accent-30)' : '1px solid var(--color-border)',
         borderRadius: 8,
         padding: '7px 6px',
         textAlign: 'center',
@@ -351,7 +356,7 @@ function StatBox({
             position: 'absolute',
             inset: 0,
             background:
-              'radial-gradient(ellipse at top left, rgba(238,134,44,0.1) 0%, transparent 70%)',
+              'radial-gradient(ellipse at top left, var(--color-accent-10) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
@@ -363,7 +368,7 @@ function StatBox({
               fontFamily: "'Inter Tight', sans-serif",
               fontSize: 16,
               fontWeight: 800,
-              color: accent ? '#ee862c' : '#ffffff',
+              color: accent ? 'var(--color-accent)' : '#ffffff',
               letterSpacing: '-0.03em',
               lineHeight: 1,
               position: 'relative',
@@ -376,7 +381,7 @@ function StatBox({
               fontFamily: "'Inter Tight', sans-serif",
               fontSize: 8,
               fontWeight: 600,
-              color: 'rgba(255,255,255,0.35)',
+              color: 'var(--color-text-label)',
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
               marginTop: 2,
@@ -392,8 +397,8 @@ function StatBox({
           style={{
             width: 16,
             height: 16,
-            border: '2px solid rgba(238,134,44,0.15)',
-            borderTopColor: 'rgba(238,134,44,0.5)',
+            border: '2px solid var(--color-accent-15)',
+            borderTopColor: 'var(--color-accent-30)',
             borderRadius: '50%',
             animation: 'spin 0.6s linear infinite',
           }}

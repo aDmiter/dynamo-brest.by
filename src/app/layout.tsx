@@ -6,18 +6,29 @@ import Header from '@/modules/shared/ui/Header';
 import Footer from '@/modules/shared/ui/Footer';
 import { headers } from 'next/headers';
 import BurgerMenu from '@/modules/shared/ui/BurgerMenu';
+import ThemeInitializer from '@/modules/shared/ui/ThemeInitializer';
 
 export const metadata: Metadata = {
-  title: 'Динамо-Брест',
+  title: 'Официальный сайт футбольного клуба «Динамо-Брест»',
   description: 'Официальный сайт футбольного клуба «Динамо-Брест»',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Определяем, является ли страница админкой
   const headersList = await headers();
   const pathname = headersList.get('x-pathname') || '';
-
   const isAdmin = pathname.startsWith('/admin');
+
+  // Загружаем настройки цветов из БД
+  let settings: Record<string, string> = {};
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/settings?full=1`, { next: { revalidate: 300 } });
+    if (res.ok) {
+      settings = await res.json();
+    }
+  } catch {
+    // если не удалось — используем дефолтные из CSS
+  }
 
   return (
     <html lang="ru">
@@ -30,6 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className="min-h-screen bg-[#242C41] text-white antialiased">
+        <ThemeInitializer settings={settings} />
         {!isAdmin && <Header />}
         {!isAdmin && <BurgerMenu />}
         <main>{children}</main>

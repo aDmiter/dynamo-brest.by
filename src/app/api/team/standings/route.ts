@@ -32,7 +32,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid teamSlug' }, { status: 400 });
   }
 
-  // Приоритет: БД → .env
   const dbKey = await getSetting(config.settingKey);
   const envKey = process.env[config.envKey] || '';
   const apiKey = dbKey || envKey;

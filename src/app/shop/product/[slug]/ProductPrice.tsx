@@ -1,4 +1,4 @@
-// src/app/shop/product/[slug]/ProductPrice.tsx - Динамическая цена
+// src/app/shop/product/[slug]/ProductPrice.tsx
 'use client';
 
 import { useState, createContext, useContext } from 'react';
@@ -35,21 +35,7 @@ export default function ProductPrice({
 
   return (
     <ProductPriceContext.Provider value={{ basePrice, extraPrice, totalPrice, setExtraPrice }}>
-      <div className="mt-8 flex items-baseline justify-end gap-3">
-        <span className="text-4xl font-bold text-[#242C41]">
-          {totalPrice.toFixed(2)} <span className="text-lg">BYN</span>
-        </span>
-        {oldPrice && Number(oldPrice) > basePrice && (
-          <span className="text-2xl text-gray-400 line-through">
-            {Number(oldPrice).toFixed(2)} BYN
-          </span>
-        )}
-        {extraPrice > 0 && (
-          <span className="text-sm text-[#ee862c]">
-            (включая нанесение +{extraPrice.toFixed(2)} BYN)
-          </span>
-        )}
-      </div>
+      {/* Цена теперь в ProductPageClient, здесь только контекст */}
       {children}
     </ProductPriceContext.Provider>
   );

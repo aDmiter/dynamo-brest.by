@@ -3,12 +3,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { clearSettingsCache } from '@/lib/settings';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const keysParam = searchParams.get('keys'); // ?keys=accent_color,accent_hover
+  const fullValues = searchParams.get('full') === '1'; // ?full=1
+
+  // Если запрошены конкретные ключи — возвращаем значения
+  if (keysParam) {
+    const keys = keysParam.split(',');
+    const settings = await prisma.setting.findMany({
+      where: { key: { in: keys } },
+    });
+    const result: Record<string, string> = {};
+    for (const s of settings) result[s.key] = s.value;
+    return NextResponse.json(result);
+  }
+
+  // Если full=1 — возвращаем все значения (для ThemeInitializer)
+  if (fullValues) {
+    const settings = await prisma.setting.findMany();
+    const result: Record<string, string> = {};
+    for (const s of settings) result[s.key] = s.value;
+    return NextResponse.json(result);
+  }
+
+  // По умолчанию — только ключи и hasValue (для админки ключей API)
   const settings = await prisma.setting.findMany({
     orderBy: { key: 'asc' },
   });
 
-  // Возвращаем только ключи и факт наличия значения, но не сами значения
   const result = settings.map((s) => ({
     key: s.key,
     hasValue: s.value.length > 0,
@@ -31,7 +54,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Сбрасываем кэш после сохранения
     clearSettingsCache();
 
     return NextResponse.json({ success: true });

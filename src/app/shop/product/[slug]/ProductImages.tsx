@@ -1,4 +1,4 @@
-// src/app/shop/product/[slug]/ProductImages.tsx - Слайдер изображений товара
+// src/app/shop/product/[slug]/ProductImages.tsx
 'use client';
 
 import { useState } from 'react';
@@ -18,7 +18,6 @@ export default function ProductImages({ images, productName }: ProductImagesProp
 
   return (
     <div className="product-images relative h-full">
-      {/* Главный слайдер — на всю высоту */}
       <Swiper
         spaceBetween={0}
         slidesPerView={1}
@@ -37,30 +36,30 @@ export default function ProductImages({ images, productName }: ProductImagesProp
         ))}
       </Swiper>
 
-      {/* Миниатюры снизу по центру */}
       {images.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2">
-          <Swiper
-            onSwiper={setThumbsSwiper}
-            spaceBetween={6}
-            slidesPerView={images.length}
-            watchSlidesProgress
-            modules={[Thumbs]}
-            className="product-images__thumbs !w-auto"
-          >
-            {images.map((img, i) => (
-              <SwiperSlide
-                key={i}
-                className="!w-16 cursor-pointer border-2 border-transparent transition-colors hover:border-[#ee862c]"
-              >
-                <img
-                  src={img}
-                  alt={`${productName} - превью ${i + 1}`}
-                  className="aspect-square w-full object-cover"
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
+        <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 flex gap-2">
+          {images.map((img, i) => (
+            <button
+              key={i}
+              onClick={() => thumbsSwiper?.slideTo(i)}
+              className="w-14 h-14 overflow-hidden border-2 transition-all"
+              style={{
+                borderRadius: 8,
+                borderColor:
+                  i === thumbsSwiper?.activeIndex
+                    ? 'var(--color-accent)'
+                    : 'rgba(255,255,255,0.15)',
+                boxShadow:
+                  i === thumbsSwiper?.activeIndex ? '0 0 0 2px var(--color-accent-20)' : 'none',
+              }}
+            >
+              <img
+                src={img}
+                alt={`${productName} - превью ${i + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </button>
+          ))}
         </div>
       )}
     </div>

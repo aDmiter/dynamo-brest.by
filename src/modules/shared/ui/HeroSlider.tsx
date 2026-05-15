@@ -62,7 +62,10 @@ export default function HeroSlider({ featuredNews }: HeroSliderProps) {
   const slides = featuredNews.length > 0 ? featuredNews : defaultSlides;
 
   return (
-    <section className="hero relative h-screen w-full overflow-hidden">
+    <section
+      className="hero relative h-screen w-full overflow-hidden"
+      style={{ fontFamily: "'Inter Tight', sans-serif", background: 'var(--color-bg-main)' }}
+    >
       <Swiper
         modules={[Autoplay, Pagination, EffectFade]}
         effect="fade"
@@ -70,7 +73,7 @@ export default function HeroSlider({ featuredNews }: HeroSliderProps) {
         pagination={{
           clickable: true,
           renderBullet: (index, className) => {
-            return `<span class="${className} !w-8 !h-1 !rounded-none !bg-white/50 !opacity-100"></span>`;
+            return `<span class="${className}" style="width: 32px; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.5); opacity: 1; margin: 0 4px;"></span>`;
           },
         }}
         loop={true}
@@ -84,22 +87,80 @@ export default function HeroSlider({ featuredNews }: HeroSliderProps) {
                 alt={slide.title}
                 className="hero__slide-image absolute inset-0 h-full w-full object-cover"
               />
-              <div className="hero__slide-overlay absolute inset-0 bg-black/50" />
+              <div className="hero__slide-overlay absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
               <div className="hero__slide-content absolute inset-0 flex items-center">
                 <div className="hero__slide-text w-full pl-6 md:pl-36">
-                  <p className="hero__slide-category mb-4 text-sm font-bold uppercase tracking-[0.3em] text-[#ee862c]">
-                    {categoryLabels[slide.category] || slide.category}
-                  </p>
+                  {/* Категория — как позиция на странице игрока */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                    <div
+                      style={{
+                        background: 'var(--color-accent-10)',
+                        border: '1.5px solid var(--color-accent)',
+                        borderRadius: 6,
+                        padding: '4px 12px',
+                        fontFamily: "'Inter Tight', sans-serif",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: 'var(--color-accent)',
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        backdropFilter: 'blur(6px)',
+                        WebkitBackdropFilter: 'blur(6px)',
+                      }}
+                    >
+                      {categoryLabels[slide.category] || slide.category}
+                    </div>
+                    <div
+                      style={{
+                        height: 1,
+                        width: 32,
+                        background:
+                          'linear-gradient(to right, var(--color-accent-30), transparent)',
+                      }}
+                    />
+                  </div>
+
                   <h1
-                    className="hero__slide-title max-w-3xl text-4xl leading-tight text-white md:text-6xl lg:text-7xl"
-                    style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
+                    className="hero__slide-title max-w-3xl text-4xl leading-[0.92] text-white md:text-6xl lg:text-7xl"
+                    style={{
+                      fontFamily: "'Inter Tight', sans-serif",
+                      fontWeight: 900,
+                      letterSpacing: '-0.03em',
+                      textTransform: 'uppercase',
+                    }}
                   >
                     {slide.title}
                   </h1>
+
                   {slide.slug !== '#' && (
                     <Link
                       href={`/news/${slide.slug}`}
-                      className="hero__slide-link mt-8 inline-flex items-center gap-3 border border-white/30 px-8 py-4 text-sm font-medium uppercase tracking-wider text-white transition-colors hover:border-[#ee862c] hover:bg-[#ee862c] hover:text-white"
+                      className="hero__slide-link mt-10 inline-flex items-center gap-2"
+                      style={{
+                        background: 'transparent',
+                        border: '1.5px solid rgba(255,255,255,0.2)',
+                        borderRadius: 8,
+                        padding: '10px 20px',
+                        color: 'rgba(255,255,255,0.7)',
+                        fontFamily: "'Inter Tight', sans-serif",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        const t = e.currentTarget as HTMLAnchorElement;
+                        t.style.borderColor = 'var(--color-accent)';
+                        t.style.color = 'var(--color-accent)';
+                        t.style.background = 'var(--color-accent-7)';
+                      }}
+                      onMouseLeave={(e) => {
+                        const t = e.currentTarget as HTMLAnchorElement;
+                        t.style.borderColor = 'rgba(255,255,255,0.2)';
+                        t.style.color = 'rgba(255,255,255,0.7)';
+                        t.style.background = 'transparent';
+                      }}
                     >
                       Подробнее
                       <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
@@ -121,12 +182,29 @@ export default function HeroSlider({ featuredNews }: HeroSliderProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={social.label}
-            className="text-white/50 transition-colors hover:text-[#ee862c]"
+            style={{ color: 'rgba(255,255,255,0.45)', transition: 'all 0.2s ease' }}
+            onMouseEnter={(e) => {
+              const t = e.currentTarget as HTMLAnchorElement;
+              t.style.color = 'rgba(255,255,255,0.95)';
+              t.style.transform = 'scale(1.15)';
+            }}
+            onMouseLeave={(e) => {
+              const t = e.currentTarget as HTMLAnchorElement;
+              t.style.color = 'rgba(255,255,255,0.45)';
+              t.style.transform = 'scale(1)';
+            }}
           >
-            <FontAwesomeIcon icon={social.icon} className="text-lg" />
+            <FontAwesomeIcon icon={social.icon} style={{ width: 16, height: 16 }} />
           </a>
         ))}
-        <div className="h-12 w-[1px] bg-white/20" />
+        <div
+          style={{
+            width: 1,
+            height: 40,
+            background: 'linear-gradient(to bottom, rgba(255,255,255,0.2), transparent)',
+            marginTop: 4,
+          }}
+        />
       </div>
 
       {/* Индикатор скролла */}

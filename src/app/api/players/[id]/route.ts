@@ -34,11 +34,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const isSync = data._sync === true;
     const updateData: Record<string, unknown> = {};
 
+    // Поля, которые обновляются ВСЕГДА (и при ручном редактировании, и при синхронизации)
     if (data.firstName !== undefined) updateData.firstName = data.firstName;
     if (data.lastName !== undefined) updateData.lastName = data.lastName;
     if (data.middleName !== undefined) updateData.middleName = data.middleName;
     if (data.shortName !== undefined) updateData.shortName = data.shortName;
-    if (data.position !== undefined) updateData.position = data.position;
     if (data.birthDate !== undefined)
       updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
     if (data.nationality !== undefined) updateData.nationality = data.nationality;
@@ -46,8 +46,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.level !== undefined) updateData.level = data.level;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
+    // Поля, которые обновляются ТОЛЬКО при ручном редактировании (не при синхронизации)
     if (!isSync) {
       if (data.number !== undefined) updateData.number = data.number;
+      if (data.position !== undefined) updateData.position = data.position;
       if (data.photoUrl !== undefined) updateData.photoUrl = data.photoUrl;
       if (data.bio !== undefined) updateData.bio = data.bio;
       if (data.country !== undefined) updateData.country = data.country;
@@ -59,6 +61,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       if (data.gallery !== undefined) updateData.gallery = data.gallery;
     }
 
+    // Генерация slug при изменении имени/фамилии
     if (data.firstName !== undefined || data.lastName !== undefined) {
       const currentPlayer = await prisma.player.findUnique({ where: { id } });
       if (currentPlayer) {

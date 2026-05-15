@@ -22,7 +22,7 @@ export default function SectionHeader({
           fontFamily: "'Inter Tight', sans-serif",
           fontSize: 'clamp(48px, 8vw, 80px)',
           fontWeight: 900,
-          color: '#ee862c',
+          color: 'var(--color-accent)',
           opacity: 0.07,
           letterSpacing: '-0.04em',
           textTransform: 'uppercase',
@@ -40,7 +40,7 @@ export default function SectionHeader({
           style={{
             width: 3,
             height: 28,
-            background: 'linear-gradient(to bottom, #ee862c, rgba(238,134,44,0.3))',
+            background: 'linear-gradient(to bottom, var(--color-accent), var(--color-accent-30))',
             borderRadius: 2,
             flexShrink: 0,
           }}
@@ -73,7 +73,7 @@ export default function SectionHeader({
           style={{
             flex: 1,
             height: 1,
-            background: 'linear-gradient(to right, rgba(238,134,44,0.25), transparent)',
+            background: 'linear-gradient(to right, var(--color-accent-20), transparent)',
             marginLeft: 6,
           }}
         />

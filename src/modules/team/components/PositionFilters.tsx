@@ -31,7 +31,7 @@ export default function PositionFilters({
         background: 'rgba(13,17,23,0.95)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: '1px solid var(--color-border)',
       }}
     >
       <div
@@ -57,8 +57,10 @@ export default function PositionFilters({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 7,
-                background: active ? 'rgba(238,134,44,0.1)' : 'transparent',
-                border: active ? '1.5px solid #ee862c' : '1.5px solid rgba(255,255,255,0.1)',
+                background: active ? 'var(--color-accent-10)' : 'transparent',
+                border: active
+                  ? '1.5px solid var(--color-accent)'
+                  : '1.5px solid var(--color-border)',
                 borderRadius: 7,
                 padding: '6px 14px',
                 fontFamily: "'Inter Tight', sans-serif",
@@ -66,7 +68,7 @@ export default function PositionFilters({
                 fontWeight: 700,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: active ? '#ee862c' : 'rgba(255,255,255,0.45)',
+                color: active ? 'var(--color-accent)' : 'rgba(255,255,255,0.45)',
                 cursor: 'pointer',
                 transition: 'all 0.18s ease',
                 whiteSpace: 'nowrap',
@@ -75,14 +77,14 @@ export default function PositionFilters({
               onMouseEnter={(e) => {
                 if (!active) {
                   const t = e.currentTarget as HTMLButtonElement;
-                  t.style.borderColor = 'rgba(238,134,44,0.35)';
+                  t.style.borderColor = 'var(--color-accent-30)';
                   t.style.color = 'rgba(255,255,255,0.75)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!active) {
                   const t = e.currentTarget as HTMLButtonElement;
-                  t.style.borderColor = 'rgba(255,255,255,0.1)';
+                  t.style.borderColor = 'var(--color-border)';
                   t.style.color = 'rgba(255,255,255,0.45)';
                 }
               }}
@@ -90,11 +92,11 @@ export default function PositionFilters({
               {label}
               <span
                 style={{
-                  background: active ? 'rgba(238,134,44,0.2)' : 'rgba(255,255,255,0.07)',
+                  background: active ? 'var(--color-accent-20)' : 'rgba(255,255,255,0.07)',
                   borderRadius: 4,
                   padding: '1px 6px',
                   fontSize: 9,
-                  color: active ? '#ee862c' : 'rgba(255,255,255,0.3)',
+                  color: active ? 'var(--color-accent)' : 'rgba(255,255,255,0.3)',
                   fontWeight: 800,
                   letterSpacing: '0.04em',
                 }}

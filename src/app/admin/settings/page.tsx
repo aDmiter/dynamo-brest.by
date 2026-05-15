@@ -4,20 +4,37 @@ import SettingsForm from './SettingsForm';
 
 export const dynamic = 'force-dynamic';
 
-const SETTING_KEYS = [
-  { key: 'COMET_API_KEY_PLAYERS', label: 'COMET — Игроки' },
-  { key: 'COMET_API_KEY_COACHES', label: 'COMET — Тренеры' },
-  { key: 'COMET_API_KEY_STAFF', label: 'COMET — Персонал' },
-  { key: 'COMET_API_KEY_MATCHES', label: 'COMET — Матчи' },
-  { key: 'COMET_API_KEY_FACILITIES', label: 'COMET — Стадионы' },
-  { key: 'COMET_STANDINGS_API_KEY_OSNOVA', label: 'COMET — Таблица (Основной состав)' },
-  { key: 'COMET_STANDINGS_API_KEY_DUBL', label: 'COMET — Таблица (Дубль)' },
-  { key: 'COMET_STANDINGS_API_KEY_WOMEN', label: 'COMET — Таблица (Женская)' },
-];
-
 export default async function SettingsPage() {
   const settings = await prisma.setting.findMany({
-    where: { key: { in: SETTING_KEYS.map((k) => k.key) } },
+    where: {
+      key: {
+        in: [
+          'accent_color',
+          'accent_hover',
+          'accent_7',
+          'accent_10',
+          'accent_12',
+          'accent_15',
+          'accent_20',
+          'accent_30',
+          'bg_main',
+          'bg_card',
+          'bg_photo_placeholder',
+          'bg_admin',
+          'border',
+          'border_light',
+          'text_stat',
+          'text_label',
+          'team_names',
+          'bio_text',
+          'bio_watermark',
+          'win',
+          'loss',
+          'yellow_card',
+          'red_card',
+        ],
+      },
+    },
   });
 
   const values: Record<string, string> = {};
@@ -27,8 +44,8 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <h1 className="font-heading text-2xl font-bold text-white mb-8">Настройки</h1>
-      <SettingsForm initialValues={values} keys={SETTING_KEYS} />
+      <h1 className="font-heading text-2xl font-bold text-white mb-8">Настройки сайта</h1>
+      <SettingsForm initialValues={values} />
     </div>
   );
 }

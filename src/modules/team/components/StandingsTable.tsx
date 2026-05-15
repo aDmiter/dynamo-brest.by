@@ -1,4 +1,4 @@
-// src/modules/team/components/StandingsTable.tsx
+// src/modules/team/components/StandingsTable.tsx - Турнирная таблица
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 interface TeamStanding {
   position: number;
   club: string;
+  clubId: number;
   logoUrl: string | null;
   matches: number;
   wins: number;
@@ -22,26 +23,53 @@ interface Props {
   title: string;
 }
 
-const DYNAMO_BREST_NAME = 'Динамо-Брест';
+const OUR_CLUB_IDS: Record<string, number> = {
+  'osnovnoy-sostav': 68812,
+  'dubliruyushchiy-sostav': 102734,
+  'zhenskaya-komanda': 101132,
+};
+
+function getPositionZone(
+  position: number,
+  totalTeams: number
+): 'cl' | 'el' | 'ecl' | 'relegation' | 'default' {
+  if (position === 1) return 'cl';
+  if (position === 2 || position === 3) return 'ecl';
+  if (position >= totalTeams - 1) return 'relegation';
+  return 'default';
+}
+
+const zoneColors: Record<string, string> = {
+  cl: 'var(--color-accent)',
+  el: 'var(--color-accent-hover)',
+  ecl: 'var(--color-win)',
+  relegation: 'var(--color-loss)',
+  default: 'var(--color-border)',
+};
+
+const zoneLabels: Record<string, string> = {
+  cl: 'Лига чемпионов',
+  el: 'Лига Европы',
+  ecl: 'Лига конференций',
+  relegation: 'Вылет',
+};
 
 export default function StandingsTable({ teamSlug, title }: Props) {
   const [standings, setStandings] = useState<TeamStanding[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const showZones = teamSlug === 'osnovnoy-sostav';
+  const ourClubId = OUR_CLUB_IDS[teamSlug];
 
   useEffect(() => {
     fetch(`/api/team/standings?teamSlug=${teamSlug}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) {
-          setStandings(data.standings);
-        } else {
-          setError(data.error || 'Ошибка загрузки');
-        }
+        if (data.success) setStandings(data.standings);
+        else setError(data.error || 'Ошибка загрузки');
         setLoading(false);
       })
-      .catch((err) => {
-        console.error('Standings fetch error:', err);
+      .catch(() => {
         setError('Не удалось загрузить турнирную таблицу');
         setLoading(false);
       });
@@ -63,97 +91,246 @@ export default function StandingsTable({ teamSlug, title }: Props) {
     );
   }
 
+  const totalTeams = standings.length;
+
   return (
-    <div className="overflow-x-auto bg-[#151b26] border border-white/10">
-      <table className="min-w-full border-collapse">
-        <thead>
-          <tr className="bg-[#242C41] border-b border-white/10">
-            <th className="py-3 px-4 text-center text-sm font-bold text-[#ee862c] uppercase tracking-wider w-12">
-              #
-            </th>
-            <th className="py-3 px-4 text-left text-sm font-bold text-[#ee862c] uppercase tracking-wider">
-              Команда
-            </th>
-            <th className="py-3 px-4 text-center text-sm font-bold text-[#ee862c] uppercase tracking-wider w-12">
-              И
-            </th>
-            <th className="py-3 px-4 text-center text-sm font-bold text-[#ee862c] uppercase tracking-wider w-10">
-              В
-            </th>
-            <th className="py-3 px-4 text-center text-sm font-bold text-[#ee862c] uppercase tracking-wider w-10">
-              Н
-            </th>
-            <th className="py-3 px-4 text-center text-sm font-bold text-[#ee862c] uppercase tracking-wider w-10">
-              П
-            </th>
-            <th className="py-3 px-4 text-center text-sm font-bold text-[#ee862c] uppercase tracking-wider w-12">
-              ЗМ
-            </th>
-            <th className="py-3 px-4 text-center text-sm font-bold text-[#ee862c] uppercase tracking-wider w-12">
-              ПМ
-            </th>
-            <th className="py-3 px-4 text-center text-sm font-bold text-[#ee862c] uppercase tracking-wider w-12">
-              ±
-            </th>
-            <th className="py-3 px-4 text-center text-sm font-bold text-[#ee862c] uppercase tracking-wider w-12">
-              О
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {standings.map((team) => {
-            const isDynamo = team.club === DYNAMO_BREST_NAME;
-            return (
-              <tr
-                key={team.position}
-                className={`border-b border-white/5 transition-colors ${
-                  isDynamo ? 'bg-[#ee862c]/10 hover:bg-[#ee862c]/20' : 'hover:bg-white/5'
-                }`}
+    <div style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+      <div
+        className="overflow-x-auto"
+        style={{
+          border: '1px solid var(--color-border)',
+          borderRadius: 16,
+          background: 'var(--color-bg-card)',
+          overflow: 'hidden',
+        }}
+      >
+        <table className="min-w-full border-collapse">
+          <thead>
+            <tr
+              style={{
+                borderBottom: '1px solid var(--color-border)',
+                background: 'rgba(255,255,255,0.02)',
+              }}
+            >
+              <th
+                className="py-3 px-4 text-center text-xs font-bold uppercase tracking-wider w-12"
+                style={{ color: 'var(--color-accent)' }}
               >
-                <td
-                  className={`py-3 px-4 text-center font-bold ${
-                    isDynamo ? 'text-[#ee862c]' : 'text-gray-400'
-                  }`}
+                #
+              </th>
+              <th
+                className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                Команда
+              </th>
+              <th
+                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                И
+              </th>
+              <th
+                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                В
+              </th>
+              <th
+                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                Н
+              </th>
+              <th
+                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                П
+              </th>
+              <th
+                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                ЗМ
+              </th>
+              <th
+                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                ПМ
+              </th>
+              <th
+                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                ±
+              </th>
+              <th
+                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-12"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                О
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {standings.map((team) => {
+              const isDynamo = team.clubId === ourClubId;
+              const zone = showZones ? getPositionZone(team.position, totalTeams) : 'default';
+              const borderColor = showZones ? zoneColors[zone] : 'transparent';
+
+              return (
+                <tr
+                  key={team.position}
+                  style={{
+                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    transition: 'background 0.2s ease',
+                    background: isDynamo ? 'var(--color-accent-7)' : 'transparent',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isDynamo)
+                      (e.currentTarget as HTMLTableRowElement).style.background =
+                        'rgba(255,255,255,0.03)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isDynamo)
+                      (e.currentTarget as HTMLTableRowElement).style.background = 'transparent';
+                  }}
                 >
-                  {team.position}
-                </td>
-                <td className="py-3 px-4 text-left">
-                  <div className="flex items-center gap-3">
-                    {team.logoUrl && (
-                      <img src={team.logoUrl} alt={team.club} className="h-6 w-6 object-contain" />
+                  <td className="py-3 px-4 text-center relative">
+                    {showZones && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          width: 3,
+                          height: 28,
+                          borderRadius: 2,
+                          background: borderColor,
+                        }}
+                      />
                     )}
                     <span
-                      className={`font-medium ${
-                        isDynamo ? 'text-white font-bold' : 'text-gray-200'
-                      }`}
+                      style={{
+                        fontFamily: "'Inter Tight', sans-serif",
+                        fontSize: 14,
+                        fontWeight: 800,
+                        color: isDynamo ? 'var(--color-accent)' : 'rgba(255,255,255,0.6)',
+                      }}
                     >
-                      {team.club}
+                      {team.position}
                     </span>
-                  </div>
-                </td>
-                <td className="py-3 px-4 text-center text-gray-300">{team.matches}</td>
-                <td className="py-3 px-4 text-center text-green-400">{team.wins}</td>
-                <td className="py-3 px-4 text-center text-gray-400">{team.draws}</td>
-                <td className="py-3 px-4 text-center text-red-400">{team.losses}</td>
-                <td className="py-3 px-4 text-center text-gray-300">{team.goalsFor}</td>
-                <td className="py-3 px-4 text-center text-gray-300">{team.goalsAgainst}</td>
-                <td
-                  className={`py-3 px-4 text-center font-mono text-sm ${
-                    team.goalDifference > 0
-                      ? 'text-green-400'
-                      : team.goalDifference < 0
-                        ? 'text-red-400'
-                        : 'text-gray-400'
-                  }`}
-                >
-                  {team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}
-                </td>
-                <td className="py-3 px-4 text-center font-bold text-white">{team.points}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  </td>
+
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-3">
+                      {team.logoUrl && (
+                        <img
+                          src={team.logoUrl}
+                          alt={team.club}
+                          className="h-6 w-6 object-contain"
+                          style={{ opacity: 0.8 }}
+                        />
+                      )}
+                      <span
+                        style={{
+                          fontFamily: "'Inter Tight', sans-serif",
+                          fontSize: 13,
+                          fontWeight: isDynamo ? 800 : 500,
+                          color: isDynamo ? '#ffffff' : 'rgba(255,255,255,0.8)',
+                        }}
+                      >
+                        {team.club}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td
+                    className="py-3 px-3 text-center text-sm"
+                    style={{ color: 'rgba(255,255,255,0.5)' }}
+                  >
+                    {team.matches}
+                  </td>
+                  <td
+                    className="py-3 px-3 text-center text-sm"
+                    style={{ color: 'var(--color-win)' }}
+                  >
+                    {team.wins}
+                  </td>
+                  <td
+                    className="py-3 px-3 text-center text-sm"
+                    style={{ color: 'rgba(255,255,255,0.4)' }}
+                  >
+                    {team.draws}
+                  </td>
+                  <td
+                    className="py-3 px-3 text-center text-sm"
+                    style={{ color: 'var(--color-loss)' }}
+                  >
+                    {team.losses}
+                  </td>
+                  <td
+                    className="py-3 px-3 text-center text-sm"
+                    style={{ color: 'rgba(255,255,255,0.6)' }}
+                  >
+                    {team.goalsFor}
+                  </td>
+                  <td
+                    className="py-3 px-3 text-center text-sm"
+                    style={{ color: 'rgba(255,255,255,0.6)' }}
+                  >
+                    {team.goalsAgainst}
+                  </td>
+                  <td
+                    className="py-3 px-3 text-center text-sm font-mono"
+                    style={{
+                      color:
+                        team.goalDifference > 0
+                          ? 'var(--color-win)'
+                          : team.goalDifference < 0
+                            ? 'var(--color-loss)'
+                            : 'rgba(255,255,255,0.4)',
+                    }}
+                  >
+                    {team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}
+                  </td>
+                  <td
+                    className="py-3 px-3 text-center"
+                    style={{
+                      fontFamily: "'Inter Tight', sans-serif",
+                      fontSize: 15,
+                      fontWeight: 800,
+                      color: '#ffffff',
+                    }}
+                  >
+                    {team.points}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {showZones && (
+        <div className="flex flex-wrap items-center gap-6 mt-6 px-4">
+          {[
+            { color: zoneColors.cl, label: zoneLabels.cl },
+            { color: zoneColors.ecl, label: zoneLabels.ecl },
+            { color: zoneColors.relegation, label: zoneLabels.relegation },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-2">
+              <div style={{ width: 12, height: 3, borderRadius: 2, background: item.color }} />
+              <span className="text-xs" style={{ color: 'var(--color-text-label)' }}>
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

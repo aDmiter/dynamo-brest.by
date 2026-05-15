@@ -1,4 +1,4 @@
-// src/app/team/player/[id]/PlayerPageClient.tsx
+// src/app/team/player/[slug]/PlayerPageClient.tsx
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
@@ -10,6 +10,7 @@ import {
   faFlag,
   faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
+import { socialLinks } from '@/modules/config/social';
 
 interface PlayerData {
   id: string;
@@ -132,7 +133,7 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
   const competitionName = mainCompetition || 'BETERA - Высшая лига';
 
   return (
-    <div className="player-page bg-[#0d1117]">
+    <div className="player-page bg-[var(--color-bg-main)]">
       {/* Экран 1 — Hero */}
       <section className="player-page__hero relative min-h-screen w-full flex flex-col md:flex-row overflow-hidden">
         {/* Фон — стадион едва видимый */}
@@ -142,7 +143,7 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
             alt=""
             className="absolute inset-0 h-full w-full object-cover opacity-[0.06]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0d1117] via-[#0d1117]/70 to-[#0d1117]/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-main)] via-[var(--color-bg-main)]/70 to-[var(--color-bg-main)]/30" />
         </div>
 
         {/* Большой номер на фоне */}
@@ -153,7 +154,7 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
               fontFamily: "'Inter Tight', sans-serif",
               fontSize: 'clamp(200px, 28vw, 340px)',
               fontWeight: 900,
-              color: '#ee862c',
+              color: 'var(--color-accent)',
               opacity: 0.13,
               lineHeight: 1,
               letterSpacing: '-0.05em',
@@ -163,6 +164,23 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
           </div>
         )}
 
+        {/* Соцсети справа */}
+        <div className="player-page__social absolute right-6 top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-6 lg:flex">
+          {socialLinks.map((social) => (
+            <a
+              key={social.label}
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={social.label}
+              className="text-white/50 transition-colors hover:text-[var(--color-accent)]"
+            >
+              <FontAwesomeIcon icon={social.icon} className="text-lg" />
+            </a>
+          ))}
+          <div className="h-12 w-[1px] bg-white/20" />
+        </div>
+
         {/* Левая часть — информация */}
         <div className="player-page__info-side relative z-10 flex items-center w-full md:w-1/2 lg:w-[45%] px-6 py-24 md:px-16 md:pl-24 lg:pl-32 order-2 md:order-1">
           <div className="w-full max-w-xl">
@@ -170,14 +188,14 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
             <div className="player-page__badge-row flex items-center gap-3 mb-6">
               {player.position && (
                 <span
-                  className="inline-flex items-center border border-[#ee862c] bg-[#ee862c]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#ee862c] rounded-md"
+                  className="inline-flex items-center border border-[var(--color-accent)] bg-[var(--color-accent-10)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-accent)] rounded-md"
                   style={{ fontFamily: "'Inter Tight', sans-serif" }}
                 >
                   {player.position}
                 </span>
               )}
               {player.position && player.number && (
-                <div className="h-[1px] w-8 bg-gradient-to-r from-[#ee862c]/60 to-transparent" />
+                <div className="h-[1px] w-8 bg-gradient-to-r from-[var(--color-accent-30)] to-transparent" />
               )}
               {player.number && (
                 <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/35">
@@ -203,24 +221,22 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
 
             {/* Блок с иконками */}
             <div className="player-page__info-icons flex flex-col gap-2.5 mb-8">
-              {/* Возраст и дата */}
               <div className="flex items-center gap-2.5 text-[13px] text-white/55">
                 <FontAwesomeIcon
                   icon={faCalendarAlt}
-                  className="text-[#ee862c] w-3.5 h-3.5 flex-shrink-0"
+                  className="text-[var(--color-accent)] w-3.5 h-3.5 flex-shrink-0"
                 />
                 {age && <span className="text-white/85 font-semibold">{age} года</span>}
                 {age && player.birthDate && <span className="text-white/30">·</span>}
                 {player.birthDate && <span>{formatDate(player.birthDate)}</span>}
               </div>
 
-              {/* Рост и вес */}
               <div className="flex items-center gap-[18px] text-[13px] text-white/55">
                 {player.height && (
                   <div className="flex items-center gap-2.5">
                     <FontAwesomeIcon
                       icon={faRulerVertical}
-                      className="text-[#ee862c] w-3.5 h-3.5 flex-shrink-0"
+                      className="text-[var(--color-accent)] w-3.5 h-3.5 flex-shrink-0"
                     />
                     <span className="text-white/85 font-semibold">{player.height} см</span>
                   </div>
@@ -229,21 +245,20 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
                   <div className="flex items-center gap-2.5">
                     <FontAwesomeIcon
                       icon={faWeightScale}
-                      className="text-[#ee862c] w-3.5 h-3.5 flex-shrink-0"
+                      className="text-[var(--color-accent)] w-3.5 h-3.5 flex-shrink-0"
                     />
                     <span className="text-white/85 font-semibold">{player.weight} кг</span>
                   </div>
                 )}
               </div>
 
-              {/* Национальность */}
               {player.nationality && (
                 <div className="flex items-center gap-2.5 text-[13px]">
                   <FontAwesomeIcon
                     icon={faFlag}
-                    className="text-[#ee862c] w-3.5 h-3.5 flex-shrink-0"
+                    className="text-[var(--color-accent)] w-3.5 h-3.5 flex-shrink-0"
                   />
-                  <span className="bg-white/[0.06] border border-white/[0.12] rounded-md px-2.5 py-[3px] text-xs font-semibold text-white/80 uppercase tracking-[0.06em]">
+                  <span className="bg-white/[0.06] border border-[var(--color-border-light)] rounded-md px-2.5 py-[3px] text-xs font-semibold text-white/80 uppercase tracking-[0.06em]">
                     {player.nationality}
                   </span>
                 </div>
@@ -258,7 +273,7 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
             {/* Статистика */}
             {statsLoading ? (
               <div className="flex items-center gap-3 text-gray-500 py-4">
-                <div className="w-5 h-5 border-2 border-[#ee862c]/30 border-t-[#ee862c] rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-[var(--color-accent-30)] border-t-[var(--color-accent)] rounded-full animate-spin" />
                 <span className="text-sm">Загрузка статистики...</span>
               </div>
             ) : stats ? (
@@ -267,8 +282,12 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
                 <StatCard label="Голов" value={stats.totals.goals} highlight />
                 <StatCard label="Минут" value={stats.totals.minutesPlayed} />
                 <StatCard label="В старте" value={stats.totals.startedMatches} />
-                <StatCard label="ЖК" value={stats.totals.yellowCards} color="rgb(245,197,24)" />
-                <StatCard label="КК" value={stats.totals.redCards} color="rgb(229,62,62)" />
+                <StatCard
+                  label="ЖК"
+                  value={stats.totals.yellowCards}
+                  color="var(--color-yellow-card)"
+                />
+                <StatCard label="КК" value={stats.totals.redCards} color="var(--color-red-card)" />
               </div>
             ) : null}
 
@@ -276,7 +295,7 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
             {player.bio && (
               <button
                 onClick={scrollToBio}
-                className="player-page__bio-btn inline-flex items-center gap-2 bg-transparent border-[1.5px] border-white/20 rounded-lg px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.1em] text-white/70 hover:border-[#ee862c] hover:text-[#ee862c] transition-all"
+                className="player-page__bio-btn inline-flex items-center gap-2 bg-transparent border-[1.5px] border-white/20 rounded-lg px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.1em] text-white/70 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-all"
                 style={{ fontFamily: "'Inter Tight', sans-serif" }}
               >
                 Биография
@@ -293,8 +312,8 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
             alt={`${player.lastName} ${player.firstName}`}
             className="absolute inset-0 h-full w-full object-contain object-bottom"
           />
-          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0d1117] to-transparent hidden md:block" />
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#0d1117] to-transparent md:hidden" />
+          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[var(--color-bg-main)] to-transparent hidden md:block" />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--color-bg-main)] to-transparent md:hidden" />
         </div>
       </section>
 
@@ -305,7 +324,7 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
           className="player-page__bio relative flex min-h-screen items-center bg-white overflow-hidden"
         >
           <div className="container mx-auto max-w-5xl px-6 py-20 md:px-12">
-            <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#ee862c] mb-4">
+            <p className="text-sm font-bold uppercase tracking-[0.3em] text-[var(--color-accent)] mb-4">
               ПРОФИЛЬ ИГРОКА
             </p>
             <h2
@@ -333,7 +352,7 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
 
           <div className="player-page__bio-title absolute right-0 bottom-0 pointer-events-none select-none">
             <span
-              className="block text-[60px] font-black uppercase tracking-[0.1em] text-[#a5b3d5]/10 md:text-[80px] leading-none"
+              className="block text-[60px] font-black uppercase tracking-[0.1em] text-[var(--color-team-names)]/10 md:text-[80px] leading-none"
               style={{
                 writingMode: 'vertical-lr',
                 fontFamily: "'Inter Tight', sans-serif",
@@ -366,26 +385,29 @@ function StatCard({
       style={{
         background: 'rgba(255,255,255,0.04)',
         backdropFilter: 'blur(12px)',
-        border: highlight ? '1px solid rgba(238,134,44,0.4)' : '1px solid rgba(255,255,255,0.08)',
+        border: highlight ? '1px solid var(--color-accent-30)' : '1px solid var(--color-border)',
       }}
     >
       {highlight && (
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'radial-gradient(at left top, rgba(238,134,44,0.12) 0%, transparent 70%)',
+            background: 'radial-gradient(at left top, var(--color-accent-12) 0%, transparent 70%)',
           }}
         />
       )}
       <span
         className="relative text-[22px] font-extrabold tracking-[-0.5px] leading-none"
-        style={{ fontFamily: "'Inter Tight', sans-serif", color: highlight ? '#ee862c' : color }}
+        style={{
+          fontFamily: "'Inter Tight', sans-serif",
+          color: highlight ? 'var(--color-accent)' : color,
+        }}
       >
         {value}
       </span>
       <span
         className="relative text-[11px] font-medium uppercase tracking-[0.06em]"
-        style={{ fontFamily: "'Inter Tight', sans-serif", color: 'rgba(255,255,255,0.45)' }}
+        style={{ fontFamily: "'Inter Tight', sans-serif", color: 'var(--color-text-stat)' }}
       >
         {label}
       </span>

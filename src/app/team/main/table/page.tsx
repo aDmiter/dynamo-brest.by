@@ -11,27 +11,37 @@ export const metadata: Metadata = {
 
 export default function StandingsPage() {
   return (
-    <div className="min-h-screen bg-[#0d1117] pt-24 pb-16 px-4">
+    <div
+      className="min-h-screen pt-24 pb-16 px-4"
+      style={{ background: 'var(--color-bg-main)', fontFamily: "'Inter Tight', sans-serif" }}
+    >
       <div className="max-w-6xl mx-auto">
         <div className="mb-8 text-center">
           <div className="inline-block relative mb-4">
             <FontAwesomeIcon
               icon={faTrophy}
-              className="text-5xl text-[#ee862c] opacity-20 absolute -left-8 top-1/2 transform -translate-y-1/2"
+              className="text-5xl absolute -left-8 top-1/2 transform -translate-y-1/2"
+              style={{ color: 'var(--color-accent)', opacity: 0.2 }}
             />
-            <h1 className="font-heading text-4xl md:text-5xl font-black text-white uppercase tracking-wider">
+            <h1
+              className="text-4xl md:text-5xl font-black text-white uppercase tracking-wider"
+              style={{ fontFamily: "'Inter Tight', sans-serif" }}
+            >
               Турнирная таблица
             </h1>
           </div>
-          <p className="text-gray-400 text-sm mt-2 flex items-center justify-center gap-2">
-            <FontAwesomeIcon icon={faCalendarAlt} className="text-[#ee862c]" />
+          <p
+            className="text-sm mt-2 flex items-center justify-center gap-2"
+            style={{ color: 'var(--color-text-stat)' }}
+          >
+            <FontAwesomeIcon icon={faCalendarAlt} style={{ color: 'var(--color-accent)' }} />
             BETERA - Высшая лига 2026
           </p>
         </div>
 
         <StandingsTable teamSlug="osnovnoy-sostav" title="BETERA - Высшая лига 2026" />
 
-        <div className="mt-6 text-right text-xs text-gray-500">
+        <div className="mt-6 text-right text-xs" style={{ color: 'var(--color-text-label)' }}>
           * Данные предоставлены платформой АБФФ
         </div>
       </div>

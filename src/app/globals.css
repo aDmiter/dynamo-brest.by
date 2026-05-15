@@ -1,6 +1,78 @@
+/* src/app/globals.css */
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+
+:root {
+  /* Акцентные */
+  --color-accent: #94a3b8;
+  --color-accent-hover: #94a3b8;
+  --color-accent-7: rgba(148, 163, 184, 0.07);
+  --color-accent-10: rgba(148, 163, 184, 0.1);
+  --color-accent-12: rgba(148, 163, 184, 0.12);
+  --color-accent-15: rgba(148, 163, 184, 0.15);
+  --color-accent-20: rgba(148, 163, 184, 0.2);
+  --color-accent-30: rgba(148, 163, 184, 0.3);
+
+  /* Тёмные фоны */
+  --color-bg-main: #0d1117;
+  --color-bg-card: #111820;
+  --color-bg-photo-placeholder: #1a1f2e;
+  --color-bg-admin: #242c41;
+
+  /* Границы */
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-light: rgba(255, 255, 255, 0.1);
+
+  /* Текст */
+  --color-text-stat: rgba(255, 255, 255, 0.45);
+  --color-text-label: rgba(255, 255, 255, 0.35);
+
+  /* Специфические */
+  --color-team-names: #a5b3d5;
+  --color-bio-text: #4a5568;
+  --color-bio-watermark: #7ba4c2;
+
+  /* Семантические */
+  --color-win: #22c55e;
+  --color-loss: #ef4444;
+  --color-yellow-card: #f5c518;
+  --color-red-card: #e53e3e;
+
+  /* shadcn/ui — тёмная тема */
+  --background: oklch(0.22 0.03 260);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.24 0.03 260);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.24 0.03 260);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.38 0.06 240);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.72 0.05 255);
+  --secondary-foreground: oklch(0.22 0.03 260);
+  --muted: oklch(0.3 0.03 260);
+  --muted-foreground: oklch(0.65 0.03 260);
+  --accent: oklch(0.55 0.08 45);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.55 0.2 25);
+  --border: oklch(0.35 0.04 260);
+  --input: oklch(0.35 0.04 260);
+  --ring: oklch(0.55 0.08 45);
+  --chart-1: oklch(0.38 0.06 240);
+  --chart-2: oklch(0.55 0.08 45);
+  --chart-3: oklch(0.38 0.06 240);
+  --chart-4: oklch(0.72 0.05 255);
+  --chart-5: oklch(0.72 0.12 55);
+  --radius: 0;
+  --sidebar: oklch(0.2 0.03 260);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.6 0.18 55);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.55 0.08 45);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.3 0.04 260);
+  --sidebar-ring: oklch(0.6 0.18 55);
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -46,89 +118,6 @@
   --radius-2xl: 0;
   --radius-3xl: 0;
   --radius-4xl: 0;
-}
-
-:root {
-  /* Основной тёмный #242C41 */
-  --background: oklch(0.22 0.03 260);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.24 0.03 260);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.24 0.03 260);
-  --popover-foreground: oklch(0.95 0 0);
-
-  /* Светлее #14516c */
-  --primary: oklch(0.38 0.06 240);
-  --primary-foreground: oklch(0.985 0 0);
-
-  /* Самый светлый синий #a5b3d5 */
-  --secondary: oklch(0.72 0.05 255);
-  --secondary-foreground: oklch(0.22 0.03 260);
-
-  --muted: oklch(0.3 0.03 260);
-  --muted-foreground: oklch(0.65 0.03 260);
-
-  /* Коричневый #a6725c */
-  --accent: oklch(0.55 0.08 45);
-  --accent-foreground: oklch(0.985 0 0);
-
-  /* Оранжевый акцент #ee862c */
-  --destructive: oklch(0.6 0.18 55);
-
-  --border: oklch(0.35 0.04 260);
-  --input: oklch(0.35 0.04 260);
-  --ring: oklch(0.6 0.18 55);
-
-  --chart-1: oklch(0.6 0.18 55);
-  --chart-2: oklch(0.55 0.08 45);
-  --chart-3: oklch(0.38 0.06 240);
-  --chart-4: oklch(0.72 0.05 255);
-  --chart-5: oklch(0.72 0.12 55);
-
-  --radius: 0;
-
-  --sidebar: oklch(0.2 0.03 260);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.6 0.18 55);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.55 0.08 45);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.3 0.04 260);
-  --sidebar-ring: oklch(0.6 0.18 55);
-}
-
-.dark {
-  --background: oklch(0.2 0.03 260);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.22 0.03 260);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.22 0.03 260);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.42 0.07 240);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.3 0.04 260);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.28 0.04 260);
-  --muted-foreground: oklch(0.6 0.03 260);
-  --accent: oklch(0.55 0.08 45);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.55 0.16 55);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.6 0.18 55);
-  --chart-1: oklch(0.6 0.18 55);
-  --chart-2: oklch(0.55 0.08 45);
-  --chart-3: oklch(0.45 0.08 240);
-  --chart-4: oklch(0.7 0.05 255);
-  --chart-5: oklch(0.7 0.12 55);
-  --sidebar: oklch(0.18 0.03 260);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.6 0.18 55);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.55 0.08 45);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.6 0.18 55);
 }
 
 @layer base {

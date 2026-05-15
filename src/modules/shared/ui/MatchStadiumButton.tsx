@@ -73,19 +73,49 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
     <>
       <button
         onClick={handleClick}
-        className={`flex items-center gap-2 text-xs transition-colors ${facilityId ? 'text-white/40 hover:text-[#ee862c] cursor-pointer' : 'text-white/40 cursor-default'}`}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          fontSize: 12,
+          transition: 'color 0.2s ease',
+          color: facilityId ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.4)',
+          cursor: facilityId ? 'pointer' : 'default',
+          background: 'none',
+          border: 'none',
+          padding: 0,
+        }}
+        onMouseEnter={(e) => {
+          if (facilityId) {
+            (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-accent)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (facilityId) {
+            (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)';
+          }
+        }}
       >
         <FontAwesomeIcon icon={faMapMarkerAlt} />
         <span>{stadiumName}</span>
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/80 backdrop-blur-md"
             onClick={() => setIsOpen(false)}
           />
-          <div className="relative z-10 w-full max-w-md border border-white/10 bg-[#242C41]/95 backdrop-blur-xl p-8 shadow-2xl">
+          <div
+            className="relative z-10 w-full max-w-md p-8 shadow-2xl"
+            style={{
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-bg-admin)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              borderRadius: 16,
+            }}
+          >
             <button
               onClick={() => setIsOpen(false)}
               className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors"
@@ -98,12 +128,19 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
             ) : facility ? (
               <div>
                 <div className="flex items-start gap-4 mb-6">
-                  <div className="h-12 w-12 flex items-center justify-center bg-[#ee862c]/20 flex-shrink-0">
-                    <FontAwesomeIcon icon={faLocationDot} className="text-[#ee862c] text-xl" />
+                  <div
+                    className="h-12 w-12 flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'var(--color-accent-10)', borderRadius: 8 }}
+                  >
+                    <FontAwesomeIcon
+                      icon={faLocationDot}
+                      className="text-xl"
+                      style={{ color: 'var(--color-accent)' }}
+                    />
                   </div>
                   <div>
                     <h3
-                      className="font-heading text-xl font-bold text-white"
+                      className="text-xl font-bold text-white"
                       style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
                     >
                       {facility.shortName || facility.name}
@@ -116,7 +153,8 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
                     <div className="flex items-start gap-2">
                       <FontAwesomeIcon
                         icon={faMapMarkerAlt}
-                        className="text-[#ee862c] mt-0.5 flex-shrink-0"
+                        className="mt-0.5 flex-shrink-0"
+                        style={{ color: 'var(--color-accent)' }}
                       />
                       <div>
                         <p className="text-gray-300 text-sm">{facility.address}</p>
@@ -133,7 +171,30 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
                     href={getMapUrl(facility)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#ee862c] px-5 py-3 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#f0ac74] transition-colors"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      background: 'var(--color-accent)',
+                      borderRadius: 8,
+                      padding: '10px 20px',
+                      color: '#ffffff',
+                      fontFamily: "'Inter Tight', sans-serif",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      textDecoration: 'none',
+                      transition: 'background 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLAnchorElement).style.background =
+                        'var(--color-accent-hover)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLAnchorElement).style.background =
+                        'var(--color-accent)';
+                    }}
                   >
                     <FontAwesomeIcon icon={faExternalLinkAlt} className="text-[10px]" />
                     Открыть в Google Картах

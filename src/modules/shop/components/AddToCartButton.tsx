@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShoppingCart, faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faShoppingCart, faCheck } from '@fortawesome/free-solid-svg-icons';
 
 interface Props {
   productId: string;
@@ -28,7 +28,6 @@ export default function AddToCartButton({
       ? `${productId}_${selectedSize}`
       : `${productId}_nosize_${Date.now()}`;
 
-    // Если выбран размер — проверяем нет ли уже такого же
     if (selectedSize) {
       const existing = cart.find((item: { cartKey: string }) => item.cartKey === cartKey);
       if (existing) {
@@ -46,7 +45,6 @@ export default function AddToCartButton({
         });
       }
     } else {
-      // Без размеров — всегда добавляем новую позицию (можно объединять по productId)
       const existing = cart.find(
         (item: { productId: string; size?: string }) => item.productId === productId && !item.size
       );
@@ -76,11 +74,38 @@ export default function AddToCartButton({
     <button
       onClick={handleAddToCart}
       disabled={added}
-      className={`inline-flex items-center gap-3 px-10 py-4 text-sm font-bold uppercase tracking-wider transition-all ${added ? 'bg-green-600 text-white' : 'bg-[#ee862c] text-white hover:bg-[#f0ac74]'}`}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 10,
+        height: 52,
+        padding: '0 28px',
+        background: added ? 'var(--color-win)' : 'var(--color-accent)',
+        border: 'none',
+        borderRadius: 10,
+        fontFamily: "'Inter Tight', sans-serif",
+        fontSize: 13,
+        fontWeight: 800,
+        color: '#fff',
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        boxShadow: added ? '0 4px 20px rgba(34,197,94,0.35)' : '0 4px 20px rgba(238,134,44,0.3)',
+      }}
+      onMouseEnter={(e) => {
+        if (!added)
+          (e.currentTarget as HTMLButtonElement).style.boxShadow =
+            '0 6px 28px rgba(238,134,44,0.45)';
+      }}
+      onMouseLeave={(e) => {
+        if (!added)
+          (e.currentTarget as HTMLButtonElement).style.boxShadow =
+            '0 4px 20px rgba(238,134,44,0.3)';
+      }}
     >
-      <FontAwesomeIcon icon={added ? faCheck : faShoppingCart} className="text-xs" />
-      {added ? 'Добавлено!' : 'В корзину'}
-      <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+      <FontAwesomeIcon icon={added ? faCheck : faShoppingCart} style={{ width: 15, height: 15 }} />
+      {added ? 'Добавлено!' : `В корзину${price ? ` — ${price.toFixed(2)} BYN` : ''}`}
     </button>
   );
 }

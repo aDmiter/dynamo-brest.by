@@ -50,10 +50,9 @@ export async function POST(request: NextRequest) {
       include: { orderitem: { include: { product: true } } },
     });
 
-    // Списываем остатки и увеличиваем счётчик продаж
-    if (data.items && Array.isArray(data.items)) {
+    // Списываем остатки и увеличиваем счётчик продаж только если не skipStockUpdate
+    if (!data.skipStockUpdate && data.items && Array.isArray(data.items)) {
       for (const item of data.items) {
-        // Списываем остатки
         if (item.size) {
           const productSize = await prisma.productSize.findFirst({
             where: { productId: item.productId, size: item.size },
@@ -71,7 +70,6 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Увеличиваем счётчик продаж
         await prisma.product.update({
           where: { id: item.productId },
           data: { totalSold: { increment: item.quantity } },
@@ -79,29 +77,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const orderForEmail = {
-      id: order.id,
-      orderNumber: order.orderNumber,
-      customerName: order.customerName,
-      customerEmail: order.customerEmail,
-      customerPhone: order.customerPhone,
-      address: order.address,
-      status: order.status,
-      trackingCode: order.trackingCode,
-      total: Number(order.total),
-      deliveryPrice: order.deliveryPrice ? Number(order.deliveryPrice) : null,
-      orderitem: order.orderitem.map((item) => ({
-        quantity: item.quantity,
-        price: Number(item.price),
-        size: item.size,
-        product: { name: item.product.name },
-      })),
-    };
+    // Отправляем письма только если заказ не pending_payment
+    if (data.status !== 'pending_payment') {
+      const orderForEmail = {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        customerName: order.customerName,
+        customerEmail: order.customerEmail,
+        customerPhone: order.customerPhone,
+        address: order.address,
+        status: order.status,
+        trackingCode: order.trackingCode,
+        total: Number(order.total),
+        deliveryPrice: order.deliveryPrice ? Number(order.deliveryPrice) : null,
+        orderitem: order.orderitem.map((item) => ({
+          quantity: item.quantity,
+          price: Number(item.price),
+          size: item.size,
+          product: { name: item.product.name },
+        })),
+      };
 
-    try {
-      await sendOrderEmails(orderForEmail);
-    } catch (err) {
-      console.error('❌ Ошибка в sendOrderEmails:', err);
+      try {
+        await sendOrderEmails(orderForEmail);
+      } catch (err) {
+        console.error('❌ Ошибка в sendOrderEmails:', err);
+      }
     }
 
     return NextResponse.json(order, { status: 201 });
