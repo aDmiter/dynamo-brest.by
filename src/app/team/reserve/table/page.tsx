@@ -1,15 +1,15 @@
-// src/app/team/main/table/page.tsx
+// src/app/team/reserve/table/page.tsx
 import { Metadata } from 'next';
 import StandingsTable from '@/modules/team/components/StandingsTable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt, faTrophy } from '@fortawesome/free-solid-svg-icons';
 
 export const metadata: Metadata = {
-  title: 'Турнирная таблица | Динамо-Брест',
-  description: 'Турнирная таблица BETERA - Высшая лига 2026.',
+  title: 'Турнирная таблица (Дубль) | Динамо-Брест',
+  description: 'Турнирная таблица второй лиги 2026.',
 };
 
-export default function StandingsPage() {
+export default function ReserveStandingsPage() {
   return (
     <div className="min-h-screen bg-[#0d1117] pt-24 pb-16 px-4">
       <div className="max-w-6xl mx-auto">
@@ -25,11 +25,11 @@ export default function StandingsPage() {
           </div>
           <p className="text-gray-400 text-sm mt-2 flex items-center justify-center gap-2">
             <FontAwesomeIcon icon={faCalendarAlt} className="text-[#ee862c]" />
-            BETERA - Высшая лига 2026
+            Вторая лига 2026
           </p>
         </div>
 
-        <StandingsTable teamSlug="osnovnoy-sostav" title="BETERA - Высшая лига 2026" />
+        <StandingsTable teamSlug="dubliruyushchiy-sostav" title="Вторая лига 2026" />
 
         <div className="mt-6 text-right text-xs text-gray-500">
           * Данные предоставлены платформой АБФФ

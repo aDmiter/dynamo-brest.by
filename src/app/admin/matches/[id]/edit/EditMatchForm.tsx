@@ -40,6 +40,7 @@ interface MatchData {
   isHome: boolean;
   matchType: string | null;
   attendance: number | null;
+  ticketUrl: string | null;
 }
 
 export default function EditMatchForm({
@@ -61,7 +62,7 @@ export default function EditMatchForm({
     awayTeam: match.awayTeam,
     homeScore: match.homeScore?.toString() || '',
     awayScore: match.awayScore?.toString() || '',
-    matchDate: formatLocalDateTime(match.matchDate), // Исправлено: локальное время
+    matchDate: formatLocalDateTime(match.matchDate),
     stadium: match.stadium || '',
     tournament: match.tournament || '',
     round: match.round || '',
@@ -70,6 +71,7 @@ export default function EditMatchForm({
     matchType: match.matchType || '',
     attendance: match.attendance?.toString() || '',
     teamId: match.teamId,
+    ticketUrl: match.ticketUrl || '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,7 +85,7 @@ export default function EditMatchForm({
       awayTeam: form.awayTeam,
       homeScore: form.homeScore ? parseInt(form.homeScore) : null,
       awayScore: form.awayScore ? parseInt(form.awayScore) : null,
-      matchDate: toUTCString(form.matchDate), // Исправлено: конвертируем в UTC для API
+      matchDate: toUTCString(form.matchDate),
       stadium: form.stadium || null,
       tournament: form.tournament || null,
       round: form.round || null,
@@ -92,6 +94,7 @@ export default function EditMatchForm({
       matchType: form.matchType || null,
       attendance: form.attendance ? parseInt(form.attendance) : null,
       teamId: form.teamId,
+      ticketUrl: form.ticketUrl || null,
     };
 
     try {
@@ -100,9 +103,7 @@ export default function EditMatchForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         setSuccess('Матч обновлён');
         router.refresh();
@@ -135,7 +136,7 @@ export default function EditMatchForm({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/admin/matches/calendar/osnovnoy-sostav">
+        <Link href="/admin/matches">
           <Button
             variant="outline"
             size="sm"
@@ -146,11 +147,9 @@ export default function EditMatchForm({
         </Link>
       </div>
 
-      <Card className="max-w-2xl border-white/10 bg-white/5 backdrop-blur-sm">
+      <Card className="max-w-3xl border-white/10 bg-white/5 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-white">
-            {match.homeTeam} vs {match.awayTeam}
-          </CardTitle>
+          <CardTitle className="text-white">Редактирование матча</CardTitle>
         </CardHeader>
         <CardContent>
           {error && (
@@ -164,10 +163,10 @@ export default function EditMatchForm({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Хозяева</label>
+                <label className="mb-1 block text-sm text-gray-400">Хозяева</label>
                 <Input
                   value={form.homeTeam}
                   onChange={(e) => setForm({ ...form, homeTeam: e.target.value })}
@@ -175,7 +174,7 @@ export default function EditMatchForm({
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Гости</label>
+                <label className="mb-1 block text-sm text-gray-400">Гости</label>
                 <Input
                   value={form.awayTeam}
                   onChange={(e) => setForm({ ...form, awayTeam: e.target.value })}
@@ -184,9 +183,9 @@ export default function EditMatchForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Голы хозяев</label>
+                <label className="mb-1 block text-sm text-gray-400">Голы хозяев</label>
                 <Input
                   type="number"
                   value={form.homeScore}
@@ -196,7 +195,7 @@ export default function EditMatchForm({
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Голы гостей</label>
+                <label className="mb-1 block text-sm text-gray-400">Голы гостей</label>
                 <Input
                   type="number"
                   value={form.awayScore}
@@ -206,7 +205,7 @@ export default function EditMatchForm({
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Зрители</label>
+                <label className="mb-1 block text-sm text-gray-400">Зрители</label>
                 <Input
                   type="number"
                   value={form.attendance}
@@ -218,7 +217,7 @@ export default function EditMatchForm({
             </div>
 
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Дата и время</label>
+              <label className="mb-1 block text-sm text-gray-400">Дата и время</label>
               <Input
                 type="datetime-local"
                 value={form.matchDate}
@@ -227,9 +226,9 @@ export default function EditMatchForm({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Турнир</label>
+                <label className="mb-1 block text-sm text-gray-400">Турнир</label>
                 <Input
                   value={form.tournament}
                   onChange={(e) => setForm({ ...form, tournament: e.target.value })}
@@ -237,7 +236,7 @@ export default function EditMatchForm({
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Тур</label>
+                <label className="mb-1 block text-sm text-gray-400">Тур</label>
                 <Input
                   value={form.round}
                   onChange={(e) => setForm({ ...form, round: e.target.value })}
@@ -246,29 +245,29 @@ export default function EditMatchForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Стадион</label>
-                <Input
-                  value={form.stadium}
-                  onChange={(e) => setForm({ ...form, stadium: e.target.value })}
-                  className="border-white/10 bg-white/5 text-white"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1 block">Статус</label>
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full border border-white/10 bg-white/5 p-2 text-sm text-white"
-                >
-                  <option value="scheduled">Запланирован</option>
-                  <option value="finished">Завершён</option>
-                </select>
-              </div>
+            <div>
+              <label className="mb-1 block text-sm text-gray-400">Стадион</label>
+              <Input
+                value={form.stadium}
+                onChange={(e) => setForm({ ...form, stadium: e.target.value })}
+                className="border-white/10 bg-white/5 text-white"
+              />
             </div>
 
-            <div className="flex items-center gap-6">
+            <div>
+              <label className="mb-1 block text-sm text-gray-400">Ссылка на билеты</label>
+              <Input
+                value={form.ticketUrl}
+                onChange={(e) => setForm({ ...form, ticketUrl: e.target.value })}
+                className="border-white/10 bg-white/5 text-white"
+                placeholder="https://tickets.by/..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Если указана — кнопка «Билеты» появится на сайте
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 text-sm text-gray-400">
                 <input
                   type="checkbox"

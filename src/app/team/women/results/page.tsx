@@ -1,25 +1,19 @@
-// src/app/team/main/calendar/page.tsx
+// src/app/team/women/results/page.tsx
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
-import MatchesCalendarClient from '@/modules/team/components/MatchesCalendarClient';
+import MatchesResultsClient from '@/modules/team/components/MatchesResultsClient';
 
-export default async function MainCalendarPage() {
+export default async function WomenResultsPage() {
   const team = await prisma.team.findUnique({
-    where: { slug: 'osnovnoy-sostav' },
+    where: { slug: 'zhenskaya-komanda' },
   });
 
   if (!team) notFound();
 
   const [matches, opponentTeams] = await Promise.all([
     prisma.match.findMany({
-      where: {
-        teamId: team.id,
-        OR: [
-          { matchDate: { gte: new Date() } },
-          { matchDate: { lte: new Date('1970-01-02T00:00:00.000Z') } },
-        ],
-      },
-      orderBy: { matchDate: 'asc' },
+      where: { teamId: team.id, status: 'finished' },
+      orderBy: { matchDate: 'desc' },
       take: 100,
     }),
     prisma.opponentTeam.findMany({
@@ -28,7 +22,6 @@ export default async function MainCalendarPage() {
     }),
   ]);
 
-  // Карта: cometId → название и лого
   const teamMap: Record<number, { name: string; logoUrl: string | null }> = {};
   for (const opp of opponentTeams) {
     if (opp.cometId) {
@@ -41,7 +34,6 @@ export default async function MainCalendarPage() {
     matchDate: m.matchDate.toISOString(),
     createdAt: m.createdAt.toISOString(),
     updatedAt: m.updatedAt.toISOString(),
-    // Подменяем названия и лого из OpponentTeam
     homeTeam: m.isHome
       ? 'Динамо-Брест'
       : (m.homeTeamId && teamMap[m.homeTeamId]?.name) || m.homeTeam,
@@ -52,5 +44,5 @@ export default async function MainCalendarPage() {
     awayLogoUrl: m.isHome ? (m.awayTeamId && teamMap[m.awayTeamId]?.logoUrl) || null : null,
   }));
 
-  return <MatchesCalendarClient matches={serialized} teamName="Основной состав" />;
+  return <MatchesResultsClient matches={serialized} teamName={team.name} />;
 }

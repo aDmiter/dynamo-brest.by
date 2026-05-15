@@ -1,4 +1,4 @@
-// src/modules/team/components/CoachesGrid.tsx - Сетка тренеров и персонала
+// src/modules/team/components/CoachesGrid.tsx - Сетка тренерского штаба
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 
@@ -18,54 +18,54 @@ interface Props {
   coaches: CoachData[];
 }
 
-const typeLabels: Record<string, string> = {
-  coach: 'Тренерский штаб',
-  staff: 'Персонал',
+// Порядок сортировки должностей
+const positionOrder: Record<string, number> = {
+  'Главный тренер': 1,
+  'Старший тренер': 2,
+  Тренер: 3,
+  'Тренер молодеж.команды': 4,
 };
 
+function getPositionSort(position: string | null): number {
+  if (!position) return 99;
+  // Ищем точное совпадение
+  if (positionOrder[position] !== undefined) return positionOrder[position];
+  // Если начинается с "Тренер" — после обычных тренеров
+  if (position.startsWith('Тренер')) return 10;
+  // Всё остальное (персонал) — после тренеров
+  return 50;
+}
+
 export default function CoachesGrid({ coaches }: Props) {
-  const groupedCoaches: Record<string, CoachData[]> = {};
-
-  for (const coach of coaches) {
-    const type = coach.type || 'coach';
-    if (!groupedCoaches[type]) {
-      groupedCoaches[type] = [];
-    }
-    groupedCoaches[type].push(coach);
-  }
-
-  const typeOrder = ['coach', 'staff'];
+  // Сортируем: сначала по должности, потом по фамилии
+  const sortedCoaches = [...coaches].sort((a, b) => {
+    const posA = getPositionSort(a.position);
+    const posB = getPositionSort(b.position);
+    if (posA !== posB) return posA - posB;
+    return (a.lastName || '').localeCompare(b.lastName || '');
+  });
 
   return (
     <div className="py-16">
       <div className="mx-auto w-full pl-20 pr-4 md:pl-28">
-        {coaches.length === 0 ? (
+        {sortedCoaches.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-xl text-gray-500">Информация о тренерском штабе скоро появится</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-16">
-            {typeOrder.map((type) => {
-              const coachesOfType = groupedCoaches[type];
-              if (!coachesOfType || coachesOfType.length === 0) return null;
+          <div>
+            <h2
+              className="mb-6 text-2xl font-black uppercase tracking-wider text-white"
+              style={{ fontFamily: "'Inter Tight', sans-serif" }}
+            >
+              Тренерский штаб
+            </h2>
 
-              return (
-                <div key={type}>
-                  <h2
-                    className="mb-6 text-2xl font-black uppercase tracking-wider text-white"
-                    style={{ fontFamily: "'Inter Tight', sans-serif" }}
-                  >
-                    {typeLabels[type] || type}
-                  </h2>
-
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-px bg-white/5">
-                    {coachesOfType.map((coach) => (
-                      <CoachCard key={coach.id} coach={coach} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-px bg-white/5">
+              {sortedCoaches.map((coach) => (
+                <CoachCard key={coach.id} coach={coach} />
+              ))}
+            </div>
           </div>
         )}
       </div>

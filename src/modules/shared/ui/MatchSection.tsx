@@ -19,6 +19,7 @@ interface SerializedMatch {
   isHome: boolean;
   matchType: string | null;
   attendance: number | null;
+  ticketUrl: string | null;
 }
 
 export default async function MatchSection() {
@@ -31,7 +32,7 @@ export default async function MatchSection() {
       where: {
         matchType: 'osnova',
         status: 'scheduled',
-        matchDate: { gte: now }, // Только будущие матчи
+        matchDate: { gte: now },
       },
       orderBy: { matchDate: 'asc' },
     }),
@@ -120,6 +121,7 @@ export default async function MatchSection() {
       isHome: match.isHome,
       matchType: match.matchType,
       attendance: match.attendance,
+      ticketUrl: match.ticketUrl,
     };
   };
 

@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 interface TeamStanding {
   position: number;
   club: string;
+  logoUrl: string | null;
   matches: number;
   wins: number;
   draws: number;
@@ -16,15 +17,20 @@ interface TeamStanding {
   points: number;
 }
 
+interface Props {
+  teamSlug: string;
+  title: string;
+}
+
 const DYNAMO_BREST_NAME = 'Динамо-Брест';
 
-export default function StandingsTable() {
+export default function StandingsTable({ teamSlug, title }: Props) {
   const [standings, setStandings] = useState<TeamStanding[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/team/standings')
+    fetch(`/api/team/standings?teamSlug=${teamSlug}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -39,7 +45,7 @@ export default function StandingsTable() {
         setError('Не удалось загрузить турнирную таблицу');
         setLoading(false);
       });
-  }, []);
+  }, [teamSlug]);
 
   if (loading) {
     return (
@@ -111,12 +117,19 @@ export default function StandingsTable() {
                 >
                   {team.position}
                 </td>
-                <td
-                  className={`py-3 px-4 text-left font-medium ${
-                    isDynamo ? 'text-white font-bold' : 'text-gray-200'
-                  }`}
-                >
-                  {team.club}
+                <td className="py-3 px-4 text-left">
+                  <div className="flex items-center gap-3">
+                    {team.logoUrl && (
+                      <img src={team.logoUrl} alt={team.club} className="h-6 w-6 object-contain" />
+                    )}
+                    <span
+                      className={`font-medium ${
+                        isDynamo ? 'text-white font-bold' : 'text-gray-200'
+                      }`}
+                    >
+                      {team.club}
+                    </span>
+                  </div>
                 </td>
                 <td className="py-3 px-4 text-center text-gray-300">{team.matches}</td>
                 <td className="py-3 px-4 text-center text-green-400">{team.wins}</td>

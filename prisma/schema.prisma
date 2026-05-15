@@ -57,6 +57,7 @@ model match {
   matchType       String?
   gender          String?
   attendance      Int?
+  ticketUrl       String?
   customFields    Json?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt

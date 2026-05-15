@@ -1,11 +1,11 @@
-// src/app/team/main/calendar/page.tsx
+// src/app/team/reserve/calendar/page.tsx
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import MatchesCalendarClient from '@/modules/team/components/MatchesCalendarClient';
 
-export default async function MainCalendarPage() {
+export default async function ReserveCalendarPage() {
   const team = await prisma.team.findUnique({
-    where: { slug: 'osnovnoy-sostav' },
+    where: { slug: 'dubliruyushchiy-sostav' },
   });
 
   if (!team) notFound();
@@ -28,7 +28,6 @@ export default async function MainCalendarPage() {
     }),
   ]);
 
-  // Карта: cometId → название и лого
   const teamMap: Record<number, { name: string; logoUrl: string | null }> = {};
   for (const opp of opponentTeams) {
     if (opp.cometId) {
@@ -41,7 +40,6 @@ export default async function MainCalendarPage() {
     matchDate: m.matchDate.toISOString(),
     createdAt: m.createdAt.toISOString(),
     updatedAt: m.updatedAt.toISOString(),
-    // Подменяем названия и лого из OpponentTeam
     homeTeam: m.isHome
       ? 'Динамо-Брест'
       : (m.homeTeamId && teamMap[m.homeTeamId]?.name) || m.homeTeam,
@@ -52,5 +50,5 @@ export default async function MainCalendarPage() {
     awayLogoUrl: m.isHome ? (m.awayTeamId && teamMap[m.awayTeamId]?.logoUrl) || null : null,
   }));
 
-  return <MatchesCalendarClient matches={serialized} teamName="Основной состав" />;
+  return <MatchesCalendarClient matches={serialized} teamName={team.name} />;
 }
