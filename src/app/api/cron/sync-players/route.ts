@@ -1,6 +1,7 @@
-// src/app/api/cron/sync-players/route.ts - Автоматическая синхронизация игроков по Cron
+// src/app/api/cron/sync-players/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { transliterate } from '@/lib/utils';
 
 const COMET_API_KEY = process.env.COMET_API_KEY_PLAYERS || '';
 const COMET_BASE_URL = process.env.COMET_API_BASE_URL || 'https://comet.abff.by';
@@ -30,8 +31,19 @@ interface CometResponse {
   lastPage: number;
 }
 
+async function generateUniqueSlug(firstName: string, lastName: string): Promise<string> {
+  let slug = transliterate(`${firstName}-${lastName}`);
+  slug = slug.replace(/-+/g, '-').replace(/^-|-$/g, '');
+  if (!slug) slug = `player-${Date.now().toString().slice(-6)}`;
+
+  const existing = await prisma.player.findUnique({ where: { slug } });
+  if (existing) {
+    slug = `${slug}-${Date.now().toString().slice(-6)}`;
+  }
+  return slug;
+}
+
 export async function GET(request: NextRequest) {
-  // Проверка секретного ключа
   const authHeader = request.headers.get('authorization') || '';
   const token = authHeader.replace('Bearer ', '');
   const urlToken = request.nextUrl.searchParams.get('token') || '';
@@ -48,7 +60,6 @@ export async function GET(request: NextRequest) {
     let page = 0;
     const pageSize = 25;
 
-    // 1. Собираем все страницы
     do {
       const url = `${COMET_BASE_URL}/data-backend/api/public/areports/run/0/${pageSize}/?page=${page}&API_KEY=${COMET_API_KEY}`;
 
@@ -75,16 +86,12 @@ export async function GET(request: NextRequest) {
       page++;
     } while (true);
 
-    console.log(`[CRON] 📥 Всего игроков: ${allPlayers.length}`);
-
     let created = 0;
     let updated = 0;
     let deactivated = 0;
 
-    // 2. Собираем все cometId из COMET для деактивации ушедших
     const cometIds = allPlayers.map((p) => p.personId.toString());
 
-    // 3. Деактивируем игроков, которых больше нет в COMET
     const deactivatedResult = await prisma.player.updateMany({
       where: {
         cometId: { notIn: cometIds },
@@ -95,7 +102,13 @@ export async function GET(request: NextRequest) {
     });
     deactivated = deactivatedResult.count;
 
-    // 4. Upsert игроков
+    const positionMap: Record<string, string> = {
+      GOALKEEPER: 'Вратарь',
+      DEFENDER: 'Защитник',
+      MIDFIELDER: 'Полузащитник',
+      FORWARD: 'Нападающий',
+    };
+
     for (const p of allPlayers) {
       try {
         const cometId = p.personId.toString();
@@ -105,71 +118,44 @@ export async function GET(request: NextRequest) {
         const firstName = nameParts[0] || '';
         const middleName = nameParts.slice(1).join(' ') || null;
         const lastName = p.lastName || '';
-        const birthDate = p.dateOfBirth ? new Date(p.dateOfBirth) : null;
-        const nationality = p.nationality || null;
 
-        const positionMap: Record<string, string> = {
-          GOALKEEPER: 'Вратарь',
-          DEFENDER: 'Защитник',
-          MIDFIELDER: 'Полузащитник',
-          FORWARD: 'Нападающий',
+        const updateData = {
+          firstName,
+          lastName,
+          middleName,
+          birthDate: p.dateOfBirth ? new Date(p.dateOfBirth) : null,
+          nationality: p.nationality || null,
+          position: positionMap[p.titlePlayer] || p.titlePlayer || null,
+          level: (p.level || '').toLowerCase().includes('профессионал')
+            ? 'professional'
+            : (p.level || '').toLowerCase().includes('любитель')
+              ? 'amateur'
+              : null,
+          gender: (p.gender || '').toLowerCase().includes('муж')
+            ? 'male'
+            : (p.gender || '').toLowerCase().includes('жен')
+              ? 'female'
+              : null,
+          isActive: true,
         };
-        const position = positionMap[p.titlePlayer] || p.titlePlayer || null;
-
-        const levelRaw = (p.level || '').toLowerCase();
-        const level = levelRaw.includes('профессионал')
-          ? 'professional'
-          : levelRaw.includes('любитель')
-            ? 'amateur'
-            : null;
-
-        const genderRaw = (p.gender || '').toLowerCase();
-        const gender = genderRaw.includes('муж')
-          ? 'male'
-          : genderRaw.includes('жен')
-            ? 'female'
-            : null;
-
-        const height = p.height ? parseInt(p.height, 10) || null : null;
-        const weight = p.weight ? parseInt(p.weight, 10) || null : null;
-        const photoUrl = p.photo || null;
 
         const existing = await prisma.player.findFirst({ where: { cometId } });
 
         if (existing) {
-          await prisma.player.update({
-            where: { id: existing.id },
-            data: {
-              firstName,
-              lastName,
-              middleName,
-              birthDate,
-              nationality,
-              position,
-              level,
-              gender,
-              isActive: true,
-            },
-          });
+          await prisma.player.update({ where: { id: existing.id }, data: updateData });
           updated++;
         } else {
+          const slug = await generateUniqueSlug(firstName, lastName);
           await prisma.player.create({
             data: {
+              ...updateData,
               cometId,
-              firstName,
-              lastName,
-              middleName,
-              birthDate,
-              nationality,
-              position,
-              level,
-              gender,
-              height,
-              weight,
-              photoUrl,
-              isActive: true,
+              slug,
+              height: p.height ? parseInt(p.height, 10) || null : null,
+              weight: p.weight ? parseInt(p.weight, 10) || null : null,
+              photoUrl: p.photo || null,
               isManuallyCreated: false,
-              isPublished: true,
+              isPublished: false,
             },
           });
           created++;

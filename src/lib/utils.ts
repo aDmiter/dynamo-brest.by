@@ -1,3 +1,4 @@
+// src/lib/utils.ts
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -5,7 +6,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// src/lib/utils.ts - Утилиты (транслитерация, форматирование)
 export function transliterate(text: string): string {
   const ru: Record<string, string> = {
     а: 'a',
@@ -80,7 +80,7 @@ export function transliterate(text: string): string {
   return text
     .toLowerCase()
     .split('')
-    .map((char) => ru[char] || char)
+    .map((char) => ru[char] ?? char)
     .join('')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')

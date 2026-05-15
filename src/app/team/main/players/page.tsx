@@ -1,4 +1,4 @@
-// src/app/team/main/players/page.tsx - Основной состав
+// src/app/team/main/players/page.tsx
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import PlayersGrid from '@/modules/team/components/PlayersGrid';
@@ -25,7 +25,6 @@ export default async function MainPlayersPage() {
     },
   });
 
-  // Сортируем по позициям и номерам
   const positionOrder: Record<string, number> = {
     Вратарь: 1,
     Защитник: 2,
@@ -44,30 +43,6 @@ export default async function MainPlayersPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0d1117]">
-      <div className="relative h-[40vh] w-full overflow-hidden">
-        <img
-          src="/images/stadium.jpg"
-          alt="Основной состав"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/60" />
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full pl-6 md:pl-36">
-            <p className="mb-4 text-sm font-bold uppercase tracking-[0.3em] text-[#ee862c]">
-              Команда
-            </p>
-            <h1
-              className="text-4xl leading-tight text-white md:text-6xl lg:text-7xl"
-              style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
-            >
-              Основной состав
-            </h1>
-          </div>
-        </div>
-      </div>
-
-      <PlayersGrid players={sortedPlayers} />
-    </div>
+    <PlayersGrid players={sortedPlayers} teamName="Основной состав" teamSlug="osnovnoy-sostav" />
   );
 }

@@ -1,6 +1,7 @@
 // src/app/api/sync/coaches/route.ts - Синхронизация тренеров и персонала из COMET
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSetting } from '@/lib/settings';
 
 interface CometPerson {
   personId: number;
@@ -21,24 +22,10 @@ interface CometPerson {
 interface SyncSource {
   key: string;
   type: 'coach' | 'staff';
+  settingKey: string;
 }
 
 const COMET_BASE_URL = process.env.COMET_API_BASE_URL || 'https://comet.abff.by';
-
-const SYNC_SOURCES: SyncSource[] = [
-  {
-    key:
-      process.env.COMET_API_KEY_COACHES ||
-      '0006QUJGRgb3b70a6a8ab4b8979a99aeef62d3ea0484c97b0503203c17a305361526bf3ace26162dd3c3c9e8d72abc01a16f6d19dbc498ce52924ca4cfaef7c4',
-    type: 'coach',
-  },
-  {
-    key:
-      process.env.COMET_API_KEY_STAFF ||
-      '0006QUJGRg7d8b33a0496b7021c1492a0e1697c7d3afe48f7cc578172baf99f21b510f39517153c28064010f1d1bf830b7d71a47d9ec68664c86616edd146bdf',
-    type: 'staff',
-  },
-];
 
 async function fetchAllPages(apiKey: string): Promise<CometPerson[]> {
   let allResults: CometPerson[] = [];
@@ -79,6 +66,19 @@ async function fetchAllPages(apiKey: string): Promise<CometPerson[]> {
 
 export async function POST(request: NextRequest) {
   try {
+    const dbCoachesKey = await getSetting('COMET_API_KEY_COACHES');
+    const envCoachesKey = process.env.COMET_API_KEY_COACHES || '';
+    const coachesKey = dbCoachesKey || envCoachesKey;
+
+    const dbStaffKey = await getSetting('COMET_API_KEY_STAFF');
+    const envStaffKey = process.env.COMET_API_KEY_STAFF || '';
+    const staffKey = dbStaffKey || envStaffKey;
+
+    const SYNC_SOURCES: SyncSource[] = [
+      { key: coachesKey, type: 'coach', settingKey: 'COMET_API_KEY_COACHES' },
+      { key: staffKey, type: 'staff', settingKey: 'COMET_API_KEY_STAFF' },
+    ];
+
     console.log('🔄 Синхронизация тренеров и персонала из COMET...');
 
     let totalCreated = 0;
@@ -86,6 +86,11 @@ export async function POST(request: NextRequest) {
     const allCometIds: string[] = [];
 
     for (const source of SYNC_SOURCES) {
+      if (!source.key) {
+        console.log(`⚠️ Пропуск ${source.type}: ключ не настроен`);
+        continue;
+      }
+
       const label = source.type === 'coach' ? 'Тренеры' : 'Персонал';
       console.log(`\n📥 Загружаем: ${label}`);
 
@@ -100,7 +105,6 @@ export async function POST(request: NextRequest) {
           const cometId = c.personId?.toString() || '';
           if (!cometId) continue;
 
-          // Парсим firstName: "Эдуард Владиславович" → имя: "Эдуард", отчество: "Владиславович"
           const nameParts = ((c.firstName as string) || '').trim().split(/\s+/);
           const firstName = nameParts[0] || '';
           const middleName = nameParts.slice(1).join(' ') || null;
@@ -152,7 +156,6 @@ export async function POST(request: NextRequest) {
       totalUpdated += updated;
     }
 
-    // Деактивируем тех, кого больше нет в COMET
     const uniqueCometIds = [...new Set(allCometIds)];
     const deactivated = await prisma.coach.updateMany({
       where: {

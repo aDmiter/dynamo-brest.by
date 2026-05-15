@@ -1,9 +1,8 @@
-// src/app/api/sync/players/route.ts - Синхронизация игроков с COMET API
+// src/app/api/sync/players/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
-const COMET_API_KEY = process.env.COMET_API_KEY_PLAYERS || '';
-const COMET_BASE_URL = process.env.COMET_API_BASE_URL || 'https://comet.abff.by';
+import { getSetting } from '@/lib/settings';
+import { transliterate } from '@/lib/utils';
 
 interface CometPlayerData {
   personId: number;
@@ -25,9 +24,13 @@ interface CometResponse {
   results: CometPlayerData[];
 }
 
-async function fetchPage(page: number, pageSize: number): Promise<CometPlayerData[]> {
-  const url = `${COMET_BASE_URL}/data-backend/api/public/areports/run/${page}/${pageSize}/?API_KEY=${COMET_API_KEY}`;
-  console.log(`📡 page=${page}, size=${pageSize}`);
+async function fetchPage(
+  page: number,
+  pageSize: number,
+  apiKey: string
+): Promise<CometPlayerData[]> {
+  const COMET_BASE_URL = process.env.COMET_API_BASE_URL || 'https://comet.abff.by';
+  const url = `${COMET_BASE_URL}/data-backend/api/public/areports/run/${page}/${pageSize}/?API_KEY=${apiKey}`;
 
   const response = await fetch(url, {
     headers: { Accept: 'application/json' },
@@ -43,37 +46,47 @@ async function fetchPage(page: number, pageSize: number): Promise<CometPlayerDat
   return data.results || [];
 }
 
+async function generateUniqueSlug(firstName: string, lastName: string): Promise<string> {
+  let slug = transliterate(`${firstName}-${lastName}`);
+  slug = slug.replace(/-+/g, '-').replace(/^-|-$/g, '');
+  if (!slug) slug = `player-${Date.now().toString().slice(-6)}`;
+
+  const existing = await prisma.player.findUnique({ where: { slug } });
+  if (existing) {
+    slug = `${slug}-${Date.now().toString().slice(-6)}`;
+  }
+  return slug;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const dbKey = await getSetting('COMET_API_KEY_PLAYERS');
+    const envKey = process.env.COMET_API_KEY_PLAYERS || '';
+    const COMET_API_KEY = dbKey || envKey;
+
+    if (!COMET_API_KEY) {
+      return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
+    }
+
     console.log('🔄 Запуск синхронизации игроков из COMET...');
 
     const pageSize = 500;
     let page = 0;
     const allResults: CometPlayerData[] = [];
 
-    // Проходим все страницы пока есть данные
     while (true) {
-      const results = await fetchPage(page, pageSize);
-      console.log(`📄 page ${page}: +${results.length} записей`);
-
+      const results = await fetchPage(page, pageSize, COMET_API_KEY);
       if (results.length === 0) break;
-
       allResults.push(...results);
       page++;
-
-      // Задержка между полными страницами
       if (results.length === pageSize) {
         await new Promise((r) => setTimeout(r, 500));
       }
     }
 
-    console.log(`📊 Всего записей: ${allResults.length}`);
-
-    // Фильтруем
     const filtered = allResults.filter(
       (p) => p.orgName === 'Динамо-Брест' && p.registrationStatus === 'Подтверждено'
     );
-    console.log(`📥 После фильтра: ${filtered.length}`);
 
     if (filtered.length === 0) {
       return NextResponse.json({ message: 'Нет данных', total: 0, created: 0, updated: 0 });
@@ -98,13 +111,14 @@ export async function POST(request: NextRequest) {
         const nameParts = (p.firstName || '').trim().split(/\s+/);
         const firstName = nameParts[0] || '';
         const middleName = nameParts.slice(1).join(' ') || null;
+        const lastName = p.lastName || '';
 
         const levelRaw = (p.level || '').toLowerCase();
         const genderRaw = (p.gender || '').toLowerCase();
 
         const updateData = {
           firstName,
-          lastName: p.lastName || '',
+          lastName,
           middleName,
           birthDate: p.dateOfBirth ? new Date(p.dateOfBirth) : null,
           nationality: p.nationality || null,
@@ -124,10 +138,12 @@ export async function POST(request: NextRequest) {
           await prisma.player.update({ where: { id: existing.id }, data: updateData });
           updated++;
         } else {
+          const slug = await generateUniqueSlug(firstName, lastName);
           await prisma.player.create({
             data: {
               ...updateData,
               cometId,
+              slug,
               height: p.height ? parseInt(p.height, 10) || null : null,
               weight: p.weight ? parseInt(p.weight, 10) || null : null,
               photoUrl: p.photo || null,
@@ -142,7 +158,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`✅ Создано ${created}, обновлено ${updated}`);
     return NextResponse.json({
       success: true,
       total: filtered.length,
@@ -152,7 +167,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error('❌', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

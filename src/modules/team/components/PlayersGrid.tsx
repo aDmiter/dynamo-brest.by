@@ -1,12 +1,14 @@
-// src/modules/team/components/PlayersGrid.tsx - Сетка игроков с группировкой по позициям
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
+// src/modules/team/components/PlayersGrid.tsx
+'use client';
+
+import { useState, useMemo } from 'react';
 
 interface PlayerData {
   id: string;
+  slug?: string | null;
+  cometId: string | null;
   firstName: string;
   lastName: string;
-  middleName: string | null;
   number: number | null;
   position: string | null;
   photoUrl: string | null;
@@ -18,128 +20,305 @@ interface PlayerData {
 
 interface Props {
   players: PlayerData[];
+  teamName: string;
+  teamSlug: string;
 }
 
-const positionLabels: Record<string, string> = {
-  Вратарь: 'Вратари',
-  Защитник: 'Защитники',
-  Полузащитник: 'Полузащитники',
-  Нападающий: 'Нападающие',
-};
+interface PlayerStats {
+  appearances: number;
+  goals: number;
+  cleanSheets?: number;
+  goalsConceded?: number;
+  assists?: number;
+}
 
-export default function PlayersGrid({ players }: Props) {
-  const groupedPlayers: Record<string, PlayerData[]> = {};
+import PlayerCard from './PlayerCard';
+import StatsPanel from './StatsPanel';
+import PositionFilters from './PositionFilters';
+import SectionHeader from './SectionHeader';
 
-  for (const player of players) {
-    const position = player.position || 'Другие';
-    if (!groupedPlayers[position]) {
-      groupedPlayers[position] = [];
-    }
-    groupedPlayers[position].push(player);
+const positionSections = [
+  { key: 'Вратарь', label: 'Вратари', watermark: 'GK' },
+  { key: 'Защитник', label: 'Защитники', watermark: 'DEF' },
+  { key: 'Полузащитник', label: 'Полузащитники', watermark: 'MID' },
+  { key: 'Нападающий', label: 'Нападающие', watermark: 'FWD' },
+];
+
+const positionFilters = [
+  { key: 'ALL', label: 'Все' },
+  { key: 'Вратарь', label: 'Вратари' },
+  { key: 'Защитник', label: 'Защитники' },
+  { key: 'Полузащитник', label: 'Полузащитники' },
+  { key: 'Нападающий', label: 'Нападающие' },
+];
+
+function calculateAge(birthDate: Date | null): number | null {
+  if (!birthDate) return null;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
+  const [filter, setFilter] = useState<string>('ALL');
+  const [statsMap, setStatsMap] = useState<Record<string, PlayerStats | null>>({});
+  const [initDone, setInitDone] = useState(false);
+
+  // Инициализация при первом рендере
+  if (!initDone) {
+    setInitDone(true);
+    startLoadingStats();
   }
 
-  const positionOrder = ['Вратарь', 'Защитник', 'Полузащитник', 'Нападающий'];
+  async function startLoadingStats() {
+    const cacheKey = `ps_${teamSlug}`;
+
+    // Проверяем кэш
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.t && Date.now() - parsed.t < 30 * 60 * 1000) {
+          setStatsMap(parsed.d);
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // Загружаем
+    const map: Record<string, PlayerStats | null> = {};
+    for (const p of players) {
+      if (!p.cometId) continue;
+      try {
+        const res = await fetch(`/api/players/${p.id}/stats?teamSlug=${teamSlug}`);
+        const data = await res.json();
+        if (data.success) {
+          map[p.id] = {
+            appearances: data.totals.appearances || 0,
+            goals: data.totals.goals || 0,
+            cleanSheets: data.totals.cleanSheets || 0,
+            goalsConceded: data.totals.goalsConceded || 0,
+            assists: data.totals.assists || 0,
+          };
+        }
+      } catch {
+        // skip
+      }
+      setStatsMap({ ...map });
+      await new Promise((r) => setTimeout(r, 100));
+    }
+
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({ d: map, t: Date.now() }));
+    } catch {
+      // ignore
+    }
+  }
+
+  const filtered = useMemo(() => {
+    return players.filter((p) => filter === 'ALL' || p.position === filter);
+  }, [players, filter]);
+
+  const isGrouped = filter === 'ALL';
+
+  const squadMeta = {
+    total: players.length,
+    avgAge:
+      Math.round(
+        (players.reduce((s, p) => s + (calculateAge(p.birthDate) || 0), 0) / players.length) * 10
+      ) / 10,
+    nations: new Set(players.map((p) => p.nationality).filter(Boolean)).size,
+    withPhotos: players.filter((p) => p.photoUrl).length,
+  };
 
   return (
-    <div className="py-16">
-      <div className="mx-auto w-full pl-20 pr-4 md:pl-28">
-        {players.length === 0 ? (
-          <div className="py-20 text-center">
-            <p className="text-xl text-gray-500">Состав пока не заполнен</p>
+    <div
+      className="players-grid"
+      style={{
+        fontFamily: "'Inter Tight', sans-serif",
+        background: '#0d1117',
+        minHeight: '100vh',
+        color: '#ffffff',
+        overflowX: 'hidden',
+      }}
+    >
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .card-enter { animation: fadeUp 0.45s ease forwards; }
+      `}</style>
+
+      <section
+        className="players-grid__hero"
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          padding: '56px 32px 40px',
+          maxWidth: 1400,
+          margin: '0 auto',
+        }}
+      >
+        <div
+          className="players-grid__watermark"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            right: -24,
+            transform: 'translateY(-50%)',
+            fontFamily: "'Inter Tight', sans-serif",
+            fontSize: 'clamp(100px, 18vw, 220px)',
+            fontWeight: 900,
+            color: '#ee862c',
+            opacity: 0.055,
+            letterSpacing: '-0.05em',
+            textTransform: 'uppercase',
+            userSelect: 'none',
+            pointerEvents: 'none',
+            lineHeight: 1,
+          }}
+        >
+          СОСТАВ
+        </div>
+        <div
+          className="players-grid__hero-content"
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            gap: 32,
+            flexWrap: 'wrap',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          <div>
+            <div
+              className="players-grid__subtitle"
+              style={{
+                fontFamily: "'Inter Tight', sans-serif",
+                fontSize: 13,
+                fontWeight: 400,
+                color: 'rgba(255,255,255,0.45)',
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+                marginBottom: 2,
+              }}
+            >
+              КОМАНДА
+            </div>
+            <div
+              className="players-grid__title"
+              style={{
+                fontFamily: "'Inter Tight', sans-serif",
+                fontSize: 'clamp(48px, 7vw, 80px)',
+                fontWeight: 900,
+                color: '#ffffff',
+                lineHeight: 0.9,
+                letterSpacing: '-0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {teamName}
+            </div>
           </div>
-        ) : (
-          <div className="flex flex-col gap-16">
-            {positionOrder.map((position) => {
-              const playersInPosition = groupedPlayers[position];
-              if (!playersInPosition || playersInPosition.length === 0) return null;
+          <StatsPanel meta={squadMeta} />
+        </div>
+      </section>
 
+      <PositionFilters
+        filters={positionFilters}
+        current={filter}
+        total={players.length}
+        players={players}
+        onChange={setFilter}
+      />
+
+      <div
+        className="players-grid__content"
+        style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 32px 80px' }}
+      >
+        {filtered.length === 0 ? (
+          <div
+            className="players-grid__empty"
+            style={{
+              textAlign: 'center',
+              padding: '100px 0',
+              fontFamily: "'Inter Tight', sans-serif",
+              color: 'rgba(255,255,255,0.25)',
+              fontSize: 15,
+              fontWeight: 500,
+            }}
+          >
+            Игроки не найдены
+          </div>
+        ) : isGrouped ? (
+          <div
+            className="players-grid__sections"
+            style={{ display: 'flex', flexDirection: 'column', gap: 52 }}
+          >
+            {positionSections.map(({ key, label, watermark }) => {
+              const group = filtered.filter((p) => p.position === key);
+              if (!group.length) return null;
               return (
-                <div key={position}>
-                  <h2
-                    className="mb-6 text-2xl font-black uppercase tracking-wider text-white"
-                    style={{ fontFamily: "'Inter Tight', sans-serif" }}
+                <div key={key} className="players-grid__section">
+                  <SectionHeader label={label} count={group.length} watermark={watermark} />
+                  <div
+                    className="players-grid__cards"
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+                      gap: 16,
+                    }}
                   >
-                    {positionLabels[position] || position}
-                  </h2>
-
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-px bg-white/5">
-                    {playersInPosition.map((player) => (
-                      <PlayerCard key={player.id} player={player} />
+                    {group.map((player, i) => (
+                      <div
+                        key={player.id}
+                        className="card-enter"
+                        style={{ animationDelay: `${i * 0.06}s`, opacity: 0 }}
+                      >
+                        <PlayerCard
+                          player={player}
+                          teamSlug={teamSlug}
+                          stats={statsMap[player.id] ?? null}
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>
               );
             })}
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Карточка игрока
-function PlayerCard({ player }: { player: PlayerData }) {
-  return (
-    <div className="player-card group relative bg-[#0d1117] overflow-hidden transition-colors hover:bg-[#111827]">
-      {/* Фото */}
-      <div className="player-card__photo relative w-full aspect-[3/4] overflow-hidden bg-[#1a1f2e]">
-        {player.photoUrl ? (
-          <img
-            src={player.photoUrl}
-            alt={`${player.lastName} ${player.firstName}`}
-            className="player-card__photo-image absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
         ) : (
-          <div className="flex h-full items-center justify-center">
-            <FontAwesomeIcon icon={faUser} className="text-6xl text-gray-600" />
+          <div
+            className="players-grid__cards"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+              gap: 16,
+            }}
+          >
+            {filtered.map((player, i) => (
+              <div
+                key={player.id}
+                className="card-enter"
+                style={{ animationDelay: `${i * 0.05}s`, opacity: 0 }}
+              >
+                <PlayerCard
+                  player={player}
+                  teamSlug={teamSlug}
+                  stats={statsMap[player.id] ?? null}
+                />
+              </div>
+            ))}
           </div>
         )}
-
-        {/* Номер */}
-        {player.number && (
-          <div className="player-card__number absolute right-3 top-3 z-10">
-            <span
-              className="text-5xl font-black leading-none text-[#ee862c]/30"
-              style={{ fontFamily: "'Inter Tight', sans-serif" }}
-            >
-              {player.number}
-            </span>
-          </div>
-        )}
-
-        {/* Градиент снизу */}
-        <div className="player-card__gradient absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0d1117] to-transparent" />
-      </div>
-
-      {/* Инфо */}
-      <div className="player-card__info p-4">
-        <h3 className="player-card__lastname text-2xl font-black uppercase text-white leading-tight">
-          {player.lastName}
-        </h3>
-        <p className="player-card__firstname mt-0.5 text-sm text-gray-400">{player.firstName}</p>
-
-        <div className="player-card__details mt-3 flex flex-wrap gap-1.5">
-          {player.nationality && (
-            <span className="border border-white/10 px-2 py-0.5 text-[11px] text-gray-500">
-              {player.nationality}
-            </span>
-          )}
-          {player.birthDate && (
-            <span className="border border-white/10 px-2 py-0.5 text-[11px] text-gray-500">
-              {new Date(player.birthDate).toLocaleDateString('ru-RU')}
-            </span>
-          )}
-          {player.height && (
-            <span className="border border-white/10 px-2 py-0.5 text-[11px] text-gray-500">
-              {player.height} см
-            </span>
-          )}
-          {player.weight && (
-            <span className="border border-white/10 px-2 py-0.5 text-[11px] text-gray-500">
-              {player.weight} кг
-            </span>
-          )}
-        </div>
       </div>
     </div>
   );

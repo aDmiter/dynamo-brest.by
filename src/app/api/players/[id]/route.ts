@@ -1,22 +1,18 @@
-// src/app/api/players/[id]/route.ts - API конкретного игрока (GET, PUT, DELETE)
+// src/app/api/players/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { transliterate } from '@/lib/utils';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-// GET — получить одного игрока по id
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   const player = await prisma.player.findUnique({
     where: { id },
-    include: {
-      playerTeams: {
-        include: { team: true },
-      },
-    },
+    include: { playerTeams: { include: { team: true } } },
   });
 
   if (!player) {
@@ -30,17 +26,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   });
 }
 
-// PUT — обновить данные игрока
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const data = await request.json();
 
     const isSync = data._sync === true;
-
     const updateData: Record<string, unknown> = {};
 
-    // Поля, которые ВСЕГДА обновляются
     if (data.firstName !== undefined) updateData.firstName = data.firstName;
     if (data.lastName !== undefined) updateData.lastName = data.lastName;
     if (data.middleName !== undefined) updateData.middleName = data.middleName;
@@ -53,7 +46,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.level !== undefined) updateData.level = data.level;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-    // Поля, которые обновляются ТОЛЬКО при ручном редактировании
     if (!isSync) {
       if (data.number !== undefined) updateData.number = data.number;
       if (data.photoUrl !== undefined) updateData.photoUrl = data.photoUrl;
@@ -67,13 +59,25 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       if (data.gallery !== undefined) updateData.gallery = data.gallery;
     }
 
-    // Обновляем игрока
-    const player = await prisma.player.update({
-      where: { id },
-      data: updateData,
-    });
+    if (data.firstName !== undefined || data.lastName !== undefined) {
+      const currentPlayer = await prisma.player.findUnique({ where: { id } });
+      if (currentPlayer) {
+        const newFirstName = data.firstName ?? currentPlayer.firstName;
+        const newLastName = data.lastName ?? currentPlayer.lastName;
+        let newSlug = transliterate(`${newFirstName}-${newLastName}`);
+        newSlug = newSlug.replace(/-+/g, '-').replace(/^-|-$/g, '');
+        if (!newSlug) newSlug = `player-${Date.now().toString().slice(-6)}`;
 
-    // Обновляем связи с командами
+        const existingSlug = await prisma.player.findUnique({ where: { slug: newSlug } });
+        if (existingSlug && existingSlug.id !== id) {
+          newSlug = `${newSlug}-${Date.now().toString().slice(-6)}`;
+        }
+        updateData.slug = newSlug;
+      }
+    }
+
+    await prisma.player.update({ where: { id }, data: updateData });
+
     if (data.teamIds !== undefined && !isSync) {
       await prisma.playerTeam.deleteMany({ where: { playerId: id } });
       const teamIds: string[] = data.teamIds || [];
@@ -86,11 +90,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const updatedPlayer = await prisma.player.findUnique({
       where: { id },
-      include: {
-        playerTeams: {
-          include: { team: true },
-        },
-      },
+      include: { playerTeams: { include: { team: true } } },
     });
 
     return NextResponse.json({
@@ -105,7 +105,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// DELETE — удалить игрока (только если создан вручную)
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;

@@ -1,9 +1,8 @@
 // src/app/api/sync/matches/route.ts - Синхронизация матчей, клубов и стадионов с COMET API
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSetting } from '@/lib/settings';
 
-const COMET_API_KEY_MATCHES = process.env.COMET_API_KEY_MATCHES || '';
-const COMET_API_KEY_FACILITIES = process.env.COMET_API_KEY_FACILITIES || '';
 const COMET_BASE_URL = process.env.COMET_API_BASE_URL || 'https://comet.abff.by';
 
 const OUR_TEAM_IDS = [68812, 102734, 101132];
@@ -74,10 +73,9 @@ async function ensureOurTeams() {
   }
 }
 
-async function syncAll() {
+async function syncAll(matchesKey: string, facilitiesKey: string) {
   const logs: string[] = [];
 
-  // 0. Проверка наших клубов
   logs.push('🏠 Проверка наших клубов...');
   await ensureOurTeams();
   logs.push('✅ Наши клубы проверены');
@@ -89,7 +87,7 @@ async function syncAll() {
   const facilityIds = new Set<number>();
 
   while (true) {
-    const facilities = await fetchCometPage(COMET_API_KEY_FACILITIES, page);
+    const facilities = await fetchCometPage(facilitiesKey, page);
     if (facilities.length === 0) break;
 
     for (const f of facilities) {
@@ -137,7 +135,7 @@ async function syncAll() {
   page = 0;
   const opponentIds = new Set<number>();
   while (true) {
-    const matches = await fetchCometPage(COMET_API_KEY_MATCHES, page);
+    const matches = await fetchCometPage(matchesKey, page);
     if (matches.length === 0) break;
     for (const m of matches) {
       const homeTeamId = m.homeTeam as number;
@@ -177,7 +175,7 @@ async function syncAll() {
   const TBD_DATE = new Date('1970-01-01T00:00:00.000Z');
 
   while (true) {
-    const matches = await fetchCometPage(COMET_API_KEY_MATCHES, page);
+    const matches = await fetchCometPage(matchesKey, page);
     if (matches.length === 0) break;
     for (const m of matches) {
       const homeTeamId = m.homeTeam as number;
@@ -297,7 +295,19 @@ async function syncAll() {
 
 export async function GET() {
   try {
-    const logs = await syncAll();
+    const dbMatchesKey = await getSetting('COMET_API_KEY_MATCHES');
+    const envMatchesKey = process.env.COMET_API_KEY_MATCHES || '';
+    const matchesKey = dbMatchesKey || envMatchesKey;
+
+    const dbFacilitiesKey = await getSetting('COMET_API_KEY_FACILITIES');
+    const envFacilitiesKey = process.env.COMET_API_KEY_FACILITIES || '';
+    const facilitiesKey = dbFacilitiesKey || envFacilitiesKey;
+
+    if (!matchesKey || !facilitiesKey) {
+      return NextResponse.json({ error: 'API keys not configured' }, { status: 500 });
+    }
+
+    const logs = await syncAll(matchesKey, facilitiesKey);
     return NextResponse.json({ success: true, logs });
   } catch (error) {
     return NextResponse.json(
@@ -309,7 +319,19 @@ export async function GET() {
 
 export async function POST() {
   try {
-    const logs = await syncAll();
+    const dbMatchesKey = await getSetting('COMET_API_KEY_MATCHES');
+    const envMatchesKey = process.env.COMET_API_KEY_MATCHES || '';
+    const matchesKey = dbMatchesKey || envMatchesKey;
+
+    const dbFacilitiesKey = await getSetting('COMET_API_KEY_FACILITIES');
+    const envFacilitiesKey = process.env.COMET_API_KEY_FACILITIES || '';
+    const facilitiesKey = dbFacilitiesKey || envFacilitiesKey;
+
+    if (!matchesKey || !facilitiesKey) {
+      return NextResponse.json({ error: 'API keys not configured' }, { status: 500 });
+    }
+
+    const logs = await syncAll(matchesKey, facilitiesKey);
     return NextResponse.json({ success: true, logs });
   } catch (error) {
     return NextResponse.json(

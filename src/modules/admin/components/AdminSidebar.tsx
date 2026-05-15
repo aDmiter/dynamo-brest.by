@@ -96,7 +96,10 @@ const menuItems: MenuItem[] = [
   {
     title: 'Настройки',
     icon: faCog,
-    children: [{ title: 'Главное меню', href: '/admin/settings/menu' }],
+    children: [
+      { title: 'Главное меню', href: '/admin/settings/menu' },
+      { title: 'Ключи API', href: '/admin/settings/keys' },
+    ],
   },
 ];
 
