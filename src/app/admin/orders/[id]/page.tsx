@@ -13,6 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import OrderStatusBadge from '../OrderStatusBadge';
 import TrackingCodeInput from './TrackingCodeInput';
+import DeleteOrderButton from '../DeleteOrderButton';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -29,13 +30,20 @@ export default async function OrderDetailPage({ params }: Props) {
 
   return (
     <div>
-      <div className="mb-6 flex items-center gap-4">
-        <Link href="/admin/orders" className="text-gray-400 hover:text-white transition-colors">
-          <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> Назад
-        </Link>
-        <h1 className="font-heading text-2xl font-bold text-white">
-          Заказ {order.orderNumber || `#${order.id.slice(-6)}`}
-        </h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/admin/orders" className="text-gray-400 hover:text-white transition-colors">
+            <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> Назад
+          </Link>
+          <h1 className="font-heading text-2xl font-bold text-white">
+            Заказ {order.orderNumber || `#${order.id.slice(-6)}`}
+          </h1>
+        </div>
+        <DeleteOrderButton
+          orderId={order.id}
+          orderLabel={order.orderNumber || `#${order.id.slice(-6)}`}
+          redirectTo="/admin/orders"
+        />
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

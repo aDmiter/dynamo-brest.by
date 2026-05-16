@@ -55,7 +55,7 @@ export default function BurgerMenu() {
   };
 
   const getUrl = (item: MenuItem): string => {
-    if (item.type === 'link' && item.linkUrl) return item.linkUrl;
+    if (item.linkUrl) return item.linkUrl;
     if (item.type === 'page') return `/page/${item.slug}`;
     return '#';
   };

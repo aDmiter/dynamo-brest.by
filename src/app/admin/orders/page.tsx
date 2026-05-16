@@ -3,27 +3,25 @@ import { prisma } from '@/lib/prisma';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
+import AdminPagination from '@/modules/admin/components/AdminPagination';
 import OrderStatusBadge from './OrderStatusBadge';
+import DeleteOrderButton from './DeleteOrderButton';
 
-const statusLabels: Record<string, string> = {
-  paid: 'Оплачен',
-  unpaid: 'Не оплачен',
-  pending_payment: 'Ожидает оплаты',
-  shipped: 'Отправлен',
-  delivered: 'Доставлен',
-  cancelled: 'Отменён',
-};
+const PAGE_SIZE = 20;
 
-const statusColors: Record<string, string> = {
-  paid: 'text-green-400 bg-green-400/10',
-  unpaid: 'text-yellow-400 bg-yellow-400/10',
-  pending_payment: 'text-gray-400 bg-gray-400/10',
-  shipped: 'text-purple-400 bg-purple-400/10',
-  delivered: 'text-blue-400 bg-blue-400/10',
-  cancelled: 'text-red-400 bg-red-400/10',
-};
+interface Props {
+  searchParams: Promise<{ page?: string }>;
+}
 
-export default async function OrdersAdminPage() {
+export default async function OrdersAdminPage({ searchParams }: Props) {
+  const { page: pageParam } = await searchParams;
+  const parsedPage = parseInt(pageParam ?? '1', 10);
+
+  const total = await prisma.order.count();
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const currentPage = Math.min(Math.max(1, Number.isNaN(parsedPage) ? 1 : parsedPage), totalPages);
+  const skip = (currentPage - 1) * PAGE_SIZE;
+
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
@@ -31,7 +29,8 @@ export default async function OrdersAdminPage() {
         include: { product: true },
       },
     },
-    take: 50,
+    skip,
+    take: PAGE_SIZE,
   });
 
   return (
@@ -81,18 +80,36 @@ export default async function OrdersAdminPage() {
                     {new Date(order.createdAt).toLocaleDateString('ru-RU')}
                   </td>
                   <td className="p-3 text-center">
-                    <Link
-                      href={`/admin/orders/${order.id}`}
-                      className="inline-flex items-center gap-1 text-sm text-[#ee862c] hover:underline"
-                    >
-                      <FontAwesomeIcon icon={faEye} /> Смотреть
-                    </Link>
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      <Link
+                        href={`/admin/orders/${order.id}`}
+                        className="inline-flex items-center gap-1 text-sm text-[#ee862c] hover:underline"
+                      >
+                        <FontAwesomeIcon icon={faEye} /> Смотреть
+                      </Link>
+                      <DeleteOrderButton
+                        orderId={order.id}
+                        orderLabel={order.orderNumber || `#${order.id.slice(-6)}`}
+                        compact
+                      />
+                    </div>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
+
+        <div className="px-3 pb-3">
+          <AdminPagination
+            basePath="/admin/orders"
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={total}
+            pageSize={PAGE_SIZE}
+            itemLabel="заказов"
+          />
+        </div>
       </div>
     </div>
   );

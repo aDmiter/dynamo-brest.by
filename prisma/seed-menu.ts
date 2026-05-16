@@ -1,7 +1,11 @@
 // prisma/seed-menu.ts - Заполнение меню начальными данными
 import { PrismaClient } from '@prisma/client';
+import { CODED_MENU_ROUTES } from '../src/config/coded-menu-routes';
 
 const prisma = new PrismaClient();
+
+/** Страница из src/app — только type: link + linkUrl (не «Текстовая страница») */
+const link = 'link' as const;
 
 async function seedMenu() {
   console.log('🌱 Заполнение меню...');
@@ -19,6 +23,7 @@ async function seedMenu() {
       {
         title: 'Игроки',
         slug: 'osnova-players',
+        type: link,
         linkUrl: '/team/main/players',
         parentId: main.id,
         order: 1,
@@ -247,23 +252,23 @@ async function seedMenu() {
       {
         title: 'Услуги транспорта',
         slug: 'services-transport',
-        type: 'page',
-        linkUrl: '/page/services-transport',
-        subtitle: 'Услуги',
-        imageUrl: '/images/services/buses/mercedes/mercedes_1.jpg',
+        type: link,
+        linkUrl: CODED_MENU_ROUTES['services-transport'],
         parentId: services.id,
         order: 1,
       },
       {
         title: 'Услуги полей',
         slug: 'services-fields',
-        linkUrl: '/services/fields',
+        type: link,
+        linkUrl: CODED_MENU_ROUTES['services-fields'],
         parentId: services.id,
         order: 2,
       },
       {
         title: 'Кафе',
         slug: 'services-cafe',
+        type: link,
         linkUrl: '/services/cafe',
         parentId: services.id,
         order: 3,
@@ -271,6 +276,7 @@ async function seedMenu() {
       {
         title: 'Гостиница',
         slug: 'services-hotel',
+        type: link,
         linkUrl: '/services/hotel',
         parentId: services.id,
         order: 4,
@@ -278,12 +284,18 @@ async function seedMenu() {
       {
         title: 'Тренажерный зал',
         slug: 'services-gym',
-        type: 'link',
-        linkUrl: '/services/gym',
-        imageUrl: '/images/services/gym/216A7477-JPG.jpg',
-        subtitle: 'Услуги',
+        type: link,
+        linkUrl: CODED_MENU_ROUTES['services-gym'],
         parentId: services.id,
         order: 5,
+      },
+      {
+        title: 'Билеты',
+        slug: 'tickets',
+        type: link,
+        linkUrl: CODED_MENU_ROUTES.tickets,
+        parentId: services.id,
+        order: 6,
       },
     ],
   });

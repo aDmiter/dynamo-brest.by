@@ -50,5 +50,5 @@ export default async function MainCalendarPage() {
     awayLogoUrl: m.isHome ? (m.awayTeamId && teamMap[m.awayTeamId]?.logoUrl) || null : null,
   }));
 
-  return <MatchesCalendarClient matches={serialized} teamName="Основной состав" />;
+  return <MatchesCalendarClient matches={serialized} teamName={team.name} />;
 }

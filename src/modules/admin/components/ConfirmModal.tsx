@@ -1,6 +1,8 @@
 // src/modules/admin/components/ConfirmModal.tsx - Модальное окно подтверждения (glassmorphism)
 'use client';
 
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
@@ -25,20 +27,38 @@ export default function ConfirmModal({
   onCancel,
   loading = false,
 }: ConfirmModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Затемнение */}
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-modal-title"
+    >
       <div
         className="absolute inset-0 bg-black/80 backdrop-blur-md"
         onClick={loading ? undefined : onCancel}
       />
 
-      {/* Модальное окно */}
       <div className="relative z-10 w-full max-w-md border border-white/10 bg-[#242C41]/95 backdrop-blur-xl p-8 shadow-2xl">
-        {/* Кнопка закрытия */}
         <button
+          type="button"
           onClick={onCancel}
           disabled={loading}
           className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
@@ -46,20 +66,19 @@ export default function ConfirmModal({
           <FontAwesomeIcon icon={faTimes} className="text-lg" />
         </button>
 
-        {/* Заголовок */}
         <h3
+          id="confirm-modal-title"
           className="font-heading text-xl font-bold text-white mb-3"
           style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
         >
           {title}
         </h3>
 
-        {/* Сообщение */}
         <p className="text-sm text-gray-400 leading-relaxed mb-8">{message}</p>
 
-        {/* Кнопки */}
         <div className="flex gap-3 justify-end">
           <button
+            type="button"
             onClick={onCancel}
             disabled={loading}
             className="px-6 py-2.5 text-sm font-medium text-gray-400 border border-white/10 hover:text-white hover:border-white/30 transition-colors disabled:opacity-50"
@@ -67,6 +86,7 @@ export default function ConfirmModal({
             {cancelLabel}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             disabled={loading}
             className="px-6 py-2.5 text-sm font-bold uppercase tracking-wider bg-[#ee862c] text-white hover:bg-[#f0ac74] transition-colors disabled:opacity-50 inline-flex items-center gap-2"
@@ -82,6 +102,7 @@ export default function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

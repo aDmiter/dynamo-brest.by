@@ -13,6 +13,7 @@ import {
   faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import Image from 'next/image';
+import CompactPageHero from '@/modules/shared/ui/CompactPageHero';
 import MatchStadiumButton from '@/modules/shared/ui/MatchStadiumButton';
 
 interface MatchData {
@@ -544,6 +545,8 @@ export default function MatchesResultsClient({ matches, teamName }: Props) {
         fontFamily: "'Inter Tight', sans-serif",
         background: 'var(--color-bg-main)',
         minHeight: '100vh',
+        color: '#ffffff',
+        overflowX: 'hidden',
       }}
     >
       <style>{`
@@ -551,67 +554,13 @@ export default function MatchesResultsClient({ matches, teamName }: Props) {
         .results__card-enter { animation: resultsFadeUp 0.38s ease forwards; }
       `}</style>
 
-      <section
-        className="results__hero"
-        style={{ position: 'relative', height: '40vh', width: '100%', overflow: 'hidden' }}
-      >
-        <img
-          src="/images/stadium.jpg"
-          alt={teamName}
-          className="results__hero-image"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            height: '100%',
-            width: '100%',
-            objectFit: 'cover',
-          }}
-        />
-        <div
-          className="results__hero-overlay"
-          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }}
-        />
-        <div
-          className="results__hero-content"
-          style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}
-        >
-          <div
-            className="results__hero-text"
-            style={{ width: '100%', paddingLeft: 'clamp(24px,6vw,144px)' }}
-          >
-            <p
-              className="results__hero-subtitle"
-              style={{
-                marginBottom: 16,
-                fontSize: 14,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.3em',
-                color: 'var(--color-accent)',
-              }}
-            >
-              {teamName}
-            </p>
-            <h1
-              className="results__hero-title"
-              style={{
-                fontSize: 'clamp(36px,6vw,72px)',
-                lineHeight: 1.1,
-                color: '#fff',
-                fontFamily: "'Inter Tight', sans-serif",
-                fontWeight: 900,
-                textTransform: 'uppercase',
-              }}
-            >
-              Результаты матчей
-            </h1>
-          </div>
-        </div>
-      </section>
+      <CompactPageHero subtitle={teamName} title="Результаты матчей" watermark="РЕЗУЛЬТАТЫ" />
+
+
 
       <div
         className="results__content"
-        style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 32px 80px' }}
+        style={{ maxWidth: 1400, margin: '0 auto', padding: '0 32px 80px' }}
       >
         {matches.length === 0 ? (
           <div

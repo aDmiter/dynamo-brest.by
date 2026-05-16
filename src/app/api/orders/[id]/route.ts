@@ -64,3 +64,24 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
+
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+
+    const order = await prisma.order.findUnique({ where: { id } });
+    if (!order) {
+      return NextResponse.json({ error: 'Заказ не найден' }, { status: 404 });
+    }
+
+    await prisma.$transaction([
+      prisma.orderitem.deleteMany({ where: { orderId: id } }),
+      prisma.order.delete({ where: { id } }),
+    ]);
+
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}

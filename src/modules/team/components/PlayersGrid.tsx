@@ -62,6 +62,19 @@ function calculateAge(birthDate: Date | null): number | null {
   return age;
 }
 
+function isBelarusNationality(nationality: string | null | undefined): boolean {
+  if (!nationality?.trim()) return false;
+  const n = nationality.trim().toLowerCase();
+  return (
+    n === 'беларусь' ||
+    n === 'belarus' ||
+    n === 'blr' ||
+    n === 'by' ||
+    n.includes('беларус') ||
+    n.includes('belarus')
+  );
+}
+
 export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
   const [filter, setFilter] = useState<string>('ALL');
   const [statsMap, setStatsMap] = useState<Record<string, PlayerStats | null>>({});
@@ -124,7 +137,9 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
         (players.reduce((s, p) => s + (calculateAge(p.birthDate) || 0), 0) / players.length) * 10
       ) / 10,
     nations: new Set(players.map((p) => p.nationality).filter(Boolean)).size,
-    withPhotos: players.filter((p) => p.photoUrl).length,
+    legionnaires: players.filter(
+      (p) => p.nationality && !isBelarusNationality(p.nationality)
+    ).length,
   };
 
   return (

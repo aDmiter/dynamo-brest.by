@@ -11,6 +11,10 @@ import ThemeInitializer from '@/modules/shared/ui/ThemeInitializer';
 export const metadata: Metadata = {
   title: 'Официальный сайт футбольного клуба «Динамо-Брест»',
   description: 'Официальный сайт футбольного клуба «Динамо-Брест»',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

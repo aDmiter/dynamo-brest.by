@@ -264,6 +264,14 @@ export default function MenuAdminPage() {
                     Текстовая страница
                   </label>
                 </div>
+                <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                  Страницы из кода (билеты, зал, поля, состав, магазин) — только тип{' '}
+                  <strong className="text-gray-400">«Ссылка»</strong> с точным URL (
+                  <code className="text-[#ee862c]/90">/page/tickets</code>,{' '}
+                  <code className="text-[#ee862c]/90">/services/gym</code> и т.д.). Тип «Текстовая
+                  страница» — для HTML-контента из редактора на{' '}
+                  <code className="text-[#ee862c]/90">/page/[slug]</code>.
+                </p>
               </div>
 
               {editForm.type === 'link' ? (

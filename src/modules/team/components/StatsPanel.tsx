@@ -2,7 +2,7 @@
 export default function StatsPanel({
   meta,
 }: {
-  meta: { total: number; withPhotos: number; avgAge: number; nations: number };
+  meta: { total: number; legionnaires: number; avgAge: number; nations: number };
 }) {
   return (
     <div
@@ -87,7 +87,7 @@ export default function StatsPanel({
             position: 'relative',
           }}
         >
-          {meta.withPhotos}
+          {meta.legionnaires}
         </div>
         <div
           className="players-grid__stat-label"
@@ -101,7 +101,7 @@ export default function StatsPanel({
             position: 'relative',
           }}
         >
-          С фото
+          Легионеры
         </div>
       </div>
 
