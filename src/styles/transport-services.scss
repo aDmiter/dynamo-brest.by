@@ -1,0 +1,269 @@
+// Страница «Услуги транспорта»
+.menu-page--light .menu-page__content {
+  background: #ffffff !important;
+}
+
+.menu-page--light .menu-page__title-module span {
+  color: rgba(36, 44, 65, 0.08) !important;
+}
+
+.transport-services {
+  background: #ffffff;
+  color: #1a1a1a;
+  padding: 2.5rem 1.5rem;
+  border-radius: 4px;
+}
+
+@media (min-width: 768px) {
+  .transport-services {
+    padding: 3rem 2.5rem;
+  }
+}
+
+.transport-services__lead {
+  font-size: 1.125rem;
+  max-width: 52rem;
+  margin-bottom: 3rem;
+  color: #333333;
+  line-height: 1.75;
+}
+
+.transport-services__lead strong {
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+.transport-services__vehicle {
+  margin-bottom: 3.5rem;
+}
+
+.transport-services__vehicle:last-child {
+  margin-bottom: 0;
+}
+
+.transport-services__divider {
+  height: 1px;
+  margin: 3rem 0;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.transport-services__vehicle-title {
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #242c41;
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 900;
+}
+
+.transport-services__vehicle-desc,
+.transport-services__phone {
+  font-size: 1rem;
+  line-height: 1.75;
+  margin-bottom: 0.75rem;
+  color: #444444;
+}
+
+.transport-services__phone a {
+  color: #c45f10;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.transport-services__phone a:hover {
+  color: #ee862c;
+}
+
+.transport-services__gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+@media (max-width: 899px) {
+  .transport-services__gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 539px) {
+  .transport-services__gallery {
+    grid-template-columns: 1fr;
+  }
+}
+
+.transport-services__gallery-item {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #f3f4f6;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.transport-services__gallery-item:hover {
+  border-color: rgba(196, 95, 16, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.transport-services__gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.transport-services__lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.9);
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.transport-services__lightbox-image {
+  max-width: min(1100px, calc(100vw - 8rem));
+  max-height: calc(100vh - 6rem);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+}
+
+.transport-services__lightbox-close {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 100001;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  background: rgba(20, 24, 32, 0.85);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.transport-services__lightbox-nav {
+  position: fixed;
+  top: 50%;
+  z-index: 100001;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  background: rgba(20, 24, 32, 0.85);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.transport-services__lightbox-nav--prev {
+  left: 1.25rem;
+}
+
+.transport-services__lightbox-nav--next {
+  right: 1.25rem;
+}
+
+.transport-services__lightbox-counter {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100001;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+}
+
+.transport-services__schedule {
+  background: #eeeeee;
+  padding: 1.25rem 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  border-radius: 4px;
+}
+
+.transport-services__schedule-title {
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 0.75rem;
+}
+
+.transport-services__schedule-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: #333333;
+  line-height: 1.8;
+}
+
+.transport-services__schedule-list span {
+  font-weight: 600;
+}
+
+.transport-services__lead--after-gallery {
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.transport-services__table-wrap {
+  overflow-x: auto;
+  margin-top: 0.5rem;
+}
+
+.transport-services__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  color: #333333;
+}
+
+.transport-services__table th,
+.transport-services__table td {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 0.65rem 1rem;
+  text-align: center;
+}
+
+.transport-services__table th {
+  background: #f3f4f6;
+  color: #242c41;
+  font-weight: 700;
+}
+
+.transport-services__table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.transport-services__phone--footer {
+  margin-top: 2rem;
+  margin-bottom: 0;
+  font-size: 1.0625rem;
+}

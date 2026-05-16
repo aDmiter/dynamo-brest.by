@@ -2,9 +2,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faTimes, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
+
+function isMenuLinkActive(href: string, pathname: string): boolean {
+  if (!href || href === '#' || href.startsWith('http')) return false;
+  if (pathname === href) return true;
+  return href !== '/' && pathname.startsWith(`${href}/`);
+}
 
 interface MenuItem {
   id: string;
@@ -20,6 +27,7 @@ interface MenuItem {
 }
 
 export default function BurgerMenu() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
@@ -127,48 +135,74 @@ export default function BurgerMenu() {
             {/* Список меню */}
             <div className="p-6 lg:p-12">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {menu.map((item) => (
-                  <div key={item.id} className="space-y-3">
-                    <h3
-                      className="font-heading text-lg font-bold uppercase tracking-wider"
-                      style={{ color: 'var(--color-text-heading)' }}
-                    >
-                      {item.title}
-                    </h3>
-                    {item.children && item.children.length > 0 && (
-                      <ul className="space-y-1">
-                        {item.children
-                          .filter((child) => child.isActive)
-                          .map((child) => (
-                            <li key={child.id}>
-                              <Link
-                                href={getUrl(child)}
-                                onClick={handleClose}
-                                target={child.isExternal ? '_blank' : undefined}
-                                className="flex items-center gap-2 text-sm py-1.5 group transition-colors"
-                                style={{ color: 'var(--color-text-stat)' }}
-                                onMouseEnter={(e) => {
-                                  const el = e.currentTarget as HTMLAnchorElement;
-                                  el.style.color = 'var(--color-accent)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  const el = e.currentTarget as HTMLAnchorElement;
-                                  el.style.color = 'var(--color-text-stat)';
-                                }}
-                              >
-                                <FontAwesomeIcon
-                                  icon={faChevronRight}
-                                  className="text-[8px] transition-colors"
-                                  style={{ color: 'var(--color-text-label)' }}
-                                />
-                                {child.title}
-                              </Link>
-                            </li>
-                          ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
+                {menu.map((item) => {
+                  const activeChildren = (item.children ?? []).filter((child) => child.isActive);
+                  const sectionActive = activeChildren.some((child) =>
+                    isMenuLinkActive(getUrl(child), pathname)
+                  );
+
+                  return (
+                    <div key={item.id} className="space-y-3">
+                      <h3
+                        className="font-heading text-lg font-bold uppercase tracking-wider transition-colors"
+                        style={{
+                          color: sectionActive
+                            ? 'var(--color-accent)'
+                            : 'var(--color-text-heading)',
+                        }}
+                      >
+                        {item.title}
+                      </h3>
+                      {activeChildren.length > 0 && (
+                        <ul className="space-y-1">
+                          {activeChildren.map((child) => {
+                            const href = getUrl(child);
+                            const isActive = isMenuLinkActive(href, pathname);
+
+                            return (
+                              <li key={child.id}>
+                                <Link
+                                  href={href}
+                                  onClick={handleClose}
+                                  target={child.isExternal ? '_blank' : undefined}
+                                  aria-current={isActive ? 'page' : undefined}
+                                  className="flex items-center gap-2 text-sm py-1.5 transition-colors"
+                                  style={{
+                                    color: isActive
+                                      ? 'var(--color-accent)'
+                                      : 'var(--color-text-stat)',
+                                    fontWeight: isActive ? 600 : 400,
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    const el = e.currentTarget as HTMLAnchorElement;
+                                    el.style.color = 'var(--color-accent)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    const el = e.currentTarget as HTMLAnchorElement;
+                                    el.style.color = isActive
+                                      ? 'var(--color-accent)'
+                                      : 'var(--color-text-stat)';
+                                  }}
+                                >
+                                  <FontAwesomeIcon
+                                    icon={faChevronRight}
+                                    className="text-[8px] transition-colors"
+                                    style={{
+                                      color: isActive
+                                        ? 'var(--color-accent)'
+                                        : 'var(--color-text-label)',
+                                    }}
+                                  />
+                                  {child.title}
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

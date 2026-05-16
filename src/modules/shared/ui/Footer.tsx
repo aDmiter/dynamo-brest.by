@@ -7,7 +7,7 @@ import SponsorsSection from './SponsorsSection';
 export default async function Footer() {
   return (
     <footer
-      style={{ background: 'var(--color-bg-footer, #1A1A1A)', color: 'var(--color-text-stat)' }}
+      style={{ background: 'var(--color-bg-main)', color: 'var(--color-text-stat)' }}
     >
       {/* Спонсоры */}
       <SponsorsSection />

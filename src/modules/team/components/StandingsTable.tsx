@@ -20,6 +20,7 @@ interface TeamStanding {
 
 interface Props {
   cometId: string;
+  onTournamentName?: (name: string) => void;
 }
 
 const OUR_CLUB_IDS: Record<string, number> = {
@@ -53,9 +54,8 @@ const zoneLabels: Record<string, string> = {
   relegation: 'Вылет',
 };
 
-export default function StandingsTable({ cometId }: Props) {
+export default function StandingsTable({ cometId, onTournamentName }: Props) {
   const [standings, setStandings] = useState<TeamStanding[]>([]);
-  const [tournamentName, setTournamentName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const showZones = cometId === '68812';
@@ -67,7 +67,7 @@ export default function StandingsTable({ cometId }: Props) {
       .then((data) => {
         if (data.success) {
           setStandings(data.standings);
-          setTournamentName(data.tournament || '');
+          onTournamentName?.(data.tournament || '');
         } else {
           setError(data.error || 'Ошибка загрузки');
         }
@@ -77,7 +77,7 @@ export default function StandingsTable({ cometId }: Props) {
         setError('Не удалось загрузить турнирную таблицу');
         setLoading(false);
       });
-  }, [cometId]);
+  }, [cometId, onTournamentName]);
 
   if (loading) {
     return (
@@ -99,15 +99,6 @@ export default function StandingsTable({ cometId }: Props) {
 
   return (
     <div style={{ fontFamily: "'Inter Tight', sans-serif" }}>
-      {tournamentName && (
-        <p
-          className="text-sm mt-2 mb-6 text-center flex items-center justify-center gap-2"
-          style={{ color: 'var(--color-text-stat)' }}
-        >
-          {tournamentName}
-        </p>
-      )}
-
       <div
         className="overflow-x-auto"
         style={{

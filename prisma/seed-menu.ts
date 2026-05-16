@@ -247,7 +247,10 @@ async function seedMenu() {
       {
         title: 'Услуги транспорта',
         slug: 'services-transport',
-        linkUrl: '/services/transport',
+        type: 'page',
+        linkUrl: '/page/services-transport',
+        subtitle: 'Услуги',
+        imageUrl: '/images/services/buses/mercedes/mercedes_1.jpg',
         parentId: services.id,
         order: 1,
       },
@@ -275,7 +278,10 @@ async function seedMenu() {
       {
         title: 'Тренажерный зал',
         slug: 'services-gym',
+        type: 'link',
         linkUrl: '/services/gym',
+        imageUrl: '/images/services/gym/216A7477-JPG.jpg',
+        subtitle: 'Услуги',
         parentId: services.id,
         order: 5,
       },
