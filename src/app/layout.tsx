@@ -6,6 +6,7 @@ import Header from '@/modules/shared/ui/Header';
 import Footer from '@/modules/shared/ui/Footer';
 import { headers } from 'next/headers';
 import BurgerMenu from '@/modules/shared/ui/BurgerMenu';
+import TicketBuyFabLoader from '@/modules/shared/ui/TicketBuyFabLoader';
 import ThemeInitializer from '@/modules/shared/ui/ThemeInitializer';
 
 export const metadata: Metadata = {
@@ -48,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeInitializer settings={settings} />
         {!isAdmin && <Header />}
         {!isAdmin && <BurgerMenu />}
+        {!isAdmin && <TicketBuyFabLoader />}
         <main>{children}</main>
         {!isAdmin && <Footer />}
       </body>

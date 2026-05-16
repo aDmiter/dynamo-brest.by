@@ -600,10 +600,6 @@ export default function MatchesResultsClient({ matches, teamName }: Props) {
                     background: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    borderBottom: isOpen
-                      ? '1px solid var(--color-border)'
-                      : '1px solid transparent',
-                    transition: 'border-color 0.3s',
                   }}
                 >
                   <FontAwesomeIcon

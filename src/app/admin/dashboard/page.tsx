@@ -13,6 +13,20 @@ import {
   faAd,
 } from '@fortawesome/free-solid-svg-icons';
 import DashboardGlassCard from '@/modules/admin/components/DashboardGlassCard';
+import DashboardUpcomingMatches, {
+  type UpcomingMatchCard,
+} from '@/modules/admin/components/DashboardUpcomingMatches';
+import {
+  buildOpponentTeamMap,
+  DYNAMO_BREST_DISPLAY_NAME,
+  resolveMatchTeamNames,
+} from '@/modules/team/lib/resolve-match-teams';
+
+const UPCOMING_TEAMS = [
+  { label: 'Основа', matchType: 'osnova', calendarSlug: 'osnovnoy-sostav' },
+  { label: 'Дубль', matchType: 'dubl', calendarSlug: 'dubliruyushchiy-sostav' },
+  { label: 'Женская', matchType: 'women', calendarSlug: 'zhenskaya-komanda' },
+] as const;
 
 export const metadata: Metadata = {
   title: 'Дашборд | Админ-панель',
@@ -45,6 +59,10 @@ export default async function DashboardPage() {
     activeBannersCount,
     sponsorsCount,
     categoriesCount,
+    osnovaNextMatch,
+    dublNextMatch,
+    womenNextMatch,
+    opponentTeams,
   ] = await Promise.all([
     prisma.product.count(),
     prisma.order.count(),
@@ -71,10 +89,63 @@ export default async function DashboardPage() {
     prisma.banner.count({ where: { isActive: true } }),
     prisma.sponsor.count(),
     prisma.productcategory.count(),
+    prisma.match.findFirst({
+      where: { matchType: 'osnova', status: 'scheduled', matchDate: { gte: now } },
+      orderBy: { matchDate: 'asc' },
+    }),
+    prisma.match.findFirst({
+      where: { matchType: 'dubl', status: 'scheduled', matchDate: { gte: now } },
+      orderBy: { matchDate: 'asc' },
+    }),
+    prisma.match.findFirst({
+      where: { matchType: 'women', status: 'scheduled', matchDate: { gte: now } },
+      orderBy: { matchDate: 'asc' },
+    }),
+    prisma.opponentTeam.findMany({
+      where: { isActive: true },
+      select: { cometId: true, name: true, logoUrl: true },
+    }),
   ]);
 
   const paidTotal = Number(paidOrdersSum._sum.total ?? 0);
   const publishedNewsCount = await prisma.news.count({ where: { isPublished: true } });
+
+  const opponentMap = buildOpponentTeamMap(opponentTeams);
+  const nextByType = {
+    osnova: osnovaNextMatch,
+    dubl: dublNextMatch,
+    women: womenNextMatch,
+  } as const;
+
+  const upcomingMatchCards: UpcomingMatchCard[] = UPCOMING_TEAMS.map((team) => {
+    const raw = nextByType[team.matchType];
+    const calendarHref = `/admin/matches/calendar/${team.calendarSlug}`;
+
+    if (!raw) {
+      return { teamLabel: team.label, calendarHref, match: null };
+    }
+
+    const { homeTeam, awayTeam } = resolveMatchTeamNames(
+      raw,
+      DYNAMO_BREST_DISPLAY_NAME,
+      opponentMap,
+    );
+
+    return {
+      teamLabel: team.label,
+      calendarHref,
+      match: {
+        id: raw.id,
+        homeTeam,
+        awayTeam,
+        isHome: raw.isHome,
+        matchDate: raw.matchDate,
+        tournament: raw.tournament,
+        round: raw.round,
+        stadium: raw.stadium,
+      },
+    };
+  });
 
   return (
     <div className="max-w-6xl">
@@ -98,6 +169,8 @@ export default async function DashboardPage() {
           показатель.
         </p>
       </header>
+
+      <DashboardUpcomingMatches cards={upcomingMatchCards} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <DashboardGlassCard

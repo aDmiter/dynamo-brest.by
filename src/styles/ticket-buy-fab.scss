@@ -1,0 +1,187 @@
+// src/styles/ticket-buy-fab.scss — плавающая кнопка «Купить билет»
+.ticket-buy-fab {
+  position: fixed;
+  right: 1.5rem;
+  top: 5.25rem;
+  z-index: 40;
+
+  @media (min-width: 1024px) {
+    right: 2rem;
+    top: 5.75rem;
+  }
+}
+
+.ticket-buy-fab__link {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: flex-start;
+  height: 3rem;
+  width: 3rem;
+  max-width: min(20rem, calc(100vw - 3rem));
+  overflow: hidden;
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  background: rgba(36, 44, 65, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  transition:
+    width 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.25s ease,
+    box-shadow 0.35s ease,
+    background 0.35s ease;
+
+  &:hover,
+  &:focus-visible {
+    width: 11.5rem;
+    border-color: var(--color-accent, #d50000);
+    background: rgba(36, 44, 65, 0.78);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.35),
+      0 0 0 1px rgba(213, 0, 0, 0.15);
+  }
+}
+
+.ticket-buy-fab__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  color: #fff;
+  transition: color 0.25s ease;
+
+  svg {
+    transform-origin: center center;
+    animation: ticket-fab-jerk 2.8s ease-in-out infinite;
+  }
+
+  .ticket-buy-fab__link:hover &,
+  .ticket-buy-fab__link:focus-visible & {
+    color: var(--color-accent, #d50000);
+  }
+}
+
+// Периодический «рывок» иконки, чтобы привлечь внимание
+@keyframes ticket-fab-jerk {
+  0%,
+  72%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  74% {
+    transform: rotate(-16deg) scale(1.12);
+  }
+
+  76% {
+    transform: rotate(14deg) scale(1.1);
+  }
+
+  78% {
+    transform: rotate(-12deg) scale(1.08);
+  }
+
+  80% {
+    transform: rotate(10deg) scale(1.06);
+  }
+
+  82% {
+    transform: rotate(-6deg) scale(1.04);
+  }
+
+  84% {
+    transform: rotate(4deg) scale(1.02);
+  }
+
+  86% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket-buy-fab__icon svg {
+    animation: ticket-fab-jerk-soft 3s ease-in-out infinite;
+  }
+}
+
+@keyframes ticket-fab-jerk-soft {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.ticket-buy-fab__panel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0 0.65rem 0 0.5rem;
+  opacity: 0;
+  transform: translateX(8px);
+  transition:
+    opacity 0.3s ease 0.05s,
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.05s;
+  pointer-events: none;
+
+  .ticket-buy-fab__link:hover &,
+  .ticket-buy-fab__link:focus-visible & {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+}
+
+.ticket-buy-fab__logos {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ticket-buy-fab__logo {
+  width: 1.75rem;
+  height: 1.75rem;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.ticket-buy-fab__vs {
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.ticket-buy-fab__cta {
+  flex-shrink: 0;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: var(--color-accent, #d50000);
+  white-space: nowrap;
+  transition: background 0.2s ease;
+
+  .ticket-buy-fab__link:hover &,
+  .ticket-buy-fab__link:focus-visible & {
+    background: var(--color-accent-hover, #e53935);
+  }
+}
+
+@media (max-width: 380px) {
+  .ticket-buy-fab__link:hover,
+  .ticket-buy-fab__link:focus-visible {
+    width: 10.5rem;
+  }
+}

@@ -399,3 +399,29 @@ model Setting {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model footermenuitem {
+  id          String   @id @default(cuid())
+  block       Int
+  title       String
+  slug        String   @unique
+  type        String   @default("page")
+  linkUrl     String?
+  pageContent String?  @db.LongText
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  isExternal  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([block, order])
+}
+
+model footercontacts {
+  id           String   @id @default("main")
+  title        String   @default("Контакты")
+  email        String   @default("info@dynamo-brest.by")
+  addressLabel String   @default("Адрес офиса в Бресте")
+  address      String   @default("г. Брест, ул. Гоголя, 9")
+  updatedAt    DateTime @updatedAt
+}
