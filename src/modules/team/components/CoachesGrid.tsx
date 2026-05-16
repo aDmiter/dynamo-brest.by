@@ -1,7 +1,6 @@
 // src/modules/team/components/CoachesGrid.tsx — Сетка тренерского штаба
 'use client';
 
-import { useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 
@@ -19,19 +18,6 @@ interface CoachData {
 
 interface Props {
   coaches: CoachData[];
-}
-
-const positionOrder: Record<string, number> = {
-  'Главный тренер': 1,
-  'Старший тренер': 2,
-  Тренер: 3,
-};
-
-function getPositionSort(position: string | null): number {
-  if (!position) return 99;
-  if (positionOrder[position] !== undefined) return positionOrder[position];
-  if (position.startsWith('Тренер')) return 10;
-  return 50;
 }
 
 function calculateAge(birthDate: Date | null): number | null {
@@ -54,17 +40,6 @@ function getAgeLabel(age: number): string {
 }
 
 export default function CoachesGrid({ coaches }: Props) {
-  const sortedCoaches = useMemo(
-    () =>
-      [...coaches].sort((a, b) => {
-        const posA = getPositionSort(a.position);
-        const posB = getPositionSort(b.position);
-        if (posA !== posB) return posA - posB;
-        return (a.lastName || '').localeCompare(b.lastName || '');
-      }),
-    [coaches]
-  );
-
   return (
     <div
       className="coaches"
@@ -81,7 +56,6 @@ export default function CoachesGrid({ coaches }: Props) {
         .coaches__card-enter { animation: coachesFadeUp 0.45s ease forwards; }
       `}</style>
 
-      {/* Hero */}
       <section
         className="coaches__hero"
         style={{
@@ -185,7 +159,6 @@ export default function CoachesGrid({ coaches }: Props) {
         </div>
       </section>
 
-      {/* Content */}
       <div
         className="coaches__content"
         style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 32px 80px' }}
@@ -267,7 +240,7 @@ export default function CoachesGrid({ coaches }: Props) {
           </div>
         </div>
 
-        {sortedCoaches.length === 0 ? (
+        {coaches.length === 0 ? (
           <div
             className="coaches__empty"
             style={{
@@ -290,7 +263,7 @@ export default function CoachesGrid({ coaches }: Props) {
               gap: 16,
             }}
           >
-            {sortedCoaches.map((coach, i) => (
+            {coaches.map((coach, i) => (
               <div
                 key={coach.id}
                 className="coaches__card-enter"
@@ -335,7 +308,6 @@ function CoachCard({ coach }: { coach: CoachData }) {
         el.style.boxShadow = '0 6px 20px rgba(0,0,0,0.35)';
       }}
     >
-      {/* Photo */}
       <div
         className="coach-card__photo"
         style={{ position: 'relative', paddingBottom: '125%', overflow: 'hidden' }}
@@ -351,7 +323,6 @@ function CoachCard({ coach }: { coach: CoachData }) {
               height: '100%',
               objectFit: 'cover',
               objectPosition: 'top center',
-              transition: 'transform 0.4s ease',
             }}
           />
         ) : (
@@ -377,7 +348,6 @@ function CoachCard({ coach }: { coach: CoachData }) {
             zIndex: 2,
           }}
         />
-        {/* Position badge */}
         {coach.position && (
           <div
             className="coach-card__pos-badge"
@@ -404,8 +374,6 @@ function CoachCard({ coach }: { coach: CoachData }) {
           </div>
         )}
       </div>
-
-      {/* Info */}
       <div
         className="coach-card__info"
         style={{ padding: '0 14px 14px', background: 'var(--color-bg-main)', marginTop: -2 }}
@@ -446,7 +414,6 @@ function CoachCard({ coach }: { coach: CoachData }) {
             marginBottom: 8,
           }}
         />
-
         <div
           className="coach-card__meta"
           style={{

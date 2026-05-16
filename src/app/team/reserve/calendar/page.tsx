@@ -5,7 +5,7 @@ import MatchesCalendarClient from '@/modules/team/components/MatchesCalendarClie
 
 export default async function ReserveCalendarPage() {
   const team = await prisma.team.findUnique({
-    where: { slug: 'dubliruyushchiy-sostav' },
+    where: { cometId: '102734' },
   });
 
   if (!team) notFound();
@@ -30,9 +30,7 @@ export default async function ReserveCalendarPage() {
 
   const teamMap: Record<number, { name: string; logoUrl: string | null }> = {};
   for (const opp of opponentTeams) {
-    if (opp.cometId) {
-      teamMap[opp.cometId] = { name: opp.name, logoUrl: opp.logoUrl };
-    }
+    if (opp.cometId) teamMap[opp.cometId] = { name: opp.name, logoUrl: opp.logoUrl };
   }
 
   const serialized = matches.map((m) => ({

@@ -1,278 +1,195 @@
-// src/modules/admin/components/TipTapEditor.tsx - Визуальный редактор на TipTap
+// src/modules/admin/components/TipTapEditor.tsx - HTML-редактор на Jodit
 'use client';
 
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import Link from '@tiptap/extension-link';
-import Underline from '@tiptap/extension-underline';
-import TextAlign from '@tiptap/extension-text-align';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faBold,
-  faItalic,
-  faUnderline,
-  faStrikethrough,
-  faListUl,
-  faListOl,
-  faAlignLeft,
-  faAlignCenter,
-  faAlignRight,
-  faAlignJustify,
-  faLink,
-  faImage,
-  faUndo,
-  faRedo,
-  faHeading,
-  faQuoteRight,
-  faCode,
-  faMinus,
-} from '@fortawesome/free-solid-svg-icons';
-import { useCallback } from 'react';
+import { useRef, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 
-interface TipTapEditorProps {
+interface JoditEditorProps {
   content: string;
   onChange: (html: string) => void;
 }
 
-export default function TipTapEditor({ content, onChange }: TipTapEditorProps) {
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
-      Image.configure({ allowBase64: true }),
-      Link.configure({ openOnClick: false }),
-      Underline,
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    ],
-    content,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
-    },
-    editorProps: {
-      attributes: {
-        class: 'prose prose-invert max-w-none focus:outline-none min-h-[300px] p-4 text-white',
+const JoditEditor = dynamic(() => import('jodit-react'), { ssr: false });
+
+export default function TipTapEditor({ content, onChange }: JoditEditorProps) {
+  const editor = useRef(null);
+
+  const config = useMemo(
+    () => ({
+      readonly: false,
+      height: 500,
+      theme: 'dark',
+      language: 'ru',
+      toolbar: true,
+      buttons: [
+        'source',
+        '|',
+        'bold',
+        'italic',
+        'underline',
+        'strikethrough',
+        '|',
+        'ul',
+        'ol',
+        '|',
+        'outdent',
+        'indent',
+        '|',
+        'font',
+        'fontsize',
+        'brush',
+        'paragraph',
+        '|',
+        'image',
+        'link',
+        'table',
+        '|',
+        'align',
+        'undo',
+        'redo',
+        '|',
+        'hr',
+        'eraser',
+        'fullsize',
+        'selectall',
+        'copyformat',
+        '|',
+        'spoiler',
+      ],
+      extraButtons: [
+        {
+          name: 'spoiler',
+          tooltip: 'Вставить спойлер',
+          text: '📋',
+          icon: 'layers',
+          exec: async (editor: unknown) => {
+            const JoditStatic = (await import('jodit')).Jodit;
+            const jed = editor as {
+              selection: { insertHTML: (html: string) => void };
+              dlg: (options?: { title?: string; content?: string; buttons?: string[] }) => {
+                open: () => void;
+                close: () => void;
+                container: HTMLElement;
+                setContent: (content: string) => void;
+              };
+            };
+
+            const dialog = jed.dlg({ title: 'Вставить спойлер' });
+            dialog.setContent(`
+    <div class="spoiler-dialog" style="display:flex;flex-direction:column;gap:10px;padding:12px;min-width:480px;">
+      <label style="font-size:11px;color:#aaa;">Заголовок спойлера</label>
+      <input type="text" id="jodit-spoiler-title" placeholder="Нажмите, чтобы раскрыть" style="width:100%;padding:8px;border:1px solid var(--color-border);background:var(--color-bg-admin);color:#fff;border-radius:6px;font-size:13px;box-sizing:border-box;" />
+      <label style="font-size:11px;color:#aaa;">Содержимое</label>
+      <div id="jodit-spoiler-editor-container" style="height:300px;border:1px solid var(--color-border);border-radius:6px;overflow:hidden;"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#aaa;cursor:pointer;">
+        <input type="checkbox" id="jodit-spoiler-open" style="accent-color:var(--color-accent);" /> Открыт по умолчанию
+      </label>
+      <button id="jodit-spoiler-insert" style="margin-top:8px;padding:10px 20px;background:var(--color-accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;">Вставить спойлер</button>
+    </div>
+  `);
+            dialog.open();
+
+            setTimeout(() => {
+              const container = dialog.container;
+              const editorDiv = container.querySelector(
+                '#jodit-spoiler-editor-container'
+              ) as HTMLDivElement;
+              if (!editorDiv) return;
+
+              const innerEditor = JoditStatic.make(editorDiv, {
+                height: 300,
+                theme: 'dark',
+                language: 'ru',
+                toolbar: true,
+                buttons: [
+                  'source',
+                  '|',
+                  'bold',
+                  'italic',
+                  'underline',
+                  'strikethrough',
+                  '|',
+                  'ul',
+                  'ol',
+                  '|',
+                  'font',
+                  'fontsize',
+                  'brush',
+                  'paragraph',
+                  '|',
+                  'image',
+                  'link',
+                  'table',
+                  '|',
+                  'align',
+                  'undo',
+                  'redo',
+                  '|',
+                  'hr',
+                  'fullsize',
+                ],
+                uploader: {
+                  url: '/api/upload',
+                  format: 'json',
+                  filesVariableName: 'file',
+                  isSuccess: (resp: { url?: string }) => !!resp.url,
+                  process: (resp: { url?: string }) => resp.url || '',
+                },
+                style: {
+                  background: 'var(--color-bg-admin, #1a1a2e)',
+                  color: '#ffffff',
+                },
+              });
+
+              container.querySelector('#jodit-spoiler-insert')?.addEventListener('click', () => {
+                const title =
+                  (
+                    container.querySelector('#jodit-spoiler-title') as HTMLInputElement
+                  ).value.trim() || 'Нажмите, чтобы раскрыть';
+                const text = innerEditor.value || '<p>Содержимое спойлера здесь...</p>';
+                const open = (container.querySelector('#jodit-spoiler-open') as HTMLInputElement)
+                  .checked;
+
+                const spoilerHtml = `<details${open ? ' open' : ''} style="margin: 16px 0; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; background: var(--color-bg-card);">
+  <summary style="padding: 12px 16px; font-family: 'Inter Tight', sans-serif; font-weight: 700; font-size: 15px; color: var(--color-accent); cursor: pointer; user-select: none; letter-spacing: 0.04em; text-transform: uppercase;">${title}</summary>
+  <div style="padding: 16px; color: #ffffff; font-size: 14px; line-height: 1.6; border-top: 1px solid var(--color-border);">${text}</div>
+</details>`;
+
+                innerEditor.destruct();
+                jed.selection.insertHTML(spoilerHtml);
+                dialog.close();
+              });
+            }, 200);
+          },
+        },
+      ],
+      uploader: {
+        url: '/api/upload',
+        format: 'json',
+        filesVariableName: 'file',
+        isSuccess: (resp: { url?: string; error?: string }) => !!resp.url,
+        process: (resp: { url?: string }) => resp.url || '',
       },
-    },
-  });
-
-  const addImage = useCallback(async () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file || !editor) return;
-
-      const formData = new FormData();
-      formData.append('file', file);
-
-      try {
-        const res = await fetch('/api/upload', { method: 'POST', body: formData });
-        const data = await res.json();
-        if (data.url) {
-          editor.chain().focus().setImage({ src: data.url }).run();
-        }
-      } catch (error) {
-        console.error('Ошибка загрузки:', error);
-      }
-    };
-    input.click();
-  }, [editor]);
-
-  const setLink = useCallback(() => {
-    if (!editor) return;
-    const previousUrl = editor.getAttributes('link').href || '';
-    const url = window.prompt('URL:', previousUrl);
-
-    if (url === null) return; // Отмена
-
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
-    } else {
-      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-    }
-  }, [editor]);
-
-  if (!editor) return null;
+      style: {
+        background: 'var(--color-bg-admin, #1a1a2e)',
+        color: '#ffffff',
+      },
+    }),
+    []
+  );
 
   return (
-    <div className="border border-white/10 bg-white/5">
-      {/* Тулбар */}
-      <div className="flex flex-wrap items-center gap-1 border-b border-white/10 p-2">
-        {/* Форматирование текста */}
-        <button
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive('bold') ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Жирный (Ctrl+B)"
-        >
-          <FontAwesomeIcon icon={faBold} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive('italic') ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Курсив (Ctrl+I)"
-        >
-          <FontAwesomeIcon icon={faItalic} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive('underline') ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Подчёркнутый (Ctrl+U)"
-        >
-          <FontAwesomeIcon icon={faUnderline} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive('strike') ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Зачёркнутый"
-        >
-          <FontAwesomeIcon icon={faStrikethrough} />
-        </button>
-
-        <span className="mx-1 h-5 w-[1px] bg-white/20" />
-
-        {/* Заголовки */}
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`px-2 py-1 text-xs font-bold transition-colors ${editor.isActive('heading', { level: 1 }) ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Заголовок 1"
-        >
-          H1
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`px-2 py-1 text-xs font-bold transition-colors ${editor.isActive('heading', { level: 2 }) ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Заголовок 2"
-        >
-          H2
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`px-2 py-1 text-xs font-bold transition-colors ${editor.isActive('heading', { level: 3 }) ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Заголовок 3"
-        >
-          H3
-        </button>
-
-        <span className="mx-1 h-5 w-[1px] bg-white/20" />
-
-        {/* Выравнивание */}
-        <button
-          onClick={() => editor.chain().focus().setTextAlign('left').run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive({ textAlign: 'left' }) ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="По левому краю"
-        >
-          <FontAwesomeIcon icon={faAlignLeft} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().setTextAlign('center').run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive({ textAlign: 'center' }) ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="По центру"
-        >
-          <FontAwesomeIcon icon={faAlignCenter} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().setTextAlign('right').run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive({ textAlign: 'right' }) ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="По правому краю"
-        >
-          <FontAwesomeIcon icon={faAlignRight} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive({ textAlign: 'justify' }) ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="По ширине"
-        >
-          <FontAwesomeIcon icon={faAlignJustify} />
-        </button>
-
-        <span className="mx-1 h-5 w-[1px] bg-white/20" />
-
-        {/* Списки */}
-        <button
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive('bulletList') ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Маркированный список"
-        >
-          <FontAwesomeIcon icon={faListUl} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive('orderedList') ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Нумерованный список"
-        >
-          <FontAwesomeIcon icon={faListOl} />
-        </button>
-
-        <span className="mx-1 h-5 w-[1px] bg-white/20" />
-
-        {/* Вставки */}
-        <button
-          onClick={setLink}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive('link') ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Ссылка"
-        >
-          <FontAwesomeIcon icon={faLink} />
-        </button>
-        <button
-          onClick={addImage}
-          className="px-2 py-1 text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-          title="Изображение"
-        >
-          <FontAwesomeIcon icon={faImage} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
-          className="px-2 py-1 text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-          title="Горизонтальная линия"
-        >
-          <FontAwesomeIcon icon={faMinus} />
-        </button>
-
-        <span className="mx-1 h-5 w-[1px] bg-white/20" />
-
-        {/* Цитата и код */}
-        <button
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive('blockquote') ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Цитата"
-        >
-          <FontAwesomeIcon icon={faQuoteRight} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          className={`px-2 py-1 text-sm transition-colors ${editor.isActive('codeBlock') ? 'bg-[#ee862c]/30 text-[#ee862c]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
-          title="Блок кода"
-        >
-          <FontAwesomeIcon icon={faCode} />
-        </button>
-
-        <span className="mx-1 h-5 w-[1px] bg-white/20" />
-
-        {/* Undo/Redo */}
-        <button
-          onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().undo()}
-          className="px-2 py-1 text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
-          title="Отменить"
-        >
-          <FontAwesomeIcon icon={faUndo} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().redo()}
-          className="px-2 py-1 text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
-          title="Вернуть"
-        >
-          <FontAwesomeIcon icon={faRedo} />
-        </button>
-      </div>
-
-      {/* Контент редактора */}
-      <EditorContent editor={editor} />
+    <div
+      className="jodit-wrapper"
+      style={{ border: '1px solid var(--color-border)', borderRadius: 8, overflow: 'hidden' }}
+    >
+      <JoditEditor
+        ref={editor}
+        value={content}
+        config={config}
+        onBlur={(newContent: string) => onChange(newContent)}
+        onChange={(newContent: string) => onChange(newContent)}
+      />
     </div>
   );
 }

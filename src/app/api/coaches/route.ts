@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
         include: { team: true },
       },
     },
-    orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+    orderBy: [{ order: 'asc' }, { lastName: 'asc' }, { firstName: 'asc' }],
   });
 
   return NextResponse.json(coaches);
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
         isActive: data.isActive ?? true,
         isPublished: data.isPublished ?? true,
         isManuallyCreated: true,
+        order: data.order || 0,
         coachTeams: {
           create: teamIds.map((teamId: string) => ({ teamId })),
         },

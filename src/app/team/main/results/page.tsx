@@ -5,7 +5,7 @@ import MatchesResultsClient from '@/modules/team/components/MatchesResultsClient
 
 export default async function MainResultsPage() {
   const team = await prisma.team.findUnique({
-    where: { slug: 'osnovnoy-sostav' },
+    where: { cometId: '68812' },
   });
 
   if (!team) notFound();

@@ -5,7 +5,7 @@ import MatchesResultsClient from '@/modules/team/components/MatchesResultsClient
 
 export default async function ReserveResultsPage() {
   const team = await prisma.team.findUnique({
-    where: { slug: 'dubliruyushchiy-sostav' },
+    where: { cometId: '102734' },
   });
 
   if (!team) notFound();
@@ -24,9 +24,7 @@ export default async function ReserveResultsPage() {
 
   const teamMap: Record<number, { name: string; logoUrl: string | null }> = {};
   for (const opp of opponentTeams) {
-    if (opp.cometId) {
-      teamMap[opp.cometId] = { name: opp.name, logoUrl: opp.logoUrl };
-    }
+    if (opp.cometId) teamMap[opp.cometId] = { name: opp.name, logoUrl: opp.logoUrl };
   }
 
   const serialized = matches.map((m) => ({

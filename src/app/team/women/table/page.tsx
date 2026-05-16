@@ -1,12 +1,10 @@
 // src/app/team/women/table/page.tsx
 import { Metadata } from 'next';
 import StandingsTable from '@/modules/team/components/StandingsTable';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarAlt, faTrophy } from '@fortawesome/free-solid-svg-icons';
 
 export const metadata: Metadata = {
   title: 'Турнирная таблица (Женская) | Динамо-Брест',
-  description: 'Турнирная таблица женской лиги 2026.',
+  description: 'Турнирная таблица женской команды.',
 };
 
 export default function WomenStandingsPage() {
@@ -16,31 +14,13 @@ export default function WomenStandingsPage() {
       style={{ background: 'var(--color-bg-main)', fontFamily: "'Inter Tight', sans-serif" }}
     >
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8 text-center">
-          <div className="inline-block relative mb-4">
-            <FontAwesomeIcon
-              icon={faTrophy}
-              className="text-5xl absolute -left-8 top-1/2 transform -translate-y-1/2"
-              style={{ color: 'var(--color-accent)', opacity: 0.2 }}
-            />
-            <h1
-              className="text-4xl md:text-5xl font-black text-white uppercase tracking-wider"
-              style={{ fontFamily: "'Inter Tight', sans-serif" }}
-            >
-              Турнирная таблица
-            </h1>
-          </div>
-          <p
-            className="text-sm mt-2 flex items-center justify-center gap-2"
-            style={{ color: 'var(--color-text-stat)' }}
-          >
-            <FontAwesomeIcon icon={faCalendarAlt} style={{ color: 'var(--color-accent)' }} />
-            Женская лига 2026
-          </p>
-        </div>
-
-        <StandingsTable teamSlug="zhenskaya-komanda" title="Женская лига 2026" />
-
+        <h1
+          className="text-4xl md:text-5xl font-black text-white uppercase tracking-wider text-center mb-8"
+          style={{ fontFamily: "'Inter Tight', sans-serif" }}
+        >
+          Турнирная таблица
+        </h1>
+        <StandingsTable cometId="101132" />
         <div className="mt-6 text-right text-xs" style={{ color: 'var(--color-text-label)' }}>
           * Данные предоставлены платформой АБФФ
         </div>

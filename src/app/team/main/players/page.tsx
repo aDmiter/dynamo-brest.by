@@ -5,7 +5,7 @@ import PlayersGrid from '@/modules/team/components/PlayersGrid';
 
 export default async function MainPlayersPage() {
   const team = await prisma.team.findUnique({
-    where: { slug: 'osnovnoy-sostav' },
+    where: { cometId: '68812' },
   });
 
   if (!team) notFound();

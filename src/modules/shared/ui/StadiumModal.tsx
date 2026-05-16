@@ -4,7 +4,12 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faMapMarkerAlt, faLocationDot } from '@fortawesome/free-solid-svg-icons';
+import {
+  faTimes,
+  faMapMarkerAlt,
+  faLocationDot,
+  faExternalLinkAlt,
+} from '@fortawesome/free-solid-svg-icons';
 
 interface Facility {
   id: string;
@@ -27,6 +32,17 @@ interface StadiumModalProps {
 }
 
 const facilityCache = new Map<number, Facility | null>();
+
+function getYandexMapsUrl(facility: Facility): string {
+  const addressParts = [facility.address, facility.city, facility.region, facility.country].filter(
+    Boolean
+  );
+  const query = encodeURIComponent(addressParts.join(', '));
+  if (facility.lat && facility.lng) {
+    return `https://yandex.ru/maps/?ll=${facility.lng},${facility.lat}&z=16&pt=${facility.lng},${facility.lat},pm2rdl&text=${query}`;
+  }
+  return `https://yandex.ru/maps/?mode=search&text=${query}&z=13`;
+}
 
 export default function StadiumModal({ facilityId, isOpen, onClose }: StadiumModalProps) {
   const [facility, setFacility] = useState<Facility | null>(() => {
@@ -59,39 +75,68 @@ export default function StadiumModal({ facilityId, isOpen, onClose }: StadiumMod
 
   if (!isOpen) return null;
 
-  const hasCoordinates = facility?.lat && facility?.lng;
-
   return createPortal(
     <div className="stadium-modal fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div
         className="stadium-modal__overlay absolute inset-0 bg-black/80 backdrop-blur-md"
         onClick={onClose}
       />
-      <div className="stadium-modal__content relative z-10 w-full max-w-md border border-white/10 bg-[#242C41]/95 backdrop-blur-xl p-8 shadow-2xl">
+      <div
+        className="stadium-modal__content relative z-10 w-full max-w-md p-8 shadow-2xl"
+        style={{
+          border: '1px solid var(--color-border)',
+          background: 'var(--color-bg-admin)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderRadius: 16,
+        }}
+      >
         <button
           onClick={onClose}
-          className="stadium-modal__close absolute right-4 top-4 text-gray-400 hover:text-white transition-colors"
+          className="stadium-modal__close absolute right-4 top-4 transition-colors"
+          style={{ color: 'var(--color-text-stat)' }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-accent)';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-stat)';
+          }}
         >
           <FontAwesomeIcon icon={faTimes} className="text-lg" />
         </button>
 
         {loading ? (
-          <div className="stadium-modal__loading text-center text-gray-400 py-8">Загрузка...</div>
+          <div
+            className="stadium-modal__loading text-center py-8"
+            style={{ color: 'var(--color-text-stat)' }}
+          >
+            Загрузка...
+          </div>
         ) : facility ? (
           <div className="stadium-modal__body">
             <div className="stadium-modal__header flex items-start gap-4 mb-6">
-              <div className="stadium-modal__icon h-12 w-12 flex items-center justify-center bg-[#ee862c]/20 flex-shrink-0">
-                <FontAwesomeIcon icon={faLocationDot} className="text-[#ee862c] text-xl" />
+              <div
+                className="stadium-modal__icon h-12 w-12 flex items-center justify-center flex-shrink-0"
+                style={{ background: 'var(--color-accent-10)', borderRadius: 8 }}
+              >
+                <FontAwesomeIcon
+                  icon={faLocationDot}
+                  className="text-xl"
+                  style={{ color: 'var(--color-accent)' }}
+                />
               </div>
               <div>
                 <h3
-                  className="stadium-modal__name font-heading text-xl font-bold text-white"
+                  className="stadium-modal__name text-xl font-bold text-white"
                   style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
                 >
                   {facility.shortName || facility.name}
                 </h3>
                 {facility.type && (
-                  <p className="stadium-modal__type text-xs text-gray-500 mt-0.5">
+                  <p
+                    className="stadium-modal__type text-xs mt-0.5"
+                    style={{ color: 'var(--color-text-label)' }}
+                  >
                     {facility.type}
                   </p>
                 )}
@@ -102,32 +147,50 @@ export default function StadiumModal({ facilityId, isOpen, onClose }: StadiumMod
               <div className="stadium-modal__address flex items-start gap-2">
                 <FontAwesomeIcon
                   icon={faMapMarkerAlt}
-                  className="text-[#ee862c] mt-0.5 flex-shrink-0"
+                  className="mt-0.5 flex-shrink-0"
+                  style={{ color: 'var(--color-accent)' }}
                 />
                 <div>
-                  <p className="text-gray-300">{facility.address}</p>
-                  <p className="text-gray-500 text-xs">
+                  <p className="text-sm" style={{ color: 'var(--color-text-nav)' }}>
+                    {facility.address}
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-label)' }}>
                     {[facility.city, facility.region, facility.country].filter(Boolean).join(', ')}
                   </p>
                 </div>
               </div>
             )}
 
-            {hasCoordinates && (
-              <div className="stadium-modal__map mt-6">
-                <a
-                  href={`https://www.google.com/maps?q=${facility.lat},${facility.lng}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="stadium-modal__map-link inline-flex items-center gap-2 bg-[#ee862c] px-4 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#f0ac74] transition-colors"
-                >
-                  Открыть на карте
-                </a>
-              </div>
-            )}
+            <div className="stadium-modal__map mt-6">
+              <a
+                href={getYandexMapsUrl(facility)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="stadium-modal__map-link inline-flex items-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-wider text-white transition-colors"
+                style={{
+                  background: 'var(--color-accent)',
+                  borderRadius: 8,
+                  textDecoration: 'none',
+                  fontFamily: "'Inter Tight', sans-serif",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.background =
+                    'var(--color-accent-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.background = 'var(--color-accent)';
+                }}
+              >
+                <FontAwesomeIcon icon={faExternalLinkAlt} className="text-[10px]" />
+                Открыть в Яндекс.Картах
+              </a>
+            </div>
           </div>
         ) : (
-          <div className="stadium-modal__empty text-center text-gray-500 py-8">
+          <div
+            className="stadium-modal__empty text-center py-8"
+            style={{ color: 'var(--color-text-label)' }}
+          >
             <FontAwesomeIcon icon={faMapMarkerAlt} className="text-3xl mb-3 opacity-50" />
             <p>Информация о стадионе недоступна</p>
           </div>

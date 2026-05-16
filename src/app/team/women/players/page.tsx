@@ -5,7 +5,7 @@ import PlayersGrid from '@/modules/team/components/PlayersGrid';
 
 export default async function WomenPlayersPage() {
   const team = await prisma.team.findUnique({
-    where: { slug: 'zhenskaya-komanda' },
+    where: { cometId: '101132' },
   });
 
   if (!team) notFound();

@@ -1,11 +1,11 @@
-// src/app/team/main/coaches/page.tsx - Тренеры основного состава
+// src/app/school/coaches/page.tsx
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import CoachesGrid from '@/modules/team/components/CoachesGrid';
 
-export default async function MainCoachesPage() {
+export default async function SchoolCoachesPage() {
   const team = await prisma.team.findUnique({
-    where: { cometId: '68812' },
+    where: { slug: 'school' },
   });
 
   if (!team) notFound();
@@ -14,16 +14,10 @@ export default async function MainCoachesPage() {
     where: {
       isActive: true,
       isPublished: true,
-      coachTeams: {
-        some: { teamId: team.id },
-      },
+      coachTeams: { some: { teamId: team.id } },
     },
-    include: {
-      coachTeams: {
-        include: { team: true },
-      },
-    },
-    orderBy: [{ type: 'asc' }, { lastName: 'asc' }],
+    include: { coachTeams: { include: { team: true } } },
+    orderBy: [{ order: 'asc' }, { lastName: 'asc' }],
   });
 
   return <CoachesGrid coaches={coaches} />;

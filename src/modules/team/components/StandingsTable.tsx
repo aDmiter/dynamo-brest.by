@@ -19,14 +19,13 @@ interface TeamStanding {
 }
 
 interface Props {
-  teamSlug: string;
-  title: string;
+  cometId: string;
 }
 
 const OUR_CLUB_IDS: Record<string, number> = {
-  'osnovnoy-sostav': 68812,
-  'dubliruyushchiy-sostav': 102734,
-  'zhenskaya-komanda': 101132,
+  '68812': 68812,
+  '102734': 102734,
+  '101132': 101132,
 };
 
 function getPositionZone(
@@ -54,26 +53,31 @@ const zoneLabels: Record<string, string> = {
   relegation: 'Вылет',
 };
 
-export default function StandingsTable({ teamSlug, title }: Props) {
+export default function StandingsTable({ cometId }: Props) {
   const [standings, setStandings] = useState<TeamStanding[]>([]);
+  const [tournamentName, setTournamentName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const showZones = teamSlug === 'osnovnoy-sostav';
-  const ourClubId = OUR_CLUB_IDS[teamSlug];
+  const showZones = cometId === '68812';
+  const ourClubId = OUR_CLUB_IDS[cometId];
 
   useEffect(() => {
-    fetch(`/api/team/standings?teamSlug=${teamSlug}`)
+    fetch(`/api/team/standings?cometId=${cometId}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) setStandings(data.standings);
-        else setError(data.error || 'Ошибка загрузки');
+        if (data.success) {
+          setStandings(data.standings);
+          setTournamentName(data.tournament || '');
+        } else {
+          setError(data.error || 'Ошибка загрузки');
+        }
         setLoading(false);
       })
       .catch(() => {
         setError('Не удалось загрузить турнирную таблицу');
         setLoading(false);
       });
-  }, [teamSlug]);
+  }, [cometId]);
 
   if (loading) {
     return (
@@ -95,6 +99,15 @@ export default function StandingsTable({ teamSlug, title }: Props) {
 
   return (
     <div style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+      {tournamentName && (
+        <p
+          className="text-sm mt-2 mb-6 text-center flex items-center justify-center gap-2"
+          style={{ color: 'var(--color-text-stat)' }}
+        >
+          {tournamentName}
+        </p>
+      )}
+
       <div
         className="overflow-x-auto"
         style={{
@@ -187,6 +200,8 @@ export default function StandingsTable({ teamSlug, title }: Props) {
                     borderBottom: '1px solid rgba(255,255,255,0.04)',
                     transition: 'background 0.2s ease',
                     background: isDynamo ? 'var(--color-accent-7)' : 'transparent',
+                    position: 'relative',
+                    clipPath: 'inset(0)',
                   }}
                   onMouseEnter={(e) => {
                     if (!isDynamo)
@@ -195,10 +210,12 @@ export default function StandingsTable({ teamSlug, title }: Props) {
                   }}
                   onMouseLeave={(e) => {
                     if (!isDynamo)
-                      (e.currentTarget as HTMLTableRowElement).style.background = 'transparent';
+                      (e.currentTarget as HTMLTableRowElement).style.background = isDynamo
+                        ? 'var(--color-accent-7)'
+                        : 'transparent';
                   }}
                 >
-                  <td className="py-3 px-4 text-center relative">
+                  <td className="py-3 px-4 text-center relative z-10">
                     {showZones && (
                       <div
                         style={{
@@ -224,15 +241,25 @@ export default function StandingsTable({ teamSlug, title }: Props) {
                       {team.position}
                     </span>
                   </td>
-
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
+                  <td className="py-3 px-4 relative z-10" style={{ overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
                       {team.logoUrl && (
                         <img
                           src={team.logoUrl}
-                          alt={team.club}
-                          className="h-6 w-6 object-contain"
-                          style={{ opacity: 0.8 }}
+                          alt=""
+                          style={{
+                            position: 'absolute',
+                            left: 4,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: 150,
+                            maxWidth: 150,
+                            objectFit: 'contain',
+                            objectPosition: 'left center',
+                            opacity: 0.12,
+                            pointerEvents: 'none',
+                            zIndex: 0,
+                          }}
                         />
                       )}
                       <span
@@ -241,51 +268,53 @@ export default function StandingsTable({ teamSlug, title }: Props) {
                           fontSize: 13,
                           fontWeight: isDynamo ? 800 : 500,
                           color: isDynamo ? '#ffffff' : 'rgba(255,255,255,0.8)',
+                          position: 'relative',
+                          zIndex: 1,
+                          paddingLeft: 12,
                         }}
                       >
                         {team.club}
                       </span>
                     </div>
                   </td>
-
                   <td
-                    className="py-3 px-3 text-center text-sm"
+                    className="py-3 px-3 text-center text-sm relative z-10"
                     style={{ color: 'rgba(255,255,255,0.5)' }}
                   >
                     {team.matches}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm"
+                    className="py-3 px-3 text-center text-sm relative z-10"
                     style={{ color: 'var(--color-win)' }}
                   >
                     {team.wins}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm"
+                    className="py-3 px-3 text-center text-sm relative z-10"
                     style={{ color: 'rgba(255,255,255,0.4)' }}
                   >
                     {team.draws}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm"
+                    className="py-3 px-3 text-center text-sm relative z-10"
                     style={{ color: 'var(--color-loss)' }}
                   >
                     {team.losses}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm"
+                    className="py-3 px-3 text-center text-sm relative z-10"
                     style={{ color: 'rgba(255,255,255,0.6)' }}
                   >
                     {team.goalsFor}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm"
+                    className="py-3 px-3 text-center text-sm relative z-10"
                     style={{ color: 'rgba(255,255,255,0.6)' }}
                   >
                     {team.goalsAgainst}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm font-mono"
+                    className="py-3 px-3 text-center text-sm font-mono relative z-10"
                     style={{
                       color:
                         team.goalDifference > 0
@@ -298,7 +327,7 @@ export default function StandingsTable({ teamSlug, title }: Props) {
                     {team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}
                   </td>
                   <td
-                    className="py-3 px-3 text-center"
+                    className="py-3 px-3 text-center relative z-10"
                     style={{
                       fontFamily: "'Inter Tight', sans-serif",
                       fontSize: 15,

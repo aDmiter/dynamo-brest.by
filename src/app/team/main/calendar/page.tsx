@@ -5,7 +5,7 @@ import MatchesCalendarClient from '@/modules/team/components/MatchesCalendarClie
 
 export default async function MainCalendarPage() {
   const team = await prisma.team.findUnique({
-    where: { slug: 'osnovnoy-sostav' },
+    where: { cometId: '68812' },
   });
 
   if (!team) notFound();
@@ -28,7 +28,6 @@ export default async function MainCalendarPage() {
     }),
   ]);
 
-  // Карта: cometId → название и лого
   const teamMap: Record<number, { name: string; logoUrl: string | null }> = {};
   for (const opp of opponentTeams) {
     if (opp.cometId) {
@@ -41,7 +40,6 @@ export default async function MainCalendarPage() {
     matchDate: m.matchDate.toISOString(),
     createdAt: m.createdAt.toISOString(),
     updatedAt: m.updatedAt.toISOString(),
-    // Подменяем названия и лого из OpponentTeam
     homeTeam: m.isHome
       ? 'Динамо-Брест'
       : (m.homeTeamId && teamMap[m.homeTeamId]?.name) || m.homeTeam,

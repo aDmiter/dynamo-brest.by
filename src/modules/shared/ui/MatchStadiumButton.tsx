@@ -4,12 +4,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faMapMarkerAlt,
-  faTimes,
-  faLocationDot,
-  faExternalLinkAlt,
-} from '@fortawesome/free-solid-svg-icons';
+import { faMapMarkerAlt, faTimes, faLocationDot } from '@fortawesome/free-solid-svg-icons';
 
 interface Facility {
   id: string;
@@ -59,16 +54,18 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
     }
   };
 
-  const getMapQuery = (f: Facility): string => {
-    const parts = [f.shortName || f.name, f.address, f.city, f.country].filter(Boolean);
-    return encodeURIComponent(parts.join(', '));
-  };
-
-  const getMapUrl = (f: Facility): string => {
-    return `https://www.google.com/maps/search/?api=1&query=${getMapQuery(f)}`;
-  };
-
   if (!stadiumName) return <span className="text-xs text-white/40">—</span>;
+
+  const addressParts = facility
+    ? [facility.address, facility.city, facility.region, facility.country].filter(Boolean)
+    : [];
+
+  const yandexMapSrc =
+    facility?.lat && facility?.lng
+      ? `https://yandex.ru/map-widget/v1/?ll=${facility.lng}%2C${facility.lat}&z=15&pt=${facility.lng},${facility.lat},pm2rdl`
+      : addressParts.length > 0
+        ? `https://yandex.ru/map-widget/v1/?mode=search&text=${encodeURIComponent(addressParts.join(', '))}&z=13`
+        : null;
 
   return (
     <>
@@ -133,14 +130,15 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
                 position: 'relative',
                 zIndex: 10,
                 width: '100%',
-                maxWidth: 448,
-                padding: 32,
+                maxWidth: 640,
+                padding: 0,
                 border: '1px solid var(--color-border)',
                 background: 'var(--color-bg-admin)',
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
                 borderRadius: 16,
                 boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+                overflow: 'hidden',
               }}
             >
               <button
@@ -148,22 +146,25 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
                 className="stadium-modal__close"
                 style={{
                   position: 'absolute',
-                  right: 16,
-                  top: 16,
-                  background: 'none',
+                  right: 12,
+                  top: 12,
+                  zIndex: 20,
+                  background: 'rgba(0,0,0,0.6)',
                   border: 'none',
-                  color: 'var(--color-text-stat)',
+                  color: '#fff',
                   cursor: 'pointer',
-                  transition: 'color 0.2s',
+                  borderRadius: 6,
+                  padding: '6px 8px',
+                  transition: 'background 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-accent)';
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.8)';
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-stat)';
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.6)';
                 }}
               >
-                <FontAwesomeIcon icon={faTimes} style={{ fontSize: 18 }} />
+                <FontAwesomeIcon icon={faTimes} style={{ fontSize: 16 }} />
               </button>
 
               {loading ? (
@@ -171,7 +172,7 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
                   className="stadium-modal__loading"
                   style={{
                     textAlign: 'center',
-                    padding: '32px 0',
+                    padding: '48px 0',
                     color: 'var(--color-text-stat)',
                   }}
                 >
@@ -179,47 +180,62 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
                 </div>
               ) : facility ? (
                 <div>
-                  <div
-                    className="stadium-modal__header"
-                    style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 24 }}
-                  >
-                    <div
-                      className="stadium-modal__icon"
-                      style={{
-                        width: 48,
-                        height: 48,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        background: 'var(--color-accent-10)',
-                        borderRadius: 8,
-                      }}
-                    >
-                      <FontAwesomeIcon
-                        icon={faLocationDot}
-                        style={{ fontSize: 20, color: 'var(--color-accent)' }}
+                  {yandexMapSrc && (
+                    <div style={{ width: '100%', height: 340 }}>
+                      <iframe
+                        src={yandexMapSrc}
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        allowFullScreen
+                        style={{ border: 'none' }}
                       />
                     </div>
-                    <div>
-                      <h3
-                        className="stadium-modal__title"
+                  )}
+
+                  <div style={{ padding: '20px 24px 24px' }}>
+                    <div
+                      className="stadium-modal__header"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 12,
+                        marginBottom: 12,
+                      }}
+                    >
+                      <div
+                        className="stadium-modal__icon"
                         style={{
-                          fontFamily: "'Inter Tight', sans-serif",
-                          fontSize: 20,
-                          fontWeight: 900,
-                          color: '#fff',
+                          width: 40,
+                          height: 40,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          background: 'var(--color-accent-10)',
+                          borderRadius: 8,
                         }}
                       >
-                        {facility.shortName || facility.name}
-                      </h3>
+                        <FontAwesomeIcon
+                          icon={faLocationDot}
+                          style={{ fontSize: 18, color: 'var(--color-accent)' }}
+                        />
+                      </div>
+                      <div>
+                        <h3
+                          className="stadium-modal__title"
+                          style={{
+                            fontFamily: "'Inter Tight', sans-serif",
+                            fontSize: 18,
+                            fontWeight: 900,
+                            color: '#fff',
+                          }}
+                        >
+                          {facility.shortName || facility.name}
+                        </h3>
+                      </div>
                     </div>
-                  </div>
 
-                  <div
-                    className="stadium-modal__info"
-                    style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
-                  >
                     {facility.address && (
                       <div
                         className="stadium-modal__address"
@@ -232,13 +248,13 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
                         <div>
                           <p
                             className="stadium-modal__address-text"
-                            style={{ color: '#ffffff', fontSize: 14 }}
+                            style={{ color: '#ffffff', fontSize: 13 }}
                           >
                             {facility.address}
                           </p>
                           <p
                             className="stadium-modal__address-sub"
-                            style={{ color: 'var(--color-text-label)', fontSize: 12, marginTop: 4 }}
+                            style={{ color: 'var(--color-text-label)', fontSize: 11, marginTop: 4 }}
                           >
                             {[facility.city, facility.region, facility.country]
                               .filter(Boolean)
@@ -247,40 +263,6 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
                         </div>
                       </div>
                     )}
-
-                    <a
-                      href={getMapUrl(facility)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="stadium-modal__map-link"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        background: 'var(--color-accent)',
-                        borderRadius: 8,
-                        padding: '10px 20px',
-                        color: '#fff',
-                        fontFamily: "'Inter Tight', sans-serif",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase',
-                        textDecoration: 'none',
-                        transition: 'background 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.background =
-                          'var(--color-accent-hover)';
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.background =
-                          'var(--color-accent)';
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: 10 }} />
-                      Открыть в Google Картах
-                    </a>
                   </div>
                 </div>
               ) : (
@@ -288,7 +270,7 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
                   className="stadium-modal__empty"
                   style={{
                     textAlign: 'center',
-                    padding: '32px 0',
+                    padding: '48px 0',
                     color: 'var(--color-text-label)',
                   }}
                 >

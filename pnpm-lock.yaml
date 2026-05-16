@@ -86,6 +86,12 @@ importers:
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.2.4)
+      jodit:
+        specifier: ^4.12.2
+        version: 4.12.2
+      jodit-react:
+        specifier: ^5.3.21
+        version: 5.3.21(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       lucide-react:
         specifier: ^1.14.0
         version: 1.14.0(react@19.2.4)
@@ -3538,6 +3544,15 @@ packages:
   jiti@2.7.0:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
+
+  jodit-react@5.3.21:
+    resolution: {integrity: sha512-dSFVKkrDVbhVwKDjuFMJ3HhPdqeEz/Yz5MhJf9v9B3Gg29CnelKCZ00h6MxXzlhglF3qvtvUTc2HSKrSB15khw==}
+    peerDependencies:
+      react: ~0.14 || ^15 || ^16 || ^17 || ^18 || ^19
+      react-dom: ~0.14 || ^15 || ^16 || ^17 || ^18 || ^19
+
+  jodit@4.12.2:
+    resolution: {integrity: sha512-SoZAH2YvL8JxPmL4muQJPbbF27rFKVzFQOiCRabjtSQcLVghm+XpIm5t9dXq+fCA4d1Z2O+8x/sORPVdLI4zbg==}
 
   jose@6.2.3:
     resolution: {integrity: sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw==}
@@ -8282,6 +8297,14 @@ snapshots:
       set-function-name: 2.0.2
 
   jiti@2.7.0: {}
+
+  jodit-react@5.3.21(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      jodit: 4.12.2
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
+  jodit@4.12.2: {}
 
   jose@6.2.3: {}
 

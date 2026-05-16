@@ -5,7 +5,7 @@ import MatchesResultsClient from '@/modules/team/components/MatchesResultsClient
 
 export default async function WomenResultsPage() {
   const team = await prisma.team.findUnique({
-    where: { slug: 'zhenskaya-komanda' },
+    where: { cometId: '101132' },
   });
 
   if (!team) notFound();
@@ -24,9 +24,7 @@ export default async function WomenResultsPage() {
 
   const teamMap: Record<number, { name: string; logoUrl: string | null }> = {};
   for (const opp of opponentTeams) {
-    if (opp.cometId) {
-      teamMap[opp.cometId] = { name: opp.name, logoUrl: opp.logoUrl };
-    }
+    if (opp.cometId) teamMap[opp.cometId] = { name: opp.name, logoUrl: opp.logoUrl };
   }
 
   const serialized = matches.map((m) => ({

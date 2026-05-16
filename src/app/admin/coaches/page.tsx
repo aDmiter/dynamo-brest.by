@@ -10,11 +10,14 @@ import {
   faToggleOff,
   faUser,
   faPlus,
+  faGripVertical,
+  faSave,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 import ConfirmModal from '@/modules/admin/components/ConfirmModal';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 interface Team {
   id: string;
@@ -33,6 +36,7 @@ interface Coach {
   isActive: boolean;
   isPublished: boolean;
   teamIds: string[];
+  order: number;
 }
 
 export default function CoachesAdminPage() {
@@ -43,6 +47,8 @@ export default function CoachesAdminPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [showSyncModal, setShowSyncModal] = useState(false);
+  const [orderChanged, setOrderChanged] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   const fetchCoaches = useCallback(async () => {
     const res = await fetch('/api/coaches');
@@ -58,7 +64,6 @@ export default function CoachesAdminPage() {
 
   useEffect(() => {
     let cancelled = false;
-
     const load = async () => {
       const res = await fetch('/api/coaches');
       const data = await res.json();
@@ -72,9 +77,7 @@ export default function CoachesAdminPage() {
         setLoading(false);
       }
     };
-
     load();
-
     return () => {
       cancelled = true;
     };
@@ -82,15 +85,12 @@ export default function CoachesAdminPage() {
 
   useEffect(() => {
     let cancelled = false;
-
     const loadTeams = async () => {
       const res = await fetch('/api/teams');
       const data = await res.json();
       if (!cancelled) setAllTeams(data);
     };
-
     loadTeams();
-
     return () => {
       cancelled = true;
     };
@@ -132,17 +132,14 @@ export default function CoachesAdminPage() {
     setToggling(`${coachId}_${teamId}`);
     const coach = coaches.find((c) => c.id === coachId);
     if (!coach) return;
-
     const newTeamIds = coach.teamIds.includes(teamId)
       ? coach.teamIds.filter((id) => id !== teamId)
       : [...coach.teamIds, teamId];
-
     await fetch(`/api/coaches/${coachId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ teamIds: newTeamIds }),
     });
-
     setCoaches((prev) => prev.map((c) => (c.id === coachId ? { ...c, teamIds: newTeamIds } : c)));
     setToggling(null);
   };
@@ -158,10 +155,32 @@ export default function CoachesAdminPage() {
     setToggling(null);
   };
 
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    const items = Array.from(coaches);
+    const [reordered] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reordered);
+    setCoaches(items);
+    setOrderChanged(true);
+  };
+
+  const saveOrder = async () => {
+    setSavingOrder(true);
+    const items = coaches.map((c, i) => ({ id: c.id, order: i }));
+    await fetch('/api/coaches/reorder', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    });
+    setSavingOrder(false);
+    setOrderChanged(false);
+  };
+
   const teamShortLabels: Record<string, string> = {
     'osnovnoy-sostav': 'Осн.',
     'dubliruyushchiy-sostav': 'Дуб.',
     'zhenskaya-komanda': 'Жен.',
+    administratsiya: 'Адм.',
   };
 
   return (
@@ -172,18 +191,29 @@ export default function CoachesAdminPage() {
           <p className="text-sm text-gray-400 mt-1">{coaches.length} тренеров</p>
         </div>
         <div className="flex items-center gap-3">
+          {orderChanged && (
+            <Button
+              size="sm"
+              onClick={saveOrder}
+              disabled={savingOrder}
+              style={{ background: 'var(--color-win)' }}
+            >
+              <FontAwesomeIcon icon={faSave} className="mr-2" />
+              {savingOrder ? 'Сохранение...' : 'Сохранить порядок'}
+            </Button>
+          )}
           <Button
             size="sm"
             onClick={() => setShowSyncModal(true)}
             disabled={syncing}
             variant="outline"
-            className="border-[#ee862c]/30 text-[#ee862c] hover:bg-[#ee862c]/10 hover:border-[#ee862c]"
+            style={{ borderColor: 'var(--color-accent-30)', color: 'var(--color-accent)' }}
           >
             <FontAwesomeIcon icon={faSync} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
             Синхронизировать из COMET
           </Button>
           <Link href="/admin/coaches/new">
-            <Button size="sm" className="bg-[#ee862c] hover:bg-[#f0ac74]">
+            <Button size="sm" style={{ background: 'var(--color-accent)' }}>
               <FontAwesomeIcon icon={faPlus} className="mr-2" />
               Добавить тренера
             </Button>
@@ -207,80 +237,108 @@ export default function CoachesAdminPage() {
             Нет тренеров. Нажмите «Синхронизировать из COMET».
           </div>
         ) : (
-          <table className="w-full min-w-[700px]">
-            <thead className="border-b border-white/10 bg-white/5">
-              <tr>
-                <th className="p-3 text-left text-sm text-gray-400 w-12">Фото</th>
-                <th className="p-3 text-left text-sm text-gray-400">Фамилия Имя</th>
-                <th className="p-3 text-center text-sm text-gray-400">Должность</th>
-                {allTeams.map((team) => (
-                  <th key={team.id} className="p-3 text-center text-sm text-gray-400">
-                    {teamShortLabels[team.slug] || team.name}
-                  </th>
-                ))}
-                <th className="p-3 text-center text-sm text-gray-400 w-20">Опубл.</th>
-                <th className="p-3 text-center text-sm text-gray-400 w-16">Ред.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {coaches.map((coach) => (
-                <tr key={coach.id} className="border-b border-white/5 hover:bg-white/5">
-                  <td className="p-3">
-                    <div className="h-10 w-10 flex items-center justify-center bg-white/5 overflow-hidden">
-                      {coach.photoUrl ? (
-                        <Image
-                          src={coach.photoUrl}
-                          alt=""
-                          width={40}
-                          height={40}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <FontAwesomeIcon icon={faUser} className="text-gray-600" />
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-3">
-                    <p className="font-medium text-white">
-                      {coach.lastName} {coach.firstName}
-                    </p>
-                  </td>
-                  <td className="p-3 text-center text-sm text-gray-400">{coach.position || '—'}</td>
-                  {allTeams.map((team) => {
-                    const isOn = coach.teamIds.includes(team.id);
-                    return (
-                      <td key={team.id} className="p-3 text-center">
-                        <button
-                          onClick={() => toggleTeam(coach.id, team.id)}
-                          disabled={toggling === `${coach.id}_${team.id}`}
-                          className={`text-xl transition-colors ${toggling === `${coach.id}_${team.id}` ? 'opacity-50' : ''} ${isOn ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
-                        >
-                          <FontAwesomeIcon icon={isOn ? faToggleOn : faToggleOff} />
-                        </button>
-                      </td>
-                    );
-                  })}
-                  <td className="p-3 text-center">
-                    <button
-                      onClick={() => togglePublished(coach.id, coach.isPublished)}
-                      disabled={toggling === `pub_${coach.id}`}
-                      className={`text-xl transition-colors ${coach.isPublished ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
-                    >
-                      <FontAwesomeIcon icon={coach.isPublished ? faToggleOn : faToggleOff} />
-                    </button>
-                  </td>
-                  <td className="p-3 text-center">
-                    <Link
-                      href={`/admin/coaches/edit/${coach.id}`}
-                      className="text-sm text-[#ee862c] hover:underline"
-                    >
-                      <FontAwesomeIcon icon={faEdit} />
-                    </Link>
-                  </td>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <table className="w-full min-w-[700px]">
+              <thead className="border-b border-white/10 bg-white/5">
+                <tr>
+                  <th className="p-3 text-left text-sm text-gray-400 w-8"></th>
+                  <th className="p-3 text-left text-sm text-gray-400 w-12">Фото</th>
+                  <th className="p-3 text-left text-sm text-gray-400">Фамилия Имя</th>
+                  <th className="p-3 text-center text-sm text-gray-400">Должность</th>
+                  {allTeams.map((team) => (
+                    <th key={team.id} className="p-3 text-center text-sm text-gray-400">
+                      {teamShortLabels[team.slug] || team.name}
+                    </th>
+                  ))}
+                  <th className="p-3 text-center text-sm text-gray-400 w-20">Опубл.</th>
+                  <th className="p-3 text-center text-sm text-gray-400 w-16">Ред.</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <Droppable droppableId="coaches">
+                {(provided) => (
+                  <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                    {coaches.map((coach, index) => (
+                      <Draggable key={coach.id} draggableId={coach.id} index={index}>
+                        {(provided, snapshot) => (
+                          <tr
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`border-b border-white/5 hover:bg-white/5 ${snapshot.isDragging ? 'bg-white/10' : ''}`}
+                          >
+                            <td className="p-3">
+                              <span
+                                {...provided.dragHandleProps}
+                                className="cursor-grab text-gray-500 hover:text-white"
+                              >
+                                <FontAwesomeIcon icon={faGripVertical} />
+                              </span>
+                            </td>
+                            <td className="p-3">
+                              <div className="h-10 w-10 flex items-center justify-center bg-white/5 overflow-hidden">
+                                {coach.photoUrl ? (
+                                  <Image
+                                    src={coach.photoUrl}
+                                    alt=""
+                                    width={40}
+                                    height={40}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <FontAwesomeIcon icon={faUser} className="text-gray-600" />
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <p className="font-medium text-white">
+                                {coach.lastName} {coach.firstName}
+                              </p>
+                            </td>
+                            <td className="p-3 text-center text-sm text-gray-400">
+                              {coach.position || '—'}
+                            </td>
+                            {allTeams.map((team) => {
+                              const isOn = coach.teamIds.includes(team.id);
+                              return (
+                                <td key={team.id} className="p-3 text-center">
+                                  <button
+                                    onClick={() => toggleTeam(coach.id, team.id)}
+                                    disabled={toggling === `${coach.id}_${team.id}`}
+                                    className={`text-xl transition-colors ${toggling === `${coach.id}_${team.id}` ? 'opacity-50' : ''} ${isOn ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
+                                  >
+                                    <FontAwesomeIcon icon={isOn ? faToggleOn : faToggleOff} />
+                                  </button>
+                                </td>
+                              );
+                            })}
+                            <td className="p-3 text-center">
+                              <button
+                                onClick={() => togglePublished(coach.id, coach.isPublished)}
+                                disabled={toggling === `pub_${coach.id}`}
+                                className={`text-xl transition-colors ${coach.isPublished ? 'text-green-500 hover:text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
+                              >
+                                <FontAwesomeIcon
+                                  icon={coach.isPublished ? faToggleOn : faToggleOff}
+                                />
+                              </button>
+                            </td>
+                            <td className="p-3 text-center">
+                              <Link
+                                href={`/admin/coaches/edit/${coach.id}`}
+                                style={{ color: 'var(--color-accent)' }}
+                              >
+                                <FontAwesomeIcon icon={faEdit} />
+                              </Link>
+                            </td>
+                          </tr>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </tbody>
+                )}
+              </Droppable>
+            </table>
+          </DragDropContext>
         )}
       </div>
 
