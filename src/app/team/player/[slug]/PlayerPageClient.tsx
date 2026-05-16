@@ -37,6 +37,8 @@ interface PlayerStats {
     minutesPlayed: number;
     startedMatches: number;
     subAppearances: number;
+    cleanSheets?: number;
+    goalsConceded?: number;
   };
   byCompetition: Record<
     string,
@@ -48,6 +50,8 @@ interface PlayerStats {
       minutesPlayed: number;
       startedMatches: number;
       subAppearances: number;
+      cleanSheets?: number;
+      goalsConceded?: number;
     }
   >;
 }
@@ -102,6 +106,8 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
   const [statsStarted, setStatsStarted] = useState(false);
   const bioRef = useRef<HTMLDivElement>(null);
 
+  const isGoalkeeper = player.position === 'Вратарь';
+
   const loadStats = useCallback(async () => {
     if (!player.cometId) return;
     setStatsLoading(true);
@@ -145,7 +151,6 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
     <div className="player-page bg-[var(--color-bg-main)]">
       {/* Экран 1 — Hero */}
       <section className="player-page__hero relative min-h-screen w-full flex flex-col md:flex-row overflow-hidden">
-        {/* Фон — стадион едва видимый */}
         <div className="player-page__bg absolute inset-0 z-0">
           <img
             src="/images/stadium.jpg"
@@ -155,7 +160,6 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-main)] via-[var(--color-bg-main)]/70 to-[var(--color-bg-main)]/30" />
         </div>
 
-        {/* Большой номер на фоне */}
         {player.number && (
           <div
             className="player-page__big-number absolute top-1/2 left-0 md:left-[5%] lg:left-[8%] -translate-y-[55%] z-0 pointer-events-none select-none"
@@ -173,7 +177,6 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
           </div>
         )}
 
-        {/* Соцсети справа */}
         <div className="player-page__social absolute right-6 top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-6 lg:flex">
           {socialLinks.map((social) => (
             <a
@@ -190,10 +193,8 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
           <div className="h-12 w-[1px] bg-white/20" />
         </div>
 
-        {/* Левая часть — информация */}
         <div className="player-page__info-side relative z-10 flex items-center w-full md:w-1/2 lg:w-[45%] px-6 py-24 md:px-16 md:pl-28 lg:pl-40 order-2 md:order-1">
           <div className="w-full max-w-xl">
-            {/* Амплуа и маленький номер */}
             <div className="player-page__badge-row flex items-center gap-3 mb-6">
               {player.position && (
                 <span
@@ -213,7 +214,6 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
               )}
             </div>
 
-            {/* Имя (сначала имя, потом фамилия) */}
             <p className="player-page__firstname text-sm font-normal uppercase tracking-[0.22em] text-white/50 mb-1">
               {player.firstName}
             </p>
@@ -228,7 +228,6 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
               {player.lastName}
             </h1>
 
-            {/* Блок с иконками */}
             <div className="player-page__info-icons flex flex-col gap-2.5 mb-8">
               <div className="flex items-center gap-2.5 text-[13px] text-white/55">
                 <FontAwesomeIcon
@@ -243,7 +242,6 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
                 {age && player.birthDate && <span className="text-white/30">·</span>}
                 {player.birthDate && <span>{formatDate(player.birthDate)}</span>}
               </div>
-
               <div className="flex items-center gap-[18px] text-[13px] text-white/55">
                 {player.height && (
                   <div className="flex items-center gap-2.5">
@@ -264,7 +262,6 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
                   </div>
                 )}
               </div>
-
               {player.nationality && (
                 <div className="flex items-center gap-2.5 text-[13px]">
                   <FontAwesomeIcon
@@ -278,7 +275,6 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
               )}
             </div>
 
-            {/* Сезон */}
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/30 mb-2.5">
               {season} Сезон · {competitionName}
             </p>
@@ -292,9 +288,19 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
             ) : stats ? (
               <div className="grid grid-cols-3 gap-2 mb-7">
                 <StatCard label="Матчей" value={stats.totals.appearances} />
-                <StatCard label="Голов" value={stats.totals.goals} highlight />
+                <StatCard
+                  label={isGoalkeeper ? 'Сухих' : 'Голов'}
+                  value={isGoalkeeper ? (stats.totals.cleanSheets ?? 0) : stats.totals.goals}
+                  highlight
+                />
                 <StatCard label="Минут" value={stats.totals.minutesPlayed} />
-                <StatCard label="В старте" value={stats.totals.startedMatches} />
+                <StatCard
+                  label={isGoalkeeper ? 'Пропущено' : 'В старте'}
+                  value={
+                    isGoalkeeper ? (stats.totals.goalsConceded ?? 0) : stats.totals.startedMatches
+                  }
+                  color={isGoalkeeper ? 'var(--color-loss)' : 'rgb(255,255,255)'}
+                />
                 <StatCard
                   label="ЖК"
                   value={stats.totals.yellowCards}
@@ -304,7 +310,6 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
               </div>
             ) : null}
 
-            {/* Кнопка БИОГРАФИЯ */}
             {player.bio && (
               <button
                 onClick={scrollToBio}
@@ -318,7 +323,6 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
           </div>
         </div>
 
-        {/* Правая часть — фото */}
         <div className="player-page__photo-side relative w-full md:w-1/2 lg:w-[55%] h-[55vh] md:h-auto md:min-h-screen order-1 md:order-2">
           <img
             src={player.photoUrl || '/images/placeholder.jpg'}
@@ -330,7 +334,6 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
         </div>
       </section>
 
-      {/* Экран 2 — Биография */}
       {player.bio && (
         <section
           ref={bioRef}
@@ -346,23 +349,28 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
             >
               {player.firstName} {player.lastName}
             </h2>
-
             <div className="mt-10 text-gray-700 leading-relaxed text-base md:text-lg max-w-3xl space-y-4">
               {player.bio.split('\n').map((paragraph, i) => (
                 <p key={i}>{paragraph}</p>
               ))}
             </div>
-
             {stats && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
                 <BottomStatBox label="Матчей" value={stats.totals.appearances} />
-                <BottomStatBox label="Голов" value={stats.totals.goals} />
+                <BottomStatBox
+                  label={isGoalkeeper ? 'Сухих' : 'Голов'}
+                  value={isGoalkeeper ? (stats.totals.cleanSheets ?? 0) : stats.totals.goals}
+                />
                 <BottomStatBox label="В старте" value={stats.totals.startedMatches} />
-                <BottomStatBox label="ЖК" value={stats.totals.yellowCards} />
+                <BottomStatBox
+                  label={isGoalkeeper ? 'Пропущено' : 'ЖК'}
+                  value={
+                    isGoalkeeper ? (stats.totals.goalsConceded ?? 0) : stats.totals.yellowCards
+                  }
+                />
               </div>
             )}
           </div>
-
           <div className="player-page__bio-title absolute right-0 bottom-0 pointer-events-none select-none">
             <span
               className="block text-[60px] font-black uppercase tracking-[0.1em] text-[var(--color-team-names)]/10 md:text-[80px] leading-none"

@@ -38,6 +38,16 @@ interface CometEvent {
   displayMinute: string;
 }
 
+interface CometGoalkeeperStat {
+  personId: number;
+  matchId: number;
+  played: number;
+  startingLineup: number;
+  goalsConceded: number;
+  competitionType: string;
+  minutesPlayed: number;
+}
+
 const TEAM_CLUB_IDS: Record<string, number> = {
   'osnovnoy-sostav': 68812,
   'dubliruyushchiy-sostav': 102734,
@@ -53,7 +63,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const player = await prisma.player.findUnique({
       where: { id },
-      select: { cometId: true, firstName: true, lastName: true },
+      select: { cometId: true, firstName: true, lastName: true, position: true },
     });
 
     if (!player || !player.cometId) {
@@ -68,11 +78,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const envEventsKey = process.env.COMET_API_KEY_MATCH_EVENTS || '';
     const EVENTS_API_KEY = dbEventsKey || envEventsKey;
 
-    const COMET_BASE_URL = process.env.COMET_API_BASE_URL || 'https://comet.abff.by';
+    const dbGkKey = await getSetting('COMET_API_KEY_GOALKEEPER_STATS');
+    const envGkKey = process.env.COMET_API_KEY_GOALKEEPER_STATS || '';
+    const GK_API_KEY = dbGkKey || envGkKey;
 
-    if (!STATS_API_KEY && !EVENTS_API_KEY) {
-      return NextResponse.json({ error: 'API keys not configured' }, { status: 500 });
-    }
+    const COMET_BASE_URL = process.env.COMET_API_BASE_URL || 'https://comet.abff.by';
 
     // 1. Загружаем статистику (Player Appearances)
     let allAppearances: CometAppearance[] = [];
@@ -99,7 +109,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           (a: Record<string, unknown>) => a.personId?.toString() === player.cometId
         );
 
-        // Фильтруем по клубу, если указан teamSlug
         if (targetClubId) {
           playerAppearances = playerAppearances.filter(
             (a: Record<string, unknown>) => a.clubId === targetClubId
@@ -138,7 +147,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           (e: Record<string, unknown>) => e.personId?.toString() === player.cometId
         );
 
-        // Фильтруем по клубу
         if (targetClubId) {
           playerEvents = playerEvents.filter(
             (e: Record<string, unknown>) => e.teamId === targetClubId
@@ -168,7 +176,52 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       } while (true);
     }
 
-    // 3. Объединяем данные
+    // 3. Загружаем вратарскую статистику (Goalkeeper Appearances)
+    let goalkeeperStats: CometGoalkeeperStat[] = [];
+    let totalCleanSheets = 0;
+    let totalGoalsConceded = 0;
+
+    if (GK_API_KEY) {
+      const page = 0;
+      const pageSize = 500;
+
+      do {
+        const url = `${COMET_BASE_URL}/data-backend/api/public/areports/run/${page}/${pageSize}/?API_KEY=${GK_API_KEY}`;
+
+        const response = await fetch(url, {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+        });
+
+        if (!response.ok) break;
+
+        const data = await response.json();
+
+        if (!data.results || data.results.length === 0) break;
+
+        let gkData = data.results.filter(
+          (g: Record<string, unknown>) => g.personId?.toString() === player.cometId
+        );
+
+        if (targetClubId) {
+          gkData = gkData.filter((g: Record<string, unknown>) => g.clubId === targetClubId);
+        }
+
+        goalkeeperStats = gkData as CometGoalkeeperStat[];
+
+        // Считаем clean sheets: played=1 AND startingLineup=1 AND goalsConceded=0
+        totalCleanSheets = goalkeeperStats.filter(
+          (g) => g.played === 1 && g.startingLineup === 1 && g.goalsConceded === 0
+        ).length;
+
+        // Сумма пропущенных голов
+        totalGoalsConceded = goalkeeperStats.reduce((sum, g) => sum + (g.goalsConceded || 0), 0);
+
+        break; // Usually one page is enough for goalkeeper stats
+      } while (false);
+    }
+
+    // 4. Объединяем данные
     const mergedAppearances = allAppearances.map((a) => {
       const events = eventsMap[a.matchId] || { goals: 0, yellowCards: 0, redCards: 0 };
       return {
@@ -190,21 +243,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     mergedAppearances.sort((a, b) => b.date - a.date);
 
-    // Статистика вратарей
-    const goalkeeperAppearances = mergedAppearances.filter((a) => a.goalkeeper === 1);
-    const cleanSheets = goalkeeperAppearances.filter((a) => {
-      const desc = a.match || '';
-      const scoreMatch = desc.match(/(\d+)\s*:\s*(\d+)/);
-      if (!scoreMatch) return false;
-      const ourScore = desc.includes('Динамо-Брест')
-        ? parseInt(scoreMatch[1])
-        : parseInt(scoreMatch[2]);
-      const theirScore = desc.includes('Динамо-Брест')
-        ? parseInt(scoreMatch[2])
-        : parseInt(scoreMatch[1]);
-      return ourScore > 0 && theirScore === 0;
-    }).length;
-
     const totals = {
       appearances: mergedAppearances.length,
       goals: mergedAppearances.reduce((sum, a) => sum + a.goals, 0),
@@ -213,16 +251,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       minutesPlayed: mergedAppearances.reduce((sum, a) => sum + a.minutesPlayed, 0),
       startedMatches: mergedAppearances.filter((a) => a.startingLineup).length,
       subAppearances: mergedAppearances.filter((a) => !a.startingLineup).length,
-      cleanSheets,
-      goalsConceded: mergedAppearances.reduce((sum, a) => {
-        const desc = a.match || '';
-        const scoreMatch = desc.match(/(\d+)\s*:\s*(\d+)/);
-        if (!scoreMatch) return sum;
-        const theirScore = desc.includes('Динамо-Брест')
-          ? parseInt(scoreMatch[2])
-          : parseInt(scoreMatch[1]);
-        return sum + (isNaN(theirScore) ? 0 : theirScore);
-      }, 0),
+      cleanSheets: totalCleanSheets,
+      goalsConceded: totalGoalsConceded,
       assists: 0,
     };
 
@@ -252,9 +282,32 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       else byCompetition[comp].subAppearances++;
     }
 
+    // Добавляем чистые матчи по соревнованиям для вратарей
+    if (player.position === 'Вратарь') {
+      const gkByComp: Record<string, { cleanSheets: number; goalsConceded: number }> = {};
+      for (const g of goalkeeperStats) {
+        const comp = g.competitionType || 'Другое';
+        if (!gkByComp[comp]) gkByComp[comp] = { cleanSheets: 0, goalsConceded: 0 };
+        gkByComp[comp].goalsConceded += g.goalsConceded || 0;
+        if (g.played === 1 && g.startingLineup === 1 && g.goalsConceded === 0) {
+          gkByComp[comp].cleanSheets++;
+        }
+      }
+      for (const [comp, data] of Object.entries(gkByComp)) {
+        if (byCompetition[comp]) {
+          byCompetition[comp].cleanSheets = data.cleanSheets;
+          byCompetition[comp].goalsConceded = data.goalsConceded;
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      player: { id: player.cometId, name: `${player.lastName} ${player.firstName}` },
+      player: {
+        id: player.cometId,
+        name: `${player.lastName} ${player.firstName}`,
+        position: player.position,
+      },
       totals,
       byCompetition,
       appearances: mergedAppearances,

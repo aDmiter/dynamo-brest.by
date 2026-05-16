@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faMapMarkerAlt,
@@ -73,13 +74,14 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
     <>
       <button
         onClick={handleClick}
+        className="stadium-button"
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 8,
           fontSize: 12,
           transition: 'color 0.2s ease',
-          color: facilityId ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.4)',
+          color: 'rgba(255,255,255,0.4)',
           cursor: facilityId ? 'pointer' : 'default',
           background: 'none',
           border: 'none',
@@ -100,116 +102,207 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
         <span>{stadiumName}</span>
       </button>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {isOpen &&
+        createPortal(
           <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-md"
-            onClick={() => setIsOpen(false)}
-          />
-          <div
-            className="relative z-10 w-full max-w-md p-8 shadow-2xl"
+            className="stadium-modal"
             style={{
-              border: '1px solid var(--color-border)',
-              background: 'var(--color-bg-admin)',
-              backdropFilter: 'blur(24px)',
-              WebkitBackdropFilter: 'blur(24px)',
-              borderRadius: 16,
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
             }}
           >
-            <button
+            <div
+              className="stadium-modal__backdrop"
               onClick={() => setIsOpen(false)}
-              className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0,0,0,0.8)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+              }}
+            />
+            <div
+              className="stadium-modal__content"
+              style={{
+                position: 'relative',
+                zIndex: 10,
+                width: '100%',
+                maxWidth: 448,
+                padding: 32,
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-bg-admin)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                borderRadius: 16,
+                boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+              }}
             >
-              <FontAwesomeIcon icon={faTimes} className="text-lg" />
-            </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="stadium-modal__close"
+                style={{
+                  position: 'absolute',
+                  right: 16,
+                  top: 16,
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-text-stat)',
+                  cursor: 'pointer',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-accent)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-stat)';
+                }}
+              >
+                <FontAwesomeIcon icon={faTimes} style={{ fontSize: 18 }} />
+              </button>
 
-            {loading ? (
-              <div className="text-center py-8 text-gray-400">Загрузка...</div>
-            ) : facility ? (
-              <div>
-                <div className="flex items-start gap-4 mb-6">
+              {loading ? (
+                <div
+                  className="stadium-modal__loading"
+                  style={{
+                    textAlign: 'center',
+                    padding: '32px 0',
+                    color: 'var(--color-text-stat)',
+                  }}
+                >
+                  Загрузка...
+                </div>
+              ) : facility ? (
+                <div>
                   <div
-                    className="h-12 w-12 flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'var(--color-accent-10)', borderRadius: 8 }}
+                    className="stadium-modal__header"
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 24 }}
                   >
-                    <FontAwesomeIcon
-                      icon={faLocationDot}
-                      className="text-xl"
-                      style={{ color: 'var(--color-accent)' }}
-                    />
-                  </div>
-                  <div>
-                    <h3
-                      className="text-xl font-bold text-white"
-                      style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
+                    <div
+                      className="stadium-modal__icon"
+                      style={{
+                        width: 48,
+                        height: 48,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        background: 'var(--color-accent-10)',
+                        borderRadius: 8,
+                      }}
                     >
-                      {facility.shortName || facility.name}
-                    </h3>
+                      <FontAwesomeIcon
+                        icon={faLocationDot}
+                        style={{ fontSize: 20, color: 'var(--color-accent)' }}
+                      />
+                    </div>
+                    <div>
+                      <h3
+                        className="stadium-modal__title"
+                        style={{
+                          fontFamily: "'Inter Tight', sans-serif",
+                          fontSize: 20,
+                          fontWeight: 900,
+                          color: '#fff',
+                        }}
+                      >
+                        {facility.shortName || facility.name}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div
+                    className="stadium-modal__info"
+                    style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+                  >
+                    {facility.address && (
+                      <div
+                        className="stadium-modal__address"
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}
+                      >
+                        <FontAwesomeIcon
+                          icon={faMapMarkerAlt}
+                          style={{ marginTop: 2, flexShrink: 0, color: 'var(--color-accent)' }}
+                        />
+                        <div>
+                          <p
+                            className="stadium-modal__address-text"
+                            style={{ color: '#ffffff', fontSize: 14 }}
+                          >
+                            {facility.address}
+                          </p>
+                          <p
+                            className="stadium-modal__address-sub"
+                            style={{ color: 'var(--color-text-label)', fontSize: 12, marginTop: 4 }}
+                          >
+                            {[facility.city, facility.region, facility.country]
+                              .filter(Boolean)
+                              .join(', ')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    <a
+                      href={getMapUrl(facility)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="stadium-modal__map-link"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        background: 'var(--color-accent)',
+                        borderRadius: 8,
+                        padding: '10px 20px',
+                        color: '#fff',
+                        fontFamily: "'Inter Tight', sans-serif",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        textDecoration: 'none',
+                        transition: 'background 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLAnchorElement).style.background =
+                          'var(--color-accent-hover)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLAnchorElement).style.background =
+                          'var(--color-accent)';
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: 10 }} />
+                      Открыть в Google Картах
+                    </a>
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  {facility.address && (
-                    <div className="flex items-start gap-2">
-                      <FontAwesomeIcon
-                        icon={faMapMarkerAlt}
-                        className="mt-0.5 flex-shrink-0"
-                        style={{ color: 'var(--color-accent)' }}
-                      />
-                      <div>
-                        <p className="text-gray-300 text-sm">{facility.address}</p>
-                        <p className="text-gray-500 text-xs mt-1">
-                          {[facility.city, facility.region, facility.country]
-                            .filter(Boolean)
-                            .join(', ')}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <a
-                    href={getMapUrl(facility)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      background: 'var(--color-accent)',
-                      borderRadius: 8,
-                      padding: '10px 20px',
-                      color: '#ffffff',
-                      fontFamily: "'Inter Tight', sans-serif",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      textDecoration: 'none',
-                      transition: 'background 0.2s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLAnchorElement).style.background =
-                        'var(--color-accent-hover)';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLAnchorElement).style.background =
-                        'var(--color-accent)';
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faExternalLinkAlt} className="text-[10px]" />
-                    Открыть в Google Картах
-                  </a>
+              ) : (
+                <div
+                  className="stadium-modal__empty"
+                  style={{
+                    textAlign: 'center',
+                    padding: '32px 0',
+                    color: 'var(--color-text-label)',
+                  }}
+                >
+                  <FontAwesomeIcon
+                    icon={faMapMarkerAlt}
+                    style={{ fontSize: 48, marginBottom: 12, opacity: 0.5 }}
+                  />
+                  <p>Информация о стадионе недоступна</p>
                 </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 py-8">
-                <FontAwesomeIcon icon={faMapMarkerAlt} className="text-3xl mb-3 opacity-50" />
-                <p>Информация о стадионе недоступна</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }

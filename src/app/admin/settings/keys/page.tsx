@@ -15,6 +15,7 @@ const SETTING_KEYS = [
   { key: 'COMET_STANDINGS_API_KEY_WOMEN', label: 'COMET — Таблица (Женская)' },
   { key: 'COMET_API_KEY_MATCH_EVENTS', label: 'COMET — События матчей' },
   { key: 'COMET_API_KEY_PLAYER_STATS', label: 'COMET — Статистика игроков' },
+  { key: 'COMET_API_KEY_GOALKEEPER_STATS', label: 'COMET — Статистика вратарей' },
 ];
 
 export default async function SettingsKeysPage() {

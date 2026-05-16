@@ -1,0 +1,615 @@
+Project: dynamo-brest
+Root: D:\Project\dynamo-brest
+============================================================
+
+dynamo-brest/
++-- .gitignore
++-- .prettierrc
++-- README.md
++-- components.json
++-- eslint.config.mjs
++-- httpswebo.byreporepo_content_part1..txt
++-- local_repo_to_prompt.py
++-- next.config.ts
++-- package.json
++-- pnpm-lock.yaml
++-- pnpm-workspace.yaml
++-- postcss.config.mjs
++-- prisma/
+|   +-- generate-slugs.ts
+|   +-- import-news.ts
+|   +-- migrations/
+|   |   +-- 0000_baseline/
+|   |   |   +-- migration.sql
+|   |   +-- 20260508132137_init/
+|   |   |   +-- migration.sql
+|   |   +-- 20260508132505_init/
+|   |   |   +-- migration.sql
+|   |   +-- 20260512_add_opponent_team_facility/
+|   |   |   +-- migration.sql
+|   |   +-- 20260512_add_player_teams/
+|   |   |   +-- migration.sql
+|   |   +-- 20260512_add_use_sizes/
+|   |   |   +-- migration.sql
+|   |   +-- 20260512_cometid_optional/
+|   |   |   +-- migration.sql
+|   |   +-- migration_lock.toml
+|   +-- schema.prisma
+|   +-- seed-countries.ts
+|   +-- seed-menu.ts
+|   +-- seed.ts
++-- public/
+|   +-- favicon.ico
+|   +-- file.svg
+|   +-- globe.svg
+|   +-- images/
+|   |   +-- banners/
+|   |   |   +-- bg-2026.jpg
+|   |   |   +-- fonbet_banner_2026.png
+|   |   +-- cart-bg.jpg
+|   |   +-- cup1.png
+|   |   +-- cup2.png
+|   |   +-- cup3.png
+|   |   +-- db3c3c41db567cb432ab683bb772b5e2_XL.jpg
+|   |   +-- headers/
+|   |   |   +-- headers-1778680598589.jpg
+|   |   +-- logos/
+|   |   |   +-- logo-blue.png
+|   |   |   +-- logo-mc.png
+|   |   |   +-- logo-white.png
+|   |   |   +-- logos-1778675796627.png
+|   |   |   +-- logos-1778675814736.png
+|   |   |   +-- logos-1778675946889.png
+|   |   |   +-- logos-1778675954451.png
+|   |   |   +-- logos-1778675963187.png
+|   |   |   +-- logos-1778676041154.png
+|   |   |   +-- logos-1778676062062.png
+|   |   |   +-- logos-1778676074966.png
+|   |   |   +-- logos-1778676210610.png
+|   |   |   +-- logos-1778676219570.png
+|   |   |   +-- logos-1778676283988.png
+|   |   |   +-- logos-1778676295733.png
+|   |   |   +-- logos-1778676305717.png
+|   |   |   +-- logos-1778676392758.png
+|   |   |   +-- logos-1778676402217.png
+|   |   |   +-- logos-1778676412191.png
+|   |   |   +-- logos-1778678945894.png
+|   |   |   +-- logos-1778678954521.png
+|   |   |   +-- logos-1778678964131.png
+|   |   |   +-- logos-1778759344648.png
+|   |   |   +-- logos-1778759360063.png
+|   |   |   +-- logos-1778760453140.png
+|   |   |   +-- logos-1778760460212.png
+|   |   |   +-- logos-1778763129404.png
+|   |   |   +-- logos-1778763138593.png
+|   |   |   +-- logos-1778763145763.png
+|   |   |   +-- logos-1778763209537.png
+|   |   |   +-- logos-1778763318023.png
+|   |   +-- news/
+|   |   |   +-- news-1778337946093.jpg
+|   |   |   +-- news-1778346692695.png
+|   |   |   +-- news-1778346715311.png
+|   |   |   +-- news-1778346737184.png
+|   |   |   +-- news-1778346807857.png
+|   |   |   +-- news-1778347008107.png
+|   |   |   +-- news-1778347035156.png
+|   |   |   +-- news-1778359933189.jpg
+|   |   |   +-- news-1778360132083.webp
+|   |   |   +-- news-1778396305276.jpg
+|   |   |   +-- news-1778403406569.jpg
+|   |   |   +-- news-1778405879397.jpg
+|   |   |   +-- news-1778405881781.webp
+|   |   |   +-- news-1778409358738.png
+|   |   |   +-- news-1778409390833.png
+|   |   |   +-- news-1778409495600.png
+|   |   |   +-- news-1778409606817.png
+|   |   |   +-- news-1778409835033.png
+|   |   |   +-- news-1778409842285.svg
+|   |   |   +-- news-1778410098700.png
+|   |   |   +-- news-1778410124217.svg
+|   |   |   +-- news-1778410303288.png
+|   |   |   +-- news-1778410675330.svg
+|   |   |   +-- news-1778410758563.png
+|   |   |   +-- news-1778410958915.png
+|   |   |   +-- news-1778410998074.jpeg
+|   |   |   +-- news-1778411129958.png
+|   |   |   +-- news-1778411829607.png
+|   |   |   +-- news-1778411927594.png
+|   |   |   +-- news-1778411968298.png
+|   |   |   +-- news-1778423740571.jpg
+|   |   |   +-- news-1778424704019.jpg
+|   |   |   +-- news-1778478015599.jpg
+|   |   |   +-- news-1778478077628.jpg
+|   |   |   +-- news-1778478157905.jpg
+|   |   |   +-- news-1778591269908.png
+|   |   |   +-- news-1778591279401.png
+|   |   |   +-- news-1778591297397.png
+|   |   |   +-- news-1778591336476.png
+|   |   |   +-- news-1778591365716.png
+|   |   |   +-- news-1778591376533.png
+|   |   |   +-- news-1778591387720.png
+|   |   |   +-- news-1778591397967.png
+|   |   |   +-- news-1778591405986.png
+|   |   |   +-- news-1778591426213.png
+|   |   |   +-- news-1778591441028.png
+|   |   |   +-- news-1778591462964.png
+|   |   |   +-- news-1778591472681.png
+|   |   |   +-- news-1778591482903.png
+|   |   |   +-- news-1778591501280.png
+|   |   |   +-- news-1778591512594.png
+|   |   |   +-- news-1778591529787.png
+|   |   |   +-- news-1778593579831.png
+|   |   |   +-- news-1778612416401.png
+|   |   |   +-- news-1778612445986.png
+|   |   |   +-- news-1778660830143.png
+|   |   +-- placeholder.jpg
+|   |   +-- players/
+|   |   |   +-- players-1778737839824.png
+|   |   |   +-- players-1778738087522.png
+|   |   |   +-- players-1778738140415.png
+|   |   |   +-- players-1778738279959.png
+|   |   |   +-- players-1778738302789.png
+|   |   |   +-- players-1778738457110.png
+|   |   |   +-- players-1778738480220.png
+|   |   |   +-- players-1778738496826.png
+|   |   |   +-- players-1778738521864.png
+|   |   |   +-- players-1778738537710.png
+|   |   |   +-- players-1778738557256.png
+|   |   |   +-- players-1778738583934.png
+|   |   |   +-- players-1778738613220.png
+|   |   |   +-- players-1778739627271.png
+|   |   |   +-- players-1778739651227.png
+|   |   |   +-- players-1778739681683.png
+|   |   |   +-- players-1778739858646.png
+|   |   |   +-- players-1778739925649.png
+|   |   |   +-- players-1778739945490.png
+|   |   |   +-- players-1778739967174.png
+|   |   |   +-- players-1778740070521.png
+|   |   |   +-- players-1778740834370.png
+|   |   |   +-- players-1778740868894.png
+|   |   |   +-- players-1778740901804.png
+|   |   |   +-- players-1778740926439.png
+|   |   |   +-- players-1778741929269.png
+|   |   |   +-- players-1778742033746.png
+|   |   |   +-- players-1778742045247.png
+|   |   |   +-- players-1778742056542.png
+|   |   |   +-- players-1778742068224.png
+|   |   |   +-- players-1778742075892.png
+|   |   |   +-- players-1778742092908.png
+|   |   |   +-- players-1778742106277.png
+|   |   |   +-- players-1778742118351.png
+|   |   |   +-- players-1778742128572.png
+|   |   |   +-- players-1778742140306.png
+|   |   |   +-- players-1778742150944.png
+|   |   |   +-- players-1778742167275.png
+|   |   |   +-- players-1778742197326.png
+|   |   |   +-- players-1778742205284.png
+|   |   |   +-- players-1778742215109.png
+|   |   |   +-- players-1778742226257.png
+|   |   |   +-- players-1778742239077.png
+|   |   |   +-- players-1778742248640.png
+|   |   |   +-- players-1778742380051.png
+|   |   |   +-- players-1778742390323.png
+|   |   |   +-- players-1778742405224.png
+|   |   +-- spinner-1.png
+|   |   +-- spinner-2.png
+|   |   +-- stadium.jpg
+|   |   +-- titles_bg.jpg
+|   |   +-- vs.png
+|   +-- next.svg
+|   +-- vercel.svg
+|   +-- window.svg
++-- src/
+|   +-- app/
+|   |   +-- admin/
+|   |   |   +-- banners/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- EditBannerForm.tsx
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- new/
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- categories/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- EditCategoryForm.tsx
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- new/
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- coaches/
+|   |   |   |   +-- edit/
+|   |   |   |   |   +-- [id]/
+|   |   |   |   |       +-- EditCoachForm.tsx
+|   |   |   |   |       +-- page.tsx
+|   |   |   |   +-- new/
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- countries/
+|   |   |   |   +-- CountriesManager.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- dashboard/
+|   |   |   |   +-- page.tsx
+|   |   |   +-- layout.tsx
+|   |   |   +-- login/
+|   |   |   |   +-- layout.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- matches/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- edit/
+|   |   |   |   |       +-- EditMatchForm.tsx
+|   |   |   |   |       +-- page.tsx
+|   |   |   |   +-- calendar/
+|   |   |   |   |   +-- [teamSlug]/
+|   |   |   |   |       +-- MatchesCalendarClient.tsx
+|   |   |   |   |       +-- page.tsx
+|   |   |   |   +-- new/
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- results/
+|   |   |   |       +-- [teamSlug]/
+|   |   |   |           +-- MatchesResultsClient.tsx
+|   |   |   |           +-- page.tsx
+|   |   |   +-- news/
+|   |   |   |   +-- NewsAdminClient.tsx
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- EditNewsForm.tsx
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- new/
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- opponent-teams/
+|   |   |   |   +-- page.tsx
+|   |   |   +-- orders/
+|   |   |   |   +-- OrderStatusBadge.tsx
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- TrackingCodeInput.tsx
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- players/
+|   |   |   |   +-- AllPlayersPageClient.tsx
+|   |   |   |   +-- [teamSlug]/
+|   |   |   |   |   +-- PlayersByTeamPageClient.tsx
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- edit/
+|   |   |   |   |   +-- [id]/
+|   |   |   |   |       +-- EditPlayerForm.tsx
+|   |   |   |   |       +-- page.tsx
+|   |   |   |   +-- new/
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- products/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- EditProductForm.tsx
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- new/
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- settings/
+|   |   |   |   +-- SettingsForm.tsx
+|   |   |   |   +-- keys/
+|   |   |   |   |   +-- SettingsKeysForm.tsx
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- menu/
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- shop/
+|   |   |   |   +-- fields/
+|   |   |   |   |   +-- CustomizationsManager.tsx
+|   |   |   |   |   +-- PlayersManager.tsx
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- sponsors/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- EditSponsorForm.tsx
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- new/
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- teams/
+|   |   |   |   +-- new/
+|   |   |   |   |   +-- page.tsx
+|   |   |   |   +-- route.ts
+|   |   |   +-- titles/
+|   |   |       +-- TitlesManager.tsx
+|   |   |       +-- page.tsx
+|   |   +-- api/
+|   |   |   +-- auth/
+|   |   |   |   +-- [...nextauth]/
+|   |   |   |       +-- route.ts
+|   |   |   +-- banners/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- click/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- categories/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- coaches/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- countries/
+|   |   |   |   +-- route.ts
+|   |   |   +-- cron/
+|   |   |   |   +-- sync-players/
+|   |   |   |       +-- route.ts
+|   |   |   +-- customizations/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- facilities/
+|   |   |   |   +-- [id]/
+|   |   |   |       +-- route.ts
+|   |   |   +-- matches/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- menu/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- reorder/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- news/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- opponent-teams/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- orders/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- players-customization/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- players/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   |   +-- stats/
+|   |   |   |   |       +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- products/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- settings/
+|   |   |   |   +-- [key]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- sponsors/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- sync/
+|   |   |   |   +-- coaches/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- matches/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- players/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- team/
+|   |   |   |   +-- standings/
+|   |   |   |       +-- route.ts
+|   |   |   +-- teams/
+|   |   |   |   +-- route.ts
+|   |   |   +-- test-comet/
+|   |   |   |   +-- route.ts
+|   |   |   +-- test-email/
+|   |   |   |   +-- route.ts
+|   |   |   +-- test-resend/
+|   |   |   |   +-- route.ts
+|   |   |   +-- titles/
+|   |   |   |   +-- [id]/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- route.ts
+|   |   |   +-- upload/
+|   |   |   |   +-- route.ts
+|   |   |   +-- webpay/
+|   |   |   |   +-- callback/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- create-payment/
+|   |   |   |   |   +-- route.ts
+|   |   |   |   +-- status/
+|   |   |   |       +-- route.ts
+|   |   |   +-- youtube/
+|   |   |       +-- route.ts
+|   |   +-- club/
+|   |   |   +-- about/
+|   |   |       +-- page.tsx
+|   |   +-- favicon.ico
+|   |   +-- globals.css
+|   |   +-- layout.tsx
+|   |   +-- loading.tsx
+|   |   +-- news/
+|   |   |   +-- [slug]/
+|   |   |   |   +-- page.tsx
+|   |   |   +-- page.tsx
+|   |   +-- page.tsx
+|   |   +-- page/
+|   |   |   +-- [slug]/
+|   |   |       +-- page.tsx
+|   |   +-- shop/
+|   |   |   +-- cart/
+|   |   |   |   +-- page.tsx
+|   |   |   +-- catalog/
+|   |   |   |   +-- CatalogClient.tsx
+|   |   |   |   +-- CatalogFilters.tsx
+|   |   |   |   +-- CatalogGrid.tsx
+|   |   |   |   +-- CatalogHero.tsx
+|   |   |   |   +-- page.tsx
+|   |   |   +-- checkout/
+|   |   |   |   +-- page.tsx
+|   |   |   |   +-- success/
+|   |   |   |       +-- page.tsx
+|   |   |   +-- product/
+|   |   |       +-- [slug]/
+|   |   |           +-- AddToCartButtonWithPrice.tsx
+|   |   |           +-- ProductCustomization.tsx
+|   |   |           +-- ProductImages.tsx
+|   |   |           +-- ProductPageClient.tsx
+|   |   |           +-- ProductPrice.tsx
+|   |   |           +-- ProductSizes.tsx
+|   |   |           +-- page.tsx
+|   |   +-- team/
+|   |       +-- main/
+|   |       |   +-- calendar/
+|   |       |   |   +-- page.tsx
+|   |       |   +-- coaches/
+|   |       |   |   +-- page.tsx
+|   |       |   +-- players/
+|   |       |   |   +-- page.tsx
+|   |       |   +-- results/
+|   |       |   |   +-- page.tsx
+|   |       |   +-- table/
+|   |       |       +-- page.tsx
+|   |       +-- player/
+|   |       |   +-- [slug]/
+|   |       |       +-- PlayerPageClient.tsx
+|   |       |       +-- page.tsx
+|   |       +-- reserve/
+|   |       |   +-- calendar/
+|   |       |   |   +-- page.tsx
+|   |       |   +-- coaches/
+|   |       |   |   +-- page.tsx
+|   |       |   +-- players/
+|   |       |   |   +-- page.tsx
+|   |       |   +-- results/
+|   |       |   |   +-- page.tsx
+|   |       |   +-- table/
+|   |       |       +-- page.tsx
+|   |       +-- women/
+|   |           +-- calendar/
+|   |           |   +-- page.tsx
+|   |           +-- coaches/
+|   |           |   +-- page.tsx
+|   |           +-- players/
+|   |           |   +-- page.tsx
+|   |           +-- results/
+|   |           |   +-- page.tsx
+|   |           +-- table/
+|   |               +-- page.tsx
+|   +-- components/
+|   |   +-- ui/
+|   |       +-- avatar.tsx
+|   |       +-- badge.tsx
+|   |       +-- button.tsx
+|   |       +-- card.tsx
+|   |       +-- carousel.tsx
+|   |       +-- dropdown-menu.tsx
+|   |       +-- input.tsx
+|   |       +-- navigation-menu.tsx
+|   |       +-- separator.tsx
+|   |       +-- sheet.tsx
+|   +-- lib/
+|   |   +-- auth.ts
+|   |   +-- cometConfig.ts
+|   |   +-- date-utils.ts
+|   |   +-- fontawesome.ts
+|   |   +-- mailer.ts
+|   |   +-- prisma.ts
+|   |   +-- settings.ts
+|   |   +-- utils.ts
+|   |   +-- webpay.ts
+|   +-- middleware.ts
+|   +-- modules/
+|   |   +-- admin/
+|   |   |   +-- components/
+|   |   |       +-- AdminSidebar.tsx
+|   |   |       +-- ConfirmModal.tsx
+|   |   |       +-- DeleteButton.tsx
+|   |   |       +-- FeaturedButton.tsx
+|   |   |       +-- ImageUpload.tsx
+|   |   |       +-- Pagination.tsx
+|   |   |       +-- Select.tsx
+|   |   |       +-- TipTapEditor.tsx
+|   |   |       +-- ToggleButton.tsx
+|   |   +-- config/
+|   |   |   +-- social.ts
+|   |   +-- news/
+|   |   |   +-- components/
+|   |   |       +-- NewsCard.tsx
+|   |   |       +-- NewsCarousel.tsx
+|   |   +-- shared/
+|   |   |   +-- hooks/
+|   |   |   |   +-- useScrollSnap.ts
+|   |   |   +-- ui/
+|   |   |       +-- AdBanner.tsx
+|   |   |       +-- BurgerMenu.tsx
+|   |   |       +-- CountdownTimer.tsx
+|   |   |       +-- Footer.tsx
+|   |   |       +-- Header.tsx
+|   |   |       +-- HeroSlider.tsx
+|   |   |       +-- MatchSection.tsx
+|   |   |       +-- MatchStadiumButton.tsx
+|   |   |       +-- MatchTabsClient.tsx
+|   |   |       +-- PagePlaceholder.tsx
+|   |   |       +-- ScrollSnapWrapper.tsx
+|   |   |       +-- SponsorLogo.tsx
+|   |   |       +-- SponsorsSection.tsx
+|   |   |       +-- StadiumModal.tsx
+|   |   |       +-- ThemeInitializer.tsx
+|   |   |       +-- TitlesCard.tsx
+|   |   |       +-- TitlesSection.tsx
+|   |   |       +-- VideoModal.tsx
+|   |   |       +-- VideoSection.tsx
+|   |   |       +-- VsIcon.tsx
+|   |   +-- shop/
+|   |   |   +-- components/
+|   |   |       +-- AddToCartButton.tsx
+|   |   +-- team/
+|   |       +-- components/
+|   |       |   +-- CoachesGrid.tsx
+|   |       |   +-- EditPlayerForm.tsx
+|   |       |   +-- MatchesCalendarClient.tsx
+|   |       |   +-- MatchesResultsClient.tsx
+|   |       |   +-- PlayerCard.tsx
+|   |       |   +-- PlayerStatsTab.tsx
+|   |       |   +-- PlayersGrid.tsx
+|   |       |   +-- PositionFilters.tsx
+|   |       |   +-- SectionHeader.tsx
+|   |       |   +-- StandingsTable.tsx
+|   |       |   +-- StatsPanel.tsx
+|   |       +-- services/
+|   |           +-- cometApi.ts
+|   +-- styles/
+|       +-- globals.scss
+|       +-- players.css
++-- tailwind.config.ts
++-- test-smtp.js
++-- test-smtp.mjs
++-- tsconfig.json
+
+============================================================
+STATISTICS
+============================================================
+Total files: 407
+Total directories: 174
+
+Files by extension:
+  .tsx                   154  ##################################################
+  .png                   125  ##################################################
+  .ts                     72  ##################################################
+  .jpg                    17  #################
+  .svg                     8  ########
+  .sql                     7  #######
+  .json                    3  ###
+  .mjs                     3  ###
+  (no extension)           2  ##
+  .yaml                    2  ##
+  .ico                     2  ##
+  .webp                    2  ##
+  .css                     2  ##
+  .md                      1  #
+  .txt                     1  #
+  .py                      1  #
+  .toml                    1  #
+  .prisma                  1  #
+  .jpeg                    1  #
+  .scss                    1  #
+  .js                      1  #
