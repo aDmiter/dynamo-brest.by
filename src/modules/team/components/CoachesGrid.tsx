@@ -14,10 +14,12 @@ interface CoachData {
   birthDate: Date | null;
   nationality: string | null;
   type: string;
+  gender?: string | null;
 }
 
 interface Props {
   coaches: CoachData[];
+  femaleTeam?: boolean;
 }
 
 function calculateAge(birthDate: Date | null): number | null {
@@ -39,7 +41,7 @@ function getAgeLabel(age: number): string {
   return 'лет';
 }
 
-export default function CoachesGrid({ coaches }: Props) {
+export default function CoachesGrid({ coaches, femaleTeam = false }: Props) {
   return (
     <div
       className="coaches"
@@ -255,21 +257,14 @@ export default function CoachesGrid({ coaches }: Props) {
             Информация о тренерском штабе скоро появится
           </div>
         ) : (
-          <div
-            className="coaches__cards"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-              gap: 16,
-            }}
-          >
+          <div className="coaches__cards">
             {coaches.map((coach, i) => (
               <div
                 key={coach.id}
                 className="coaches__card-enter"
                 style={{ animationDelay: `${i * 0.06}s`, opacity: 0 }}
               >
-                <CoachCard coach={coach} />
+                <CoachCard coach={coach} femaleAccent={femaleTeam || coach.gender === 'female'} />
               </div>
             ))}
           </div>
@@ -279,7 +274,7 @@ export default function CoachesGrid({ coaches }: Props) {
   );
 }
 
-function CoachCard({ coach }: { coach: CoachData }) {
+function CoachCard({ coach, femaleAccent = false }: { coach: CoachData; femaleAccent?: boolean }) {
   const age = calculateAge(coach.birthDate);
 
   return (
@@ -350,7 +345,7 @@ function CoachCard({ coach }: { coach: CoachData }) {
         />
         {coach.position && (
           <div
-            className="coach-card__pos-badge"
+            className={`coach-card__pos-badge${femaleAccent ? ' coach-card__pos-badge--female' : ''}`}
             style={{
               position: 'absolute',
               top: 12,

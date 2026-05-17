@@ -1,0 +1,29 @@
+// src/styles/roster-cards.scss — сетки игроков, тренеров, администрации
+.players-grid__cards,
+.coaches__cards,
+.administration-grid__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.player-card__pos-badge--female,
+.coach-card__pos-badge--female,
+.administration-card__pos-badge--female {
+  background: rgba(236, 72, 153, 0.14) !important;
+  border-color: #ec4899 !important;
+  color: #f9a8d4 !important;
+}
+
+.player-card--female .player-card__number-bg {
+  color: #ec4899;
+}
+
+.player-card--female .player-card__stat--accent {
+  background: rgba(236, 72, 153, 0.1) !important;
+  border-color: rgba(236, 72, 153, 0.35) !important;
+}
+
+.player-card--female .player-card__stat--accent > div:first-child {
+  color: #f472b6 !important;
+}

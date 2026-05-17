@@ -18,6 +18,7 @@ interface PlayerData {
   nationality: string | null;
   height: number | null;
   weight: number | null;
+  gender?: string | null;
 }
 
 interface PlayerStats {
@@ -32,6 +33,7 @@ interface Props {
   player: PlayerData;
   teamSlug: string;
   stats: PlayerStats | null;
+  femaleAccent?: boolean;
 }
 
 function calculateAge(birthDate: Date | null): number | null {
@@ -53,14 +55,14 @@ function getAgeLabel(age: number): string {
   return 'лет';
 }
 
-export default function PlayerCard({ player, stats }: Props) {
+export default function PlayerCard({ player, stats, femaleAccent = false }: Props) {
   const age = calculateAge(player.birthDate);
   const isGoalkeeper = player.position === 'Вратарь';
 
   return (
     <Link
       href={`/team/player/${player.slug || player.id}`}
-      className="player-card"
+      className={`player-card${femaleAccent ? ' player-card--female' : ''}`}
       style={{
         position: 'relative',
         borderRadius: 16,
@@ -159,7 +161,7 @@ export default function PlayerCard({ player, stats }: Props) {
         {/* Position badge */}
         {player.position && (
           <div
-            className="player-card__pos-badge"
+            className={`player-card__pos-badge${femaleAccent ? ' player-card__pos-badge--female' : ''}`}
             style={{
               position: 'absolute',
               top: 12,

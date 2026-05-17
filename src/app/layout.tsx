@@ -8,6 +8,7 @@ import { headers } from 'next/headers';
 import BurgerMenu from '@/modules/shared/ui/BurgerMenu';
 import TicketBuyFabLoader from '@/modules/shared/ui/TicketBuyFabLoader';
 import ThemeInitializer from '@/modules/shared/ui/ThemeInitializer';
+import AnalyticsScripts from '@/modules/shared/ui/AnalyticsScripts';
 
 export const metadata: Metadata = {
   title: 'Официальный сайт футбольного клуба «Динамо-Брест»',
@@ -47,6 +48,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="min-h-screen bg-[#242C41] text-white antialiased">
         <ThemeInitializer settings={settings} />
+        {!isAdmin && <AnalyticsScripts />}
         {!isAdmin && <Header />}
         {!isAdmin && <BurgerMenu />}
         {!isAdmin && <TicketBuyFabLoader />}

@@ -26,5 +26,5 @@ export default async function WomenCoachesPage() {
     orderBy: [{ type: 'asc' }, { lastName: 'asc' }],
   });
 
-  return <CoachesGrid coaches={coaches} />;
+  return <CoachesGrid coaches={coaches} femaleTeam />;
 }

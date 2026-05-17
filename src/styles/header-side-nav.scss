@@ -1,0 +1,165 @@
+// src/styles/header-side-nav.scss — левое вертикальное меню
+.side-nav__item {
+  position: relative;
+  display: flex;
+  height: 3.5rem;
+  width: 5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.side-nav__icon-wrap {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.55);
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.side-nav__icon {
+  font-size: 1rem;
+}
+
+.side-nav__item:hover .side-nav__icon-wrap,
+.side-nav__item:focus-visible .side-nav__icon-wrap {
+  color: #fff;
+  border-color: var(--color-accent, #d50000);
+  background: rgba(213, 0, 0, 0.12);
+  box-shadow: 0 0 20px rgba(213, 0, 0, 0.15);
+}
+
+.side-nav__item--active .side-nav__icon-wrap {
+  color: var(--color-accent, #d50000);
+  border-color: color-mix(in srgb, var(--color-accent, #d50000) 55%, transparent);
+  background: rgba(213, 0, 0, 0.1);
+}
+
+.side-nav__flyout {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  height: 100%;
+  min-width: 12.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.25rem 0 4.25rem;
+  border: 1px solid transparent;
+  background: transparent;
+  opacity: 0;
+  transform: translateX(-100%);
+  transition:
+    opacity 0.3s ease,
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.side-nav__item:hover .side-nav__flyout,
+.side-nav__item:focus-visible .side-nav__flyout {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateX(0);
+  border-color: var(--color-border, rgba(255, 255, 255, 0.1));
+  background: color-mix(in srgb, var(--color-bg-main, #242c41) 92%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.side-nav__flyout-label {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.side-nav__cart {
+  position: relative;
+  display: flex;
+  height: 3rem;
+  width: 5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.side-nav__cart .side-nav__icon-wrap {
+  height: 2.25rem;
+  width: 2.25rem;
+}
+
+.side-nav__cart-badge {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.85rem;
+  z-index: 20;
+  display: flex;
+  height: 1.1rem;
+  min-width: 1.1rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.2rem;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-accent, #d50000);
+}
+
+.side-nav-mobile__link {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-heading, #fff);
+  transition: color 0.2s ease;
+}
+
+.side-nav-mobile__link:hover,
+.side-nav-mobile__link--active {
+  color: var(--color-accent, #d50000);
+}
+
+.side-nav-mobile__icon {
+  display: flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.55);
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.side-nav-mobile__link:hover .side-nav-mobile__icon,
+.side-nav-mobile__link--active .side-nav-mobile__icon {
+  color: var(--color-accent, #d50000);
+  border-color: color-mix(in srgb, var(--color-accent, #d50000) 50%, transparent);
+  background: rgba(213, 0, 0, 0.1);
+}

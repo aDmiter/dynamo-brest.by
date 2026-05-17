@@ -16,6 +16,7 @@ interface PlayerData {
   nationality: string | null;
   height: number | null;
   weight: number | null;
+  gender?: string | null;
 }
 
 interface Props {
@@ -76,6 +77,7 @@ function isBelarusNationality(nationality: string | null | undefined): boolean {
 }
 
 export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
+  const isWomenTeam = teamSlug === 'zhenskaya-komanda';
   const [filter, setFilter] = useState<string>('ALL');
   const [statsMap, setStatsMap] = useState<Record<string, PlayerStats | null>>({});
   const [initDone, setInitDone] = useState(false);
@@ -278,11 +280,6 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
                   <SectionHeader label={label} count={group.length} watermark={watermark} />
                   <div
                     className="players-grid__cards"
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-                      gap: 16,
-                    }}
                   >
                     {group.map((player, i) => (
                       <div
@@ -294,6 +291,7 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
                           player={player}
                           teamSlug={teamSlug}
                           stats={statsMap[player.id] ?? null}
+                          femaleAccent={isWomenTeam || player.gender === 'female'}
                         />
                       </div>
                     ))}
@@ -303,14 +301,7 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
             })}
           </div>
         ) : (
-          <div
-            className="players-grid__cards"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-              gap: 16,
-            }}
-          >
+          <div className="players-grid__cards">
             {filtered.map((player, i) => (
               <div
                 key={player.id}
@@ -321,6 +312,7 @@ export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
                   player={player}
                   teamSlug={teamSlug}
                   stats={statsMap[player.id] ?? null}
+                  femaleAccent={isWomenTeam || player.gender === 'female'}
                 />
               </div>
             ))}

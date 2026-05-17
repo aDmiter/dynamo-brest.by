@@ -209,13 +209,7 @@ export default function AdministrationGrid({ members }: Props) {
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-            gap: 16,
-          }}
-        >
+        <div className="administration-grid__cards">
           {members.map((m, i) => (
             <div
               key={m.id}
