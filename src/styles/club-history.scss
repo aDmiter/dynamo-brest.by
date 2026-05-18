@@ -1,0 +1,555 @@
+// Страница «История» (/club/history)
+.club-history {
+  position: relative;
+  background: var(--color-bg-main);
+  color: #fff;
+  overflow-x: hidden;
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+.club-history__glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.club-history__glow--accent {
+  width: 480px;
+  height: 480px;
+  top: -100px;
+  right: -80px;
+  background: var(--color-accent-20);
+}
+
+.club-history__glow--primary {
+  width: 400px;
+  height: 400px;
+  bottom: 20%;
+  left: -100px;
+  background: rgba(0, 77, 168, 0.22);
+}
+
+.club-history-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.club-history__hero {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: end;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2rem;
+}
+
+.club-history__eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.club-history__title {
+  margin: 0;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.75) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.club-history__lead {
+  margin: 1rem 0 0;
+  max-width: 36rem;
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.club-history__hero-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(160deg, rgba(0, 77, 168, 0.35), rgba(213, 0, 0, 0.15));
+  animation: club-history-badge-pulse 4s ease-in-out infinite;
+}
+
+.club-history__hero-badge-year {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.club-history__hero-badge-dash {
+  width: 2px;
+  height: 28px;
+  background: linear-gradient(to bottom, var(--color-primary-light), var(--color-accent));
+  border-radius: 2px;
+}
+
+@keyframes club-history-badge-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 77, 168, 0.3);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 32px 4px rgba(0, 77, 168, 0.25);
+  }
+}
+
+.club-history__intro {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto 2.5rem;
+  padding: 1.75rem 2rem;
+}
+
+.club-history__intro-p {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.88);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.club-history__section-title {
+  margin: 0 0 1.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.club-history__timeline-section {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem 2rem;
+}
+
+.club-history__timeline-head {
+  margin-bottom: 2rem;
+}
+
+.club-history__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.club-history__filter {
+  padding: 0.45rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+  }
+
+  &--active {
+    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary-light);
+  }
+}
+
+.club-history-timeline {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 50%;
+}
+
+.club-history-timeline__line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1.5px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--color-primary) 8%,
+    var(--color-accent) 50%,
+    var(--color-primary) 92%,
+    transparent
+  );
+  border-radius: 3px;
+  opacity: 0.85;
+}
+
+.club-history-timeline__item {
+  position: relative;
+  width: 50%;
+  margin-bottom: 1.75rem;
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &--visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  &--left {
+    left: -50%;
+    padding-right: 2.5rem;
+    text-align: right;
+
+    .club-history-timeline__card {
+      margin-left: auto;
+    }
+
+    &::before {
+      right: -0.55rem;
+    }
+  }
+
+  &--right {
+    padding-left: 2.5rem;
+    text-align: left;
+
+    &::before {
+      left: -0.55rem;
+    }
+  }
+
+  &--highlight .club-history-timeline__year {
+    color: var(--color-accent);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 1.25rem;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-primary-light);
+    border: 3px solid var(--color-bg-main);
+    box-shadow: 0 0 0 2px var(--color-accent);
+    z-index: 2;
+  }
+}
+
+.club-history-timeline__card {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  padding: 1.25rem 1.5rem;
+  text-align: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+
+  &:hover {
+    transform: scale(1.02);
+    border-color: rgba(0, 91, 181, 0.5);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+}
+
+.club-history-timeline__year {
+  display: block;
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-primary-light);
+}
+
+.club-history-timeline__label {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.club-history-timeline__thumb {
+  display: block;
+  width: 100%;
+  max-height: 140px;
+  margin-top: 0.75rem;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.club-history-timeline__teaser {
+  margin: 0.75rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.club-history-timeline__cta {
+  display: inline-block;
+  margin-top: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+// Модальное окно сезона
+.club-history-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: club-history-modal-in 0.35s ease;
+}
+
+.club-history-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(0, 8, 24, 0.82);
+  cursor: pointer;
+  animation: club-history-backdrop-in 0.35s ease;
+}
+
+.club-history-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 100%);
+  max-height: min(85vh, 800px);
+  display: flex;
+  flex-direction: column;
+  animation: club-history-panel-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.club-history-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 1.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.club-history-modal__eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.club-history-modal__title {
+  margin: 0.25rem 0 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+
+.club-history-modal__close {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+}
+
+.club-history-modal__body {
+  overflow-y: auto;
+  padding: 1.25rem 1.75rem 1.75rem;
+}
+
+.club-history-content__paragraph {
+  margin: 0 0 1rem;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.9);
+
+  &--heading {
+    margin-top: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.club-history-content__figure {
+  margin: 0 0 1.25rem;
+}
+
+.club-history-content__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  transition: transform 0.4s ease;
+
+  &:hover {
+    transform: scale(1.01);
+  }
+}
+
+.club-history__intro .club-history-content__image {
+  max-height: 420px;
+  object-fit: cover;
+}
+
+.club-history-content__video {
+  margin: 0 0 1.5rem;
+}
+
+.club-history-content__video-inner {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000;
+
+  iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+}
+
+.club-history-content__video-caption {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.club-history-modal__panel {
+  width: min(820px, 100%);
+}
+
+@keyframes club-history-modal-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes club-history-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes club-history-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+}
+
+@media (max-width: 900px) {
+  .club-history__hero {
+    grid-template-columns: 1fr;
+  }
+
+  .club-history__hero-badge {
+    flex-direction: row;
+    justify-content: center;
+    width: fit-content;
+  }
+
+  .club-history__hero-badge-dash {
+    width: 40px;
+    height: 2px;
+  }
+
+  .club-history-timeline {
+    padding-left: 2rem;
+  }
+
+  .club-history-timeline__line {
+    left: 0.65rem;
+    margin-left: 0;
+  }
+
+  .club-history-timeline__item {
+    width: 100%;
+    left: 0 !important;
+    padding-left: 2rem !important;
+    padding-right: 0 !important;
+    text-align: left !important;
+
+    &--left .club-history-timeline__card {
+      margin-left: 0;
+    }
+
+    &::before {
+      left: -0.15rem !important;
+      right: auto !important;
+    }
+  }
+}

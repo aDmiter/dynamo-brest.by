@@ -3,15 +3,13 @@
 
 import { useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faCalendarAlt,
-  faClock,
-  faMapMarkerAlt,
-  faTicket,
-} from '@fortawesome/free-solid-svg-icons';
+import { faClock, faTicket } from '@fortawesome/free-solid-svg-icons';
 import Image from 'next/image';
 import CompactPageHero from '@/modules/shared/ui/CompactPageHero';
 import MatchStadiumButton from '@/modules/shared/ui/MatchStadiumButton';
+import MatchesPageNav from '@/modules/team/components/matches/MatchesPageNav';
+import MatchCardGlassLogos from '@/modules/team/components/matches/MatchCardGlassLogos';
+import MatchCardCalendarAside from '@/modules/team/components/matches/MatchCardCalendarAside';
 
 interface MatchData {
   id: string;
@@ -38,6 +36,7 @@ interface MatchData {
 interface Props {
   matches: MatchData[];
   teamName: string;
+  teamRoute: 'main' | 'reserve' | 'women';
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -173,8 +172,8 @@ function ClubBadge({
 function CalendarCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
   const [hov, setHov] = useState(false);
   const tbd = isTBD(match.matchDate);
-  const homeName = match.isHome ? 'Динамо-Брест' : match.homeTeam;
-  const awayName = match.isHome ? match.awayTeam : 'Динамо-Брест';
+  const homeName = match.homeTeam;
+  const awayName = match.awayTeam;
   const homeLogo = match.isHome ? ourLogo : match.homeLogoUrl;
   const awayLogo = match.isHome ? match.awayLogoUrl : ourLogo;
   const compColor = getCompetitionColor(match.tournament);
@@ -197,8 +196,15 @@ function CalendarCard({ match, ourLogo }: { match: MatchData; ourLogo: string })
         transition: 'all 0.25s cubic-bezier(0.34,1.3,0.64,1)',
       }}
     >
-      <div className="calendar__card-body" style={{ padding: '16px 20px 16px 24px' }}>
-        {/* Top meta row — tournament name + TBD badge */}
+      <MatchCardGlassLogos
+        homeName={homeName}
+        awayName={awayName}
+        homeLogo={homeLogo}
+        awayLogo={awayLogo}
+      />
+      <MatchCardCalendarAside matchDate={match.matchDate} tbd={tbd} />
+      <div className="calendar__card-body">
+        {/* Top meta row — tournament name */}
         <div
           className="calendar__card-meta"
           style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}
@@ -231,26 +237,6 @@ function CalendarCard({ match, ourLogo }: { match: MatchData; ourLogo: string })
               }}
             >
               {match.round} тур
-            </span>
-          )}
-          {tbd && (
-            <span
-              className="calendar__card-tbd-badge"
-              style={{
-                marginLeft: 'auto',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 5,
-                padding: '2px 8px',
-                fontFamily: "'Inter Tight', sans-serif",
-                fontSize: 8,
-                fontWeight: 700,
-                color: 'rgba(255,255,255,0.3)',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-              }}
-            >
-              TBD
             </span>
           )}
         </div>
@@ -372,27 +358,6 @@ function CalendarCard({ match, ourLogo }: { match: MatchData; ourLogo: string })
             flexWrap: 'wrap',
           }}
         >
-          <div
-            className="calendar__card-info-item"
-            style={{ display: 'flex', alignItems: 'center', gap: 5 }}
-          >
-            <FontAwesomeIcon
-              icon={faCalendarAlt}
-              style={{ width: 10, height: 10, color: 'rgba(255,255,255,0.3)' }}
-            />
-            <span
-              className="calendar__card-info-text"
-              style={{
-                fontFamily: "'Inter Tight', sans-serif",
-                fontSize: 10,
-                fontWeight: 500,
-                color: 'rgba(255,255,255,0.4)',
-                letterSpacing: '0.04em',
-              }}
-            >
-              {tbd ? 'Дата уточняется' : formatDate(match.matchDate)}
-            </span>
-          </div>
           {!tbd && (
             <div
               className="calendar__card-info-item"
@@ -417,14 +382,7 @@ function CalendarCard({ match, ourLogo }: { match: MatchData; ourLogo: string })
             </div>
           )}
           {match.stadium && (
-            <div
-              className="calendar__card-info-item"
-              style={{ display: 'flex', alignItems: 'center', gap: 5 }}
-            >
-              <FontAwesomeIcon
-                icon={faMapMarkerAlt}
-                style={{ width: 10, height: 10, color: 'rgba(255,255,255,0.3)' }}
-              />
+            <div className="calendar__card-info-item team-matches-v1__stadium-wrap">
               <MatchStadiumButton facilityId={match.facilityId} stadiumName={match.stadium} />
             </div>
           )}
@@ -434,28 +392,9 @@ function CalendarCard({ match, ourLogo }: { match: MatchData; ourLogo: string })
               target="_blank"
               rel="noopener noreferrer"
               className="calendar__card-ticket-link"
-              style={{
-                marginLeft: 'auto',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                background: 'var(--color-accent-10)',
-                border: '1.5px solid var(--color-accent-30)',
-                borderRadius: 7,
-                padding: '5px 11px',
-                fontFamily: "'Inter Tight', sans-serif",
-                fontSize: 9,
-                fontWeight: 700,
-                color: 'var(--color-accent)',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                textDecoration: 'none',
-                flexShrink: 0,
-                transition: 'all 0.2s',
-              }}
             >
-              <FontAwesomeIcon icon={faTicket} style={{ width: 10, height: 10 }} />
-              Билеты
+              <FontAwesomeIcon icon={faTicket} className="calendar__card-ticket-link-icon" />
+              Купить билеты
             </a>
           )}
         </div>
@@ -465,7 +404,7 @@ function CalendarCard({ match, ourLogo }: { match: MatchData; ourLogo: string })
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function MatchesCalendarClient({ matches, teamName }: Props) {
+export default function MatchesCalendarClient({ matches, teamName, teamRoute }: Props) {
   const ourLogo = '/images/logos/logo-white.png';
 
   const sortedMatches = useMemo(
@@ -502,7 +441,7 @@ export default function MatchesCalendarClient({ matches, teamName }: Props) {
 
   return (
     <div
-      className="calendar"
+      className="calendar calendar--v1"
       style={{
         fontFamily: "'Inter Tight', sans-serif",
         background: 'var(--color-bg-main)',
@@ -517,8 +456,7 @@ export default function MatchesCalendarClient({ matches, teamName }: Props) {
       `}</style>
 
       <CompactPageHero subtitle={teamName} title="Календарь матчей" watermark="КАЛЕНДАРЬ" />
-
-
+      <MatchesPageNav teamRoute={teamRoute} variant="calendar" />
 
       <div
         className="calendar__content"

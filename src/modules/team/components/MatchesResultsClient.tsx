@@ -4,9 +4,7 @@
 import { useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faCalendarAlt,
   faClock,
-  faMapMarkerAlt,
   faUsers,
   faTicket,
   faFileAlt,
@@ -15,6 +13,12 @@ import {
 import Image from 'next/image';
 import CompactPageHero from '@/modules/shared/ui/CompactPageHero';
 import MatchStadiumButton from '@/modules/shared/ui/MatchStadiumButton';
+import MatchesPageNav from '@/modules/team/components/matches/MatchesPageNav';
+import MatchCardGlassLogos from '@/modules/team/components/matches/MatchCardGlassLogos';
+import MatchCardResultPill from '@/modules/team/components/matches/MatchCardResultPill';
+import MatchCardGoalScorers from '@/modules/team/components/matches/MatchCardGoalScorers';
+import MatchProtocolModal from '@/modules/team/components/matches/MatchProtocolModal';
+import type { GoalScorerPublic } from '@/lib/match-protocol';
 
 interface MatchData {
   id: string;
@@ -36,11 +40,14 @@ interface MatchData {
   matchType: string | null;
   attendance: number | null;
   ticketUrl: string | null;
+  goalsHome: GoalScorerPublic[];
+  goalsAway: GoalScorerPublic[];
 }
 
 interface Props {
   matches: MatchData[];
   teamName: string;
+  teamRoute: 'main' | 'reserve' | 'women';
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -98,7 +105,6 @@ function getResult(match: MatchData): 'W' | 'D' | 'L' | null {
 }
 
 const RESULT_COLOR: Record<string, string> = { W: '#22c55e', D: '#94a3b8', L: '#ef4444' };
-const RESULT_LABEL: Record<string, string> = { W: 'ПОБЕДА', D: 'НИЧЬЯ', L: 'ПОРАЖЕНИЕ' };
 
 function groupByYearAndMonth(matches: MatchData[]): Map<string, Map<string, MatchData[]>> {
   const map = new Map<string, Map<string, MatchData[]>>();
@@ -189,9 +195,10 @@ function ClubBadge({
 // ── Match Card ────────────────────────────────────────────────────────────────
 function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
   const [hov, setHov] = useState(false);
+  const [protocolOpen, setProtocolOpen] = useState(false);
   const result = getResult(match);
-  const homeName = match.isHome ? 'Динамо-Брест' : match.homeTeam;
-  const awayName = match.isHome ? match.awayTeam : 'Динамо-Брест';
+  const homeName = match.homeTeam;
+  const awayName = match.awayTeam;
   const homeLogo = match.isHome ? ourLogo : match.homeLogoUrl;
   const awayLogo = match.isHome ? match.awayLogoUrl : ourLogo;
   const compColor = getCompetitionColor(match.tournament);
@@ -226,8 +233,15 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
           borderRadius: '14px 0 0 14px',
         }}
       />
-      <div className="results__card-body" style={{ padding: '16px 20px 16px 24px' }}>
-        {/* Top meta — tournament name + result pill */}
+      <MatchCardGlassLogos
+        homeName={homeName}
+        awayName={awayName}
+        homeLogo={homeLogo}
+        awayLogo={awayLogo}
+      />
+      {result && <MatchCardResultPill result={result} />}
+      <div className="results__card-body">
+        {/* Top meta — tournament name */}
         <div
           className="results__card-meta"
           style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}
@@ -261,25 +275,6 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
             >
               {match.round} тур
             </span>
-          )}
-          {result && (
-            <div
-              className="results__card-result-pill"
-              style={{
-                marginLeft: 'auto',
-                background: `${RESULT_COLOR[result]}14`,
-                border: `1px solid ${RESULT_COLOR[result]}50`,
-                borderRadius: 5,
-                padding: '2px 8px',
-                fontFamily: "'Inter Tight', sans-serif",
-                fontSize: 8,
-                fontWeight: 900,
-                color: RESULT_COLOR[result],
-                letterSpacing: '0.14em',
-              }}
-            >
-              {RESULT_LABEL[result]}
-            </div>
           )}
         </div>
 
@@ -328,7 +323,7 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
             >
               {match.homeScore ?? '—'}
               <span style={{ color: 'rgba(255,255,255,0.22)', margin: '0 4px', fontWeight: 300 }}>
-                –
+                :
               </span>
               {match.awayScore ?? '—'}
             </span>
@@ -346,6 +341,12 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
             >
               FT
             </div>
+            {(match.goalsHome.length > 0 || match.goalsAway.length > 0) && (
+              <div className="results__card-goals-row">
+                <MatchCardGoalScorers scorers={match.goalsHome} align="left" />
+                <MatchCardGoalScorers scorers={match.goalsAway} align="right" />
+              </div>
+            )}
           </div>
 
           <div
@@ -386,10 +387,6 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
             className="results__card-info-item"
             style={{ display: 'flex', alignItems: 'center', gap: 5 }}
           >
-            <FontAwesomeIcon
-              icon={faCalendarAlt}
-              style={{ width: 10, height: 10, color: 'rgba(255,255,255,0.3)' }}
-            />
             <span
               className="results__card-info-text"
               style={{
@@ -425,14 +422,7 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
             </span>
           </div>
           {match.stadium && (
-            <div
-              className="results__card-info-item"
-              style={{ display: 'flex', alignItems: 'center', gap: 5 }}
-            >
-              <FontAwesomeIcon
-                icon={faMapMarkerAlt}
-                style={{ width: 10, height: 10, color: 'rgba(255,255,255,0.3)' }}
-              />
+            <div className="results__card-info-item team-matches-v1__stadium-wrap">
               <MatchStadiumButton facilityId={match.facilityId} stadiumName={match.stadium} />
             </div>
           )}
@@ -460,9 +450,8 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
               </span>
             </div>
           )}
-          {/* Protocol button (always shown for finished matches) */}
-          <a
-            href="#"
+          <button
+            type="button"
             className="results__card-protocol-link"
             style={{
               marginLeft: match.attendance == null ? 'auto' : 0,
@@ -479,17 +468,15 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
               color: 'var(--color-accent)',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              textDecoration: 'none',
               flexShrink: 0,
+              cursor: 'pointer',
               transition: 'all 0.2s',
             }}
-            onClick={(e) => {
-              e.preventDefault(); /* TODO: add protocol link */
-            }}
+            onClick={() => setProtocolOpen(true)}
           >
             <FontAwesomeIcon icon={faFileAlt} style={{ width: 10, height: 10 }} />
             Протокол
-          </a>
+          </button>
           {match.ticketUrl && (
             <a
               href={match.ticketUrl}
@@ -521,12 +508,17 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
           )}
         </div>
       </div>
+      <MatchProtocolModal
+        matchId={match.id}
+        open={protocolOpen}
+        onClose={() => setProtocolOpen(false)}
+      />
     </div>
   );
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function MatchesResultsClient({ matches, teamName }: Props) {
+export default function MatchesResultsClient({ matches, teamName, teamRoute }: Props) {
   const ourLogo = '/images/logos/logo-white.png';
   const currentYear = new Date().getFullYear().toString();
   const grouped = useMemo(() => groupByYearAndMonth(matches), []);
@@ -540,7 +532,7 @@ export default function MatchesResultsClient({ matches, teamName }: Props) {
 
   return (
     <div
-      className="results"
+      className="results results--v1"
       style={{
         fontFamily: "'Inter Tight', sans-serif",
         background: 'var(--color-bg-main)',
@@ -555,8 +547,7 @@ export default function MatchesResultsClient({ matches, teamName }: Props) {
       `}</style>
 
       <CompactPageHero subtitle={teamName} title="Результаты матчей" watermark="РЕЗУЛЬТАТЫ" />
-
-
+      <MatchesPageNav teamRoute={teamRoute} variant="results" />
 
       <div
         className="results__content"

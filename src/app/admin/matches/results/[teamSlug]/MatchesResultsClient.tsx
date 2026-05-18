@@ -28,6 +28,7 @@ interface Match {
   status: string;
   isHome: boolean;
   attendance: number | null;
+  hasProtocol?: boolean;
 }
 
 interface Props {
@@ -122,12 +123,18 @@ export default function MatchesResultsClient({ initialMatches, allTeams }: Props
               )}
             </div>
 
-            <Link
-              href={`/admin/matches/${match.id}/edit`}
-              className="text-sm text-[#ee862c] hover:underline"
-            >
-              <FontAwesomeIcon icon={faEdit} />
-            </Link>
+            <div className="flex flex-col items-end gap-1">
+              {match.hasProtocol && (
+                <span className="text-[10px] uppercase tracking-wide text-gray-500">Протокол</span>
+              )}
+              <Link
+                href={`/admin/matches/${match.id}/edit`}
+                className="text-sm text-[#ee862c] hover:underline"
+                title="Редактировать матч и протокол"
+              >
+                <FontAwesomeIcon icon={faEdit} />
+              </Link>
+            </div>
           </div>
         ))
       )}

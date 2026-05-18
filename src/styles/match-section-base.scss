@@ -1,0 +1,42 @@
+// Version Base — блок матчей на главной (скругления как в календаре / составе)
+$match-radius-sm: 7px;
+$match-radius-lg: 14px;
+
+.match {
+  .match__tab {
+    border-radius: $match-radius-sm;
+  }
+
+  .match__cards {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .match__next,
+  .match__last {
+    min-width: 0;
+    display: flex;
+  }
+
+  .match__card {
+    width: 100%;
+    min-width: 0;
+    border-radius: $match-radius-lg;
+  }
+
+  .match__card-ticket-link {
+    border-radius: $match-radius-sm;
+  }
+
+  .match__card-countdown {
+    padding: 0.25rem 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+}

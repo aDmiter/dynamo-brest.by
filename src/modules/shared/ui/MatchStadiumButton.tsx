@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMapMarkerAlt, faTimes, faLocationDot } from '@fortawesome/free-solid-svg-icons';
+import { faMapMarkerAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 interface Facility {
   id: string;
@@ -203,37 +203,17 @@ export default function MatchStadiumButton({ facilityId, stadiumName }: Props) {
                         marginBottom: 12,
                       }}
                     >
-                      <div
-                        className="stadium-modal__icon"
+                      <h3
+                        className="stadium-modal__title"
                         style={{
-                          width: 40,
-                          height: 40,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          background: 'var(--color-accent-10)',
-                          borderRadius: 8,
+                          fontFamily: "'Inter Tight', sans-serif",
+                          fontSize: 18,
+                          fontWeight: 900,
+                          color: '#fff',
                         }}
                       >
-                        <FontAwesomeIcon
-                          icon={faLocationDot}
-                          style={{ fontSize: 18, color: 'var(--color-accent)' }}
-                        />
-                      </div>
-                      <div>
-                        <h3
-                          className="stadium-modal__title"
-                          style={{
-                            fontFamily: "'Inter Tight', sans-serif",
-                            fontSize: 18,
-                            fontWeight: 900,
-                            color: '#fff',
-                          }}
-                        >
-                          {facility.shortName || facility.name}
-                        </h3>
-                      </div>
+                        {facility.shortName || facility.name}
+                      </h3>
                     </div>
 
                     {facility.address && (

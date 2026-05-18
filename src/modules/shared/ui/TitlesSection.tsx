@@ -1,5 +1,6 @@
 // src/modules/shared/ui/TitlesSection.tsx - Секция титулов клуба
 import { prisma } from '@/lib/prisma';
+import { withDb } from '@/lib/with-db';
 import TitlesCard from './TitlesCard';
 
 const titleConfig = [
@@ -9,9 +10,11 @@ const titleConfig = [
 ];
 
 export default async function TitlesSection() {
-  const titles = await prisma.title.findMany({
-    orderBy: { year: 'desc' },
-  });
+  const titles = await withDb(
+    () => prisma.title.findMany({ orderBy: { year: 'desc' } }),
+    [],
+    'titles',
+  );
 
   const titleData = titleConfig.map((config) => {
     const items = titles.filter((t) => t.type === config.type);

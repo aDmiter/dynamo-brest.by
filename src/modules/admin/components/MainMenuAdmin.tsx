@@ -45,6 +45,9 @@ const QUICK_CHILD_LINKS: { title: string; slug: string; linkUrl: string }[] = [
   { title: 'Транспорт', slug: 'menu-link-transport', linkUrl: '/page/services-transport' },
   { title: 'Состав', slug: 'menu-link-players', linkUrl: '/team/main/players' },
   { title: 'Магазин', slug: 'menu-link-shop', linkUrl: '/shop/catalog' },
+  { title: 'Доставка', slug: 'menu-link-shop-delivery', linkUrl: '/shop/delivery' },
+  { title: 'Оплата', slug: 'menu-link-shop-payment', linkUrl: '/shop/payment' },
+  { title: 'Возврат', slug: 'menu-link-shop-returns', linkUrl: '/shop/returns' },
 ];
 
 const emptyForm = {

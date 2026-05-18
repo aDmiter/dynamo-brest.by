@@ -1,6 +1,13 @@
 // src/modules/shared/ui/MatchSection.tsx - Секция матчей с вкладками (glassmorphism)
 import { prisma } from '@/lib/prisma';
+import { getHomeMatchStandings } from '@/lib/standings';
+import { withDb } from '@/lib/with-db';
 import MatchTabsClient from './MatchTabsClient';
+import type { MatchTabsClientProps } from './match-section/types';
+import {
+  buildOpponentTeamMap,
+  resolveMatchTeamNames,
+} from '@/modules/team/lib/resolve-match-teams';
 
 interface SerializedMatch {
   id: string;
@@ -22,10 +29,25 @@ interface SerializedMatch {
   ticketUrl: string | null;
 }
 
-export default async function MatchSection() {
+const EMPTY_TEAM_MATCHES = {
+  next: null,
+  last: null,
+  nextOppLogo: null,
+  lastOppLogo: null,
+};
+
+const EMPTY_MATCHES: MatchTabsClientProps['matches'] = {
+  osnova: { ...EMPTY_TEAM_MATCHES },
+  dubl: { ...EMPTY_TEAM_MATCHES },
+  women: { ...EMPTY_TEAM_MATCHES },
+};
+
+async function loadMatchSectionData(): Promise<{
+  matches: MatchTabsClientProps['matches'];
+  standings: MatchTabsClientProps['standings'];
+}> {
   const now = new Date();
 
-  // Загружаем матчи для всех трёх команд
   const [osnovaNext, osnovaLast, dublNext, dublLast, womenNext, womenLast] = await Promise.all([
     // Основной состав — следующий матч (только будущие)
     prisma.match.findFirst({
@@ -88,13 +110,20 @@ export default async function MatchSection() {
   }
 
   const opponents = await prisma.opponentTeam.findMany({
-    where: { cometId: { in: Array.from(opponentIds) } },
-    select: { cometId: true, logoUrl: true },
+    where: {
+      isActive: true,
+      OR: [
+        { cometId: { in: Array.from(opponentIds) } },
+        { cometId: { in: [68812, 102734, 101132] } },
+      ],
+    },
+    select: { cometId: true, name: true, logoUrl: true },
   });
 
+  const opponentMap = buildOpponentTeamMap(opponents);
   const logoMap = new Map<number, string | null>();
-  for (const o of opponents) {
-    if (o.cometId) logoMap.set(o.cometId, o.logoUrl);
+  for (const [id, row] of Object.entries(opponentMap)) {
+    logoMap.set(Number(id), row.logoUrl);
   }
 
   const getOpponentLogo = (teamId: number | null) => {
@@ -104,10 +133,11 @@ export default async function MatchSection() {
 
   const serializeMatch = (match: typeof osnovaNext): SerializedMatch | null => {
     if (!match) return null;
+    const { homeTeam, awayTeam } = resolveMatchTeamNames(match, opponentMap);
     return {
       id: match.id,
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
+      homeTeam,
+      awayTeam,
       homeTeamId: match.homeTeamId,
       awayTeamId: match.awayTeamId,
       homeScore: match.homeScore,
@@ -158,5 +188,17 @@ export default async function MatchSection() {
     },
   };
 
-  return <MatchTabsClient matches={serializedMatches} />;
+  const standings = await getHomeMatchStandings();
+
+  return { matches: serializedMatches, standings };
+}
+
+export default async function MatchSection() {
+  const data = await withDb(() => loadMatchSectionData(), null, 'matchSection');
+
+  if (!data) {
+    return <MatchTabsClient matches={EMPTY_MATCHES} standings={{}} />;
+  }
+
+  return <MatchTabsClient matches={data.matches} standings={data.standings} />;
 }

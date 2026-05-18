@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { formatLocalDateTime, toUTCString } from '@/lib/date-utils';
+import MatchProtocolEditor from '@/modules/admin/components/MatchProtocolEditor';
 
 interface Team {
   id: string;
@@ -47,10 +48,12 @@ export default function EditMatchForm({
   match,
   teams,
   opponents,
+  backHref,
 }: {
   match: MatchData;
   teams: Team[];
   opponents: Opponent[];
+  backHref: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -136,16 +139,15 @@ export default function EditMatchForm({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/admin/matches">
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-white/10 text-gray-400 hover:text-white"
-          >
-            <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> Назад
-          </Button>
+        <Link
+          href={backHref}
+          className="inline-flex h-7 items-center gap-2 rounded-[min(var(--radius-md),12px)] border border-white/10 px-2.5 text-sm text-gray-400 transition-colors hover:text-white"
+        >
+          <FontAwesomeIcon icon={faArrowLeft} className="text-xs" /> Назад
         </Link>
       </div>
+
+      <MatchProtocolEditor matchId={match.id} />
 
       <Card className="max-w-3xl border-white/10 bg-white/5 backdrop-blur-sm">
         <CardHeader>
@@ -163,7 +165,7 @@ export default function EditMatchForm({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form id="match-edit-form" onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-sm text-gray-400">Хозяева</label>

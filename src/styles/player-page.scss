@@ -1,0 +1,318 @@
+// Страница игрока — таблица матчей сезона
+.player-page__season-title {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-weight: 900;
+  color: #242c41;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid #ee862c;
+  display: inline-block;
+}
+
+.player-page__matches-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 14px;
+  background: var(--color-bg-admin, #242c41);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 6px rgba(36, 44, 65, 0.04),
+    0 20px 48px rgba(36, 44, 65, 0.14);
+}
+
+.player-page__matches-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 0.8125rem;
+}
+
+.player-page__col-date {
+  width: 5.5rem;
+}
+
+.player-page__col-match {
+  width: auto;
+}
+
+.player-page__col-comp {
+  width: 11rem;
+}
+
+.player-page__col-stat {
+  width: 3.25rem;
+}
+
+.player-page__matches-table thead {
+  background: rgba(0, 0, 0, 0.22);
+  border-bottom: 2px solid #ee862c;
+}
+
+.player-page__matches-table th,
+.player-page__matches-table td {
+  padding: 0.875rem 0.75rem;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.player-page__matches-table th {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: left;
+}
+
+.player-page__matches-table--stat {
+  text-align: center !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+
+.player-page__matches-table th.player-page__matches-table--stat {
+  text-align: center !important;
+}
+
+.player-page__th-icon {
+  display: inline-block;
+  opacity: 0.85;
+}
+
+.player-page__th-icon--goal {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: var(--color-win, #22c55e);
+}
+
+.player-page__th-icon--assist {
+  width: 0.8rem;
+  height: 0.8rem;
+  color: #94a3b8;
+}
+
+.player-page__matches-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s ease;
+}
+
+.player-page__matches-table tbody tr[data-result='W'] {
+  box-shadow: inset 3px 0 0 var(--color-win, #22c55e);
+}
+
+.player-page__matches-table tbody tr[data-result='D'] {
+  box-shadow: inset 3px 0 0 #ee862c;
+}
+
+.player-page__matches-table tbody tr[data-result='L'] {
+  box-shadow: inset 3px 0 0 var(--color-loss, #ef4444);
+}
+
+.player-page__matches-table tbody tr:not([data-result]) {
+  box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+.player-page__matches-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.player-page__matches-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.player-page__matches-table td {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.player-page__matches-table tbody td:first-child {
+  padding-left: 1rem;
+}
+
+.player-page__matches-table thead th:first-child {
+  padding-left: 1rem;
+}
+
+.player-page__matches-date {
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ee862c !important;
+  white-space: nowrap;
+}
+
+.player-page__matches-name {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #ffffff !important;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.player-page__matches-comp {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-team-names, #a5b3d5) !important;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.player-page__matches-min {
+  font-weight: 800;
+  font-size: 0.875rem;
+  color: #ffffff !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.player-page__goals {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 1.25rem;
+  flex-wrap: nowrap;
+}
+
+.player-page__goals-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+  color: var(--color-win, #22c55e);
+  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.35));
+}
+
+.player-page__assists {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 1.25rem;
+  flex-wrap: nowrap;
+}
+
+.player-page__assists-icon {
+  width: 0.8rem;
+  height: 0.8rem;
+  flex-shrink: 0;
+  color: #94a3b8;
+  opacity: 0.95;
+}
+
+.player-page__assists-count {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+  margin-left: 0.1rem;
+}
+
+.player-page__goals-count {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--color-win, #22c55e);
+  font-variant-numeric: tabular-nums;
+  margin-left: 0.1rem;
+}
+
+.player-page__goals-empty {
+  color: rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+}
+
+.player-page__cards {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 1.25rem;
+  flex-wrap: nowrap;
+}
+
+.player-page__card {
+  display: block;
+  width: 0.625rem;
+  height: 0.875rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.player-page__card--yellow {
+  background: var(--color-yellow-card, #f5c518);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.player-page__card--red {
+  background: var(--color-red-card, #e53e3e);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.player-page__cards-count--yellow,
+.player-page__cards-count--red {
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  margin-left: 0.1rem;
+}
+
+.player-page__cards-count--yellow {
+  color: var(--color-yellow-card, #f5c518);
+}
+
+.player-page__cards-count--red {
+  color: var(--color-red-card, #e53e3e);
+}
+
+.player-page__th-card {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.875rem;
+  border-radius: 2px;
+  vertical-align: middle;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.player-page__th-card--yellow {
+  background: var(--color-yellow-card, #f5c518);
+}
+
+.player-page__th-card--red {
+  background: var(--color-red-card, #e53e3e);
+}
+
+@media (max-width: 640px) {
+  .player-page__matches-table--hide-sm {
+    display: none;
+    width: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    overflow: hidden;
+  }
+
+  .player-page__col-comp {
+    width: 0 !important;
+  }
+
+  .player-page__matches-table th,
+  .player-page__matches-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .player-page__col-date {
+    width: 4.5rem;
+  }
+
+  .player-page__col-stat {
+    width: 2.75rem;
+  }
+
+  .player-page__matches-name {
+    font-size: 0.8125rem;
+  }
+}

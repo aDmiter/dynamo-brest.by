@@ -1,0 +1,241 @@
+// Страница «Контакты» (/club/contacts)
+.club-contacts {
+  position: relative;
+  background: var(--color-bg-main);
+  color: #fff;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+.club-contacts__glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.club-contacts__glow--accent {
+  width: 420px;
+  height: 420px;
+  top: -80px;
+  right: -60px;
+  background: var(--color-accent-20);
+}
+
+.club-contacts__glow--primary {
+  width: 360px;
+  height: 360px;
+  bottom: 10%;
+  left: -80px;
+  background: rgba(0, 77, 168, 0.18);
+}
+
+.club-contacts-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.club-contacts__hero {
+  position: relative;
+  z-index: 1;
+  padding: 120px 32px 48px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.club-contacts__eyebrow {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 1rem;
+}
+
+.club-contacts__title {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 4.25rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin: 0 0 1rem;
+}
+
+.club-contacts__lead {
+  max-width: 40rem;
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.club-contacts__body {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.club-contacts__section {
+  padding: 2rem 2rem 2.25rem;
+}
+
+.club-contacts__section-title {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 800;
+  margin: 0 0 1rem;
+  color: #fff;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--color-accent);
+  display: inline-block;
+}
+
+.club-contacts__legal {
+  margin: 0 0 1.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 52rem;
+}
+
+.club-contacts__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem 2rem;
+  margin-bottom: 2rem;
+}
+
+.club-contacts__meta-label {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0 0 0.5rem;
+}
+
+.club-contacts__meta-value {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #fff;
+}
+
+.club-contacts__phones {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.club-contacts__phone-label {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.club-contacts__phone-link,
+.club-contacts__email {
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.club-contacts__phone-link:hover,
+.club-contacts__email:hover {
+  color: var(--color-accent);
+}
+
+.club-contacts__table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.club-contacts__table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 0.875rem;
+}
+
+.club-contacts__table thead {
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 2px solid var(--color-accent);
+}
+
+.club-contacts__table th,
+.club-contacts__table td {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.club-contacts__table th {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.club-contacts__table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.club-contacts__table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.club-contacts__table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.club-contacts__table td:first-child {
+  color: rgba(255, 255, 255, 0.55);
+  width: 38%;
+}
+
+.club-contacts__table td:nth-child(2) {
+  font-weight: 600;
+  color: #fff;
+}
+
+.club-contacts__table td:last-child {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 768px) {
+  .club-contacts__hero {
+    padding: 100px 20px 32px;
+  }
+
+  .club-contacts__body {
+    padding: 0 20px 56px;
+  }
+
+  .club-contacts__section {
+    padding: 1.25rem 1rem 1.5rem;
+  }
+
+  .club-contacts__meta {
+    grid-template-columns: 1fr;
+  }
+}

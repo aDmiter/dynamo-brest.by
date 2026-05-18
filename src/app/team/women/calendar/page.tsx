@@ -2,6 +2,10 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import MatchesCalendarClient from '@/modules/team/components/MatchesCalendarClient';
+import {
+  buildOpponentTeamMap,
+  serializeTeamMatchesForPublic,
+} from '@/modules/team/lib/resolve-match-teams';
 
 export default async function WomenCalendarPage() {
   const team = await prisma.team.findUnique({
@@ -28,25 +32,8 @@ export default async function WomenCalendarPage() {
     }),
   ]);
 
-  const teamMap: Record<number, { name: string; logoUrl: string | null }> = {};
-  for (const opp of opponentTeams) {
-    if (opp.cometId) teamMap[opp.cometId] = { name: opp.name, logoUrl: opp.logoUrl };
-  }
+  const opponentMap = buildOpponentTeamMap(opponentTeams);
+  const serialized = serializeTeamMatchesForPublic(matches, opponentMap);
 
-  const serialized = matches.map((m) => ({
-    ...m,
-    matchDate: m.matchDate.toISOString(),
-    createdAt: m.createdAt.toISOString(),
-    updatedAt: m.updatedAt.toISOString(),
-    homeTeam: m.isHome
-      ? 'Динамо-Брест'
-      : (m.homeTeamId && teamMap[m.homeTeamId]?.name) || m.homeTeam,
-    awayTeam: m.isHome
-      ? (m.awayTeamId && teamMap[m.awayTeamId]?.name) || m.awayTeam
-      : 'Динамо-Брест',
-    homeLogoUrl: m.isHome ? null : (m.homeTeamId && teamMap[m.homeTeamId]?.logoUrl) || null,
-    awayLogoUrl: m.isHome ? (m.awayTeamId && teamMap[m.awayTeamId]?.logoUrl) || null : null,
-  }));
-
-  return <MatchesCalendarClient matches={serialized} teamName={team.name} />;
+  return <MatchesCalendarClient matches={serialized} teamName={team.name} teamRoute="women" />;
 }

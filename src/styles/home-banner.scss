@@ -1,0 +1,25 @@
+$banner-image-radius: 14px;
+
+.banner__link {
+  display: block;
+  text-decoration: none;
+}
+
+.banner__image-wrap {
+  overflow: hidden;
+  border-radius: $banner-image-radius;
+  line-height: 0;
+  will-change: transform;
+}
+
+.banner__image {
+  display: block;
+  max-height: 300px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+
+  @media (min-width: 768px) {
+    max-width: 1400px;
+  }
+}

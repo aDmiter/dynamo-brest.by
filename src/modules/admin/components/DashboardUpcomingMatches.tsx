@@ -1,11 +1,6 @@
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarDays, faFutbol, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import {
-  buildOpponentTeamMap,
-  DYNAMO_BREST_DISPLAY_NAME,
-  resolveMatchTeamNames,
-} from '@/modules/team/lib/resolve-match-teams';
 import { formatMatchDateTime } from '@/lib/format-match-datetime';
 
 export type UpcomingMatchCard = {

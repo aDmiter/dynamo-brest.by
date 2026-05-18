@@ -7,4 +7,10 @@ export const CODED_MENU_ROUTES: Record<string, string> = {
   'services-fields': '/services/fields',
   'services-gym': '/services/gym',
   tickets: '/page/tickets',
+  'club-contacts': '/club/contacts',
+  'club-history': '/club/history',
+  'shop-catalog': '/shop/catalog',
+  'shop-delivery': '/shop/delivery',
+  'shop-payment': '/shop/payment',
+  'shop-returns': '/shop/returns',
 };

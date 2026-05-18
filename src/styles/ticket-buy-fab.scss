@@ -1,4 +1,6 @@
 // src/styles/ticket-buy-fab.scss — плавающая кнопка «Купить билет»
+$ui-radius: 7px;
+
 .ticket-buy-fab {
   position: fixed;
   right: 1.5rem;
@@ -21,6 +23,7 @@
   max-width: min(20rem, calc(100vw - 3rem));
   overflow: hidden;
   border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  border-radius: $ui-radius;
   background: rgba(36, 44, 65, 0.55);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -170,6 +173,7 @@
   letter-spacing: 0.02em;
   color: #fff;
   background: var(--color-accent, #d50000);
+  border-radius: $ui-radius;
   white-space: nowrap;
   transition: background 0.2s ease;
 

@@ -206,25 +206,32 @@ async function seedMenu() {
       },
       { title: 'О клубе', slug: 'club-about', linkUrl: '/club/about', parentId: club.id, order: 2 },
       {
+        title: 'История',
+        slug: 'club-history',
+        linkUrl: '/club/history',
+        parentId: club.id,
+        order: 3,
+      },
+      {
         title: 'Партнеры и спонсоры',
         slug: 'club-partners',
         linkUrl: '/club/partners',
         parentId: club.id,
-        order: 3,
+        order: 4,
       },
       {
         title: 'Стадион',
         slug: 'club-stadium',
         linkUrl: '/club/stadium',
         parentId: club.id,
-        order: 4,
+        order: 5,
       },
       {
         title: 'Контакты',
         slug: 'club-contacts',
         linkUrl: '/club/contacts',
         parentId: club.id,
-        order: 5,
+        order: 6,
       },
     ],
   });
@@ -296,6 +303,47 @@ async function seedMenu() {
         linkUrl: CODED_MENU_ROUTES.tickets,
         parentId: services.id,
         order: 6,
+      },
+    ],
+  });
+
+  const shop = await prisma.menuitem.create({
+    data: { title: 'Интернет-магазин', slug: 'shop', type: 'link', order: 8 },
+  });
+
+  await prisma.menuitem.createMany({
+    data: [
+      {
+        title: 'Каталог',
+        slug: 'shop-catalog',
+        type: link,
+        linkUrl: CODED_MENU_ROUTES['shop-catalog'],
+        parentId: shop.id,
+        order: 1,
+      },
+      {
+        title: 'Доставка',
+        slug: 'shop-delivery',
+        type: link,
+        linkUrl: CODED_MENU_ROUTES['shop-delivery'],
+        parentId: shop.id,
+        order: 2,
+      },
+      {
+        title: 'Оплата',
+        slug: 'shop-payment',
+        type: link,
+        linkUrl: CODED_MENU_ROUTES['shop-payment'],
+        parentId: shop.id,
+        order: 3,
+      },
+      {
+        title: 'Возврат товара',
+        slug: 'shop-returns',
+        type: link,
+        linkUrl: CODED_MENU_ROUTES['shop-returns'],
+        parentId: shop.id,
+        order: 4,
       },
     ],
   });

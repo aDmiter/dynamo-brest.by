@@ -279,12 +279,7 @@ export default function CheckoutPage() {
           <select
             value={form.countryId}
             onChange={(e) => setForm({ ...form, countryId: e.target.value })}
-            className="w-full p-3 text-sm text-white text-right outline-none"
-            style={{
-              border: '1px solid var(--color-border)',
-              background: 'var(--color-bg-card)',
-              borderRadius: 8,
-            }}
+            className="shop-select shop-checkout__select text-right"
             required
           >
             <option value="">— Выберите страну доставки —</option>

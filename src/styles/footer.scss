@@ -110,6 +110,18 @@
   color: var(--color-text-label);
 }
 
+.site-footer__copyright-requisites {
+  margin-bottom: 1rem;
+}
+
+.site-footer__payment-logos {
+  display: block;
+  width: auto;
+  max-width: min(100%, 360px);
+  height: auto;
+  margin: 0 auto 0.75rem;
+}
+
 .site-footer__copyright-line {
   margin: 0 0 0.35rem;
 

@@ -1,11 +1,7 @@
 // src/app/page/tickets/page.tsx — Билеты
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
-import {
-  buildOpponentTeamMap,
-  DYNAMO_BREST_DISPLAY_NAME,
-  resolveMatchTeamNames,
-} from '@/modules/team/lib/resolve-match-teams';
+import { buildOpponentTeamMap, resolveMatchTeamNames } from '@/modules/team/lib/resolve-match-teams';
 import TicketsPageView from '@/modules/tickets/components/TicketsPageView';
 
 export const metadata: Metadata = {
@@ -45,11 +41,7 @@ export default async function TicketsPage() {
 
   const serialized = nextMatch
     ? (() => {
-        const { homeTeam, awayTeam } = resolveMatchTeamNames(
-          nextMatch,
-          DYNAMO_BREST_DISPLAY_NAME,
-          opponentMap
-        );
+        const { homeTeam, awayTeam } = resolveMatchTeamNames(nextMatch, opponentMap);
         return {
           id: nextMatch.id,
           homeTeam,

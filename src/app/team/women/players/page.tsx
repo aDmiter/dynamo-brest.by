@@ -2,6 +2,7 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import PlayersGrid from '@/modules/team/components/PlayersGrid';
+import { getTeamPlayersStatsMap } from '@/lib/player-stats-db';
 
 export default async function WomenPlayersPage() {
   const team = await prisma.team.findUnique({
@@ -42,7 +43,18 @@ export default async function WomenPlayersPage() {
     return (a.lastName || '').localeCompare(b.lastName || '');
   });
 
+  const statsByPlayerId = await getTeamPlayersStatsMap(
+    team.id,
+    'zhenskaya-komanda',
+    sortedPlayers.map((p) => p.id)
+  );
+
   return (
-    <PlayersGrid players={sortedPlayers} teamName="Женская команда" teamSlug="zhenskaya-komanda" />
+    <PlayersGrid
+      players={sortedPlayers}
+      teamName="Женская команда"
+      teamSlug="zhenskaya-komanda"
+      statsByPlayerId={statsByPlayerId}
+    />
   );
 }

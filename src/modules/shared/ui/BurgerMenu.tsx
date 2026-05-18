@@ -4,8 +4,9 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faTimes, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faTimes, faChevronRight, faCartShopping } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
+import { useCartCount } from '@/modules/shared/hooks/useCartCount';
 
 function isMenuLinkActive(href: string, pathname: string): boolean {
   if (!href || href === '#' || href.startsWith('http')) return false;
@@ -28,6 +29,7 @@ interface MenuItem {
 
 export default function BurgerMenu() {
   const pathname = usePathname();
+  const cartCount = useCartCount();
   const [isOpen, setIsOpen] = useState(false);
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
@@ -62,73 +64,61 @@ export default function BurgerMenu() {
 
   return (
     <>
-      {/* Кнопка бургера */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed right-6 top-6 z-40 flex h-12 w-12 items-center justify-center transition-all lg:right-8 lg:top-8"
-        style={{
-          border: '1px solid var(--color-border)',
-          background: 'transparent',
-          backdropFilter: 'blur(12px)',
-          color: '#ffffff',
-        }}
-        onMouseEnter={(e) => {
-          const el = e.currentTarget as HTMLButtonElement;
-          el.style.borderColor = 'var(--color-accent)';
-          el.style.color = 'var(--color-accent)';
-        }}
-        onMouseLeave={(e) => {
-          const el = e.currentTarget as HTMLButtonElement;
-          el.style.borderColor = 'var(--color-border)';
-          el.style.color = '#ffffff';
-        }}
-        aria-label="Меню"
-      >
-        <FontAwesomeIcon icon={faBars} className="text-xl" />
-      </button>
+      <Link href="/" className="burger-menu__mobile-logo" aria-label="На главную">
+        <img
+          src="/images/logos/logo-white.png"
+          alt="Динамо-Брест"
+          className="burger-menu__mobile-logo-img"
+        />
+      </Link>
+
+      <div className="burger-menu__actions">
+        <Link href="/shop/cart" className="burger-menu__btn burger-menu__btn--cart" aria-label="Корзина">
+          <FontAwesomeIcon icon={faCartShopping} className="burger-menu__btn-icon" />
+          {cartCount > 0 && (
+            <span className="burger-menu__cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>
+          )}
+        </Link>
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="burger-menu__btn burger-menu__btn--menu"
+          aria-label="Меню"
+        >
+          <FontAwesomeIcon icon={faBars} className="burger-menu__btn-icon" />
+        </button>
+      </div>
 
       {/* Меню */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex" style={{ background: 'var(--color-bg-main)' }}>
+        <div className="burger-menu__overlay">
           {/* Левая панель с логотипом */}
           <div
-            className="hidden lg:flex w-20 flex-col items-center pt-8"
-            style={{ borderRight: '1px solid var(--color-border)' }}
+            className="burger-menu__aside"
           >
-            <img src="/images/logos/logo-white.png" alt="Динамо-Брест" className="h-12 w-auto" />
+            <img
+              src="/images/logos/logo-white.png"
+              alt="Динамо-Брест"
+              className="burger-menu__aside-logo"
+            />
           </div>
 
           {/* Основное меню */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="burger-menu__panel">
             {/* Шапка */}
-            <div
-              className="flex items-center justify-between p-6"
-              style={{ borderBottom: '1px solid var(--color-border)' }}
-            >
+            <div className="burger-menu__header">
               <img
                 src="/images/logos/logo-white.png"
                 alt="Динамо-Брест"
-                className="h-6 w-auto lg:hidden"
+                className="burger-menu__header-logo"
               />
               <button
+                type="button"
                 onClick={handleClose}
-                className="flex h-12 w-12 items-center justify-center ml-auto transition-all"
-                style={{
-                  border: '1px solid var(--color-border)',
-                  color: 'var(--color-text-nav)',
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLButtonElement;
-                  el.style.borderColor = 'var(--color-accent)';
-                  el.style.color = 'var(--color-accent)';
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLButtonElement;
-                  el.style.borderColor = 'var(--color-border)';
-                  el.style.color = 'var(--color-text-nav)';
-                }}
+                className="burger-menu__btn burger-menu__btn--close burger-menu__header-close"
+                aria-label="Закрыть меню"
               >
-                <FontAwesomeIcon icon={faTimes} className="text-xl" />
+                <FontAwesomeIcon icon={faTimes} className="burger-menu__btn-icon" />
               </button>
             </div>
 

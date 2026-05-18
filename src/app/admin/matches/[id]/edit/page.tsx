@@ -23,6 +23,11 @@ export default async function EditMatchPage({ params }: Props) {
     orderBy: { name: 'asc' },
   });
 
+  const team = teams.find((t) => t.id === match.teamId);
+  const backHref = team
+    ? `/admin/matches/results/${team.slug}`
+    : '/admin/matches/results/osnovnoy-sostav';
+
   const serializedMatch = {
     ...match,
     matchDate: match.matchDate.toISOString(),
@@ -35,7 +40,12 @@ export default async function EditMatchPage({ params }: Props) {
       <div className="mb-6">
         <h1 className="font-heading text-2xl font-bold text-white">Редактирование матча</h1>
       </div>
-      <EditMatchForm match={serializedMatch} teams={teams} opponents={opponents} />
+      <EditMatchForm
+        match={serializedMatch}
+        teams={teams}
+        opponents={opponents}
+        backHref={backHref}
+      />
     </div>
   );
 }

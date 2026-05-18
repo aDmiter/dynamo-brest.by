@@ -26,11 +26,23 @@ export default async function ResultsPage({ params }: Props) {
     }),
   ]);
 
+  const matchIds = matches.map((m) => m.id);
+  const lineupCounts =
+    matchIds.length > 0
+      ? await prisma.matchLineup.groupBy({
+          by: ['matchId'],
+          where: { matchId: { in: matchIds } },
+          _count: { _all: true },
+        })
+      : [];
+  const protocolByMatch = new Map(lineupCounts.map((r) => [r.matchId, r._count._all > 0]));
+
   const serialized = matches.map((m) => ({
     ...m,
     matchDate: m.matchDate.toISOString(),
     createdAt: m.createdAt.toISOString(),
     updatedAt: m.updatedAt.toISOString(),
+    hasProtocol: protocolByMatch.get(m.id) ?? false,
   }));
 
   return (

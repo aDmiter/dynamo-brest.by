@@ -23,6 +23,7 @@ interface Props {
   players: PlayerData[];
   teamName: string;
   teamSlug: string;
+  statsByPlayerId?: Record<string, PlayerStats>;
 }
 
 interface PlayerStats {
@@ -76,55 +77,15 @@ function isBelarusNationality(nationality: string | null | undefined): boolean {
   );
 }
 
-export default function PlayersGrid({ players, teamName, teamSlug }: Props) {
+export default function PlayersGrid({
+  players,
+  teamName,
+  teamSlug,
+  statsByPlayerId = {},
+}: Props) {
   const isWomenTeam = teamSlug === 'zhenskaya-komanda';
   const [filter, setFilter] = useState<string>('ALL');
-  const [statsMap, setStatsMap] = useState<Record<string, PlayerStats | null>>({});
-  const [initDone, setInitDone] = useState(false);
-
-  if (!initDone) {
-    setInitDone(true);
-    startLoadingStats();
-  }
-
-  async function startLoadingStats() {
-    const cacheKey = `ps_${teamSlug}`;
-
-    try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed.t && Date.now() - parsed.t < 30 * 60 * 1000) {
-          setStatsMap(parsed.d);
-          return;
-        }
-      }
-    } catch {}
-
-    const map: Record<string, PlayerStats | null> = {};
-    for (const p of players) {
-      if (!p.cometId) continue;
-      try {
-        const res = await fetch(`/api/players/${p.id}/stats?teamSlug=${teamSlug}`);
-        const data = await res.json();
-        if (data.success) {
-          map[p.id] = {
-            appearances: data.totals.appearances || 0,
-            goals: data.totals.goals || 0,
-            cleanSheets: data.totals.cleanSheets || 0,
-            goalsConceded: data.totals.goalsConceded || 0,
-            assists: data.totals.assists || 0,
-          };
-        }
-      } catch {}
-      setStatsMap({ ...map });
-      await new Promise((r) => setTimeout(r, 100));
-    }
-
-    try {
-      localStorage.setItem(cacheKey, JSON.stringify({ d: map, t: Date.now() }));
-    } catch {}
-  }
+  const statsMap = statsByPlayerId;
 
   const filtered = useMemo(() => {
     return players.filter((p) => filter === 'ALL' || p.position === filter);

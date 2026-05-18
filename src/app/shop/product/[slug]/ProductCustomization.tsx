@@ -218,12 +218,7 @@ export default function ProductCustomization({
                         setCustomName('');
                       }
                     }}
-                    className="w-full p-2.5 text-sm text-white"
-                    style={{
-                      border: '1px solid var(--color-border)',
-                      background: 'rgba(255,255,255,0.05)',
-                      borderRadius: 8,
-                    }}
+                    className="shop-select product-customization__select"
                   >
                     <option value="">— Выбрать игрока —</option>
                     {players.map((p) => (

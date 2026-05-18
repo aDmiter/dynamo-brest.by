@@ -64,10 +64,55 @@ model match {
   team            team         @relation(fields: [teamId], references: [id], map: "Match_teamId_fkey")
   homeOpponent    OpponentTeam? @relation("HomeMatches", fields: [homeTeamId], references: [cometId])
   awayOpponent    OpponentTeam? @relation("AwayMatches", fields: [awayTeamId], references: [cometId])
+  lineups         matchLineup[]
+  events          matchEvent[]
 
   @@index([teamId], map: "Match_teamId_fkey")
   @@index([homeTeamId])
   @@index([awayTeamId])
+}
+
+model matchLineup {
+  id             String  @id @default(cuid())
+  matchId        String
+  personCometId  String
+  personName     String
+  teamCometId    Int?
+  shirtNumber    Int?
+  startingLineup Boolean @default(false)
+  played         Boolean @default(false)
+  goals          Int     @default(0)
+  assists        Int     @default(0)
+  yellowCards    Int     @default(0)
+  redCards       Int     @default(0)
+  minutesPlayed  Int?
+  playerId       String?
+
+  match  match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player player? @relation(fields: [playerId], references: [id], onDelete: SetNull)
+
+  @@unique([matchId, personCometId])
+  @@index([matchId])
+}
+
+model matchEvent {
+  id                  String  @id @default(cuid())
+  matchId             String
+  personCometId       String?
+  personName          String?
+  relatedPersonCometId String?
+  relatedPersonName   String?
+  teamCometId         Int?
+  eventType           String
+  eventSubType        String?
+  minute              Int?
+  displayMinute       String?
+  sortOrder           Int     @default(0)
+
+  match match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+  @@index([matchId, eventType])
 }
 
 model OpponentTeam {
@@ -178,6 +223,7 @@ model player {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
   playerTeams       PlayerTeam[]
+  matchLineups      matchLineup[]
   slug              String?      @unique
 }
 

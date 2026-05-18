@@ -2,6 +2,7 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import PlayerPageClient from './PlayerPageClient';
+import { getPlayerStatsFromDb } from '@/lib/player-stats-db';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -30,5 +31,8 @@ export default async function PlayerPage({ params }: Props) {
     playerTeams: undefined,
   };
 
-  return <PlayerPageClient player={serialized} />;
+  const teamSlug = player.playerTeams[0]?.team.slug ?? '';
+  const stats = await getPlayerStatsFromDb(player.id, { teamSlug });
+
+  return <PlayerPageClient player={serialized} initialStats={stats} />;
 }

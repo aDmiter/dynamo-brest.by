@@ -1,7 +1,7 @@
 // src/app/team/player/[slug]/PlayerPageClient.tsx
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCalendarAlt,
@@ -10,6 +10,8 @@ import {
   faFlag,
   faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
+import ProtocolAssistIcon from '@/modules/team/components/matches/ProtocolAssistIcon';
+import ProtocolGoalIcon from '@/modules/team/components/matches/ProtocolGoalIcon';
 import { socialLinks } from '@/modules/config/social';
 
 interface PlayerData {
@@ -26,12 +28,32 @@ interface PlayerData {
   weight: number | null;
   photoUrl: string | null;
   bio: string | null;
+  teams?: { slug: string }[];
 }
 
-interface PlayerStats {
+interface AppearanceRow {
+  date: number;
+  match: string;
+  competition: string;
+  round: string;
+  shirtNumber: number;
+  startingLineup: boolean;
+  played: boolean;
+  goals: number;
+  assists: number;
+  yellowCards: number;
+  redCards: number;
+  minutesPlayed: number;
+  result: string;
+}
+
+interface PlayerStatsResponse {
+  success?: boolean;
+  source?: string;
   totals: {
     appearances: number;
     goals: number;
+    assists: number;
     yellowCards: number;
     redCards: number;
     minutesPlayed: number;
@@ -45,6 +67,7 @@ interface PlayerStats {
     {
       appearances: number;
       goals: number;
+      assists: number;
       yellowCards: number;
       redCards: number;
       minutesPlayed: number;
@@ -54,6 +77,7 @@ interface PlayerStats {
       goalsConceded?: number;
     }
   >;
+  appearances: AppearanceRow[];
 }
 
 const MONTHS = [
@@ -100,19 +124,25 @@ function getSeason(): string {
   return String(new Date().getFullYear());
 }
 
-export default function PlayerPageClient({ player }: { player: PlayerData }) {
-  const [stats, setStats] = useState<PlayerStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [statsStarted, setStatsStarted] = useState(false);
+export default function PlayerPageClient({
+  player,
+  initialStats = null,
+}: {
+  player: PlayerData;
+  initialStats?: PlayerStatsResponse | null;
+}) {
+  const [stats, setStats] = useState<PlayerStatsResponse | null>(initialStats);
+  const [statsLoading, setStatsLoading] = useState(!initialStats);
   const bioRef = useRef<HTMLDivElement>(null);
 
   const isGoalkeeper = player.position === 'Вратарь';
+  const teamSlug = player.teams?.[0]?.slug ?? '';
 
   const loadStats = useCallback(async () => {
-    if (!player.cometId) return;
     setStatsLoading(true);
     try {
-      const res = await fetch(`/api/players/${player.id}/stats`);
+      const qs = teamSlug ? `?teamSlug=${encodeURIComponent(teamSlug)}` : '';
+      const res = await fetch(`/api/players/${player.id}/stats${qs}`);
       const data = await res.json();
       if (data.success) setStats(data);
     } catch {
@@ -120,12 +150,12 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
     } finally {
       setStatsLoading(false);
     }
-  }, [player.id, player.cometId]);
+  }, [player.id, teamSlug]);
 
-  if (!statsStarted && player.cometId) {
-    setStatsStarted(true);
+  useEffect(() => {
+    if (initialStats) return;
     loadStats();
-  }
+  }, [initialStats, loadStats]);
 
   const scrollToBio = () => {
     setTimeout(() => {
@@ -146,6 +176,10 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
     : null;
 
   const competitionName = mainCompetition || 'BETERA - Высшая лига';
+  const seasonAppearances = stats?.appearances ?? [];
+  const showBioSection =
+    Boolean(player.bio) || statsLoading || seasonAppearances.length > 0;
+  const showBioButton = Boolean(player.bio) || statsLoading || seasonAppearances.length > 0;
 
   return (
     <div className="player-page bg-[var(--color-bg-main)]">
@@ -288,19 +322,27 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
             ) : stats ? (
               <div className="grid grid-cols-3 gap-2 mb-7">
                 <StatCard label="Матчей" value={stats.totals.appearances} />
-                <StatCard
-                  label={isGoalkeeper ? 'Сухих' : 'Голов'}
-                  value={isGoalkeeper ? (stats.totals.cleanSheets ?? 0) : stats.totals.goals}
-                  highlight
-                />
-                <StatCard label="Минут" value={stats.totals.minutesPlayed} />
-                <StatCard
-                  label={isGoalkeeper ? 'Пропущено' : 'В старте'}
-                  value={
-                    isGoalkeeper ? (stats.totals.goalsConceded ?? 0) : stats.totals.startedMatches
-                  }
-                  color={isGoalkeeper ? 'var(--color-loss)' : 'rgb(255,255,255)'}
-                />
+                {isGoalkeeper ? (
+                  <>
+                    <StatCard
+                      label="Сухих"
+                      value={stats.totals.cleanSheets ?? 0}
+                      highlight
+                    />
+                    <StatCard label="Минут" value={stats.totals.minutesPlayed} />
+                    <StatCard
+                      label="Пропущено"
+                      value={stats.totals.goalsConceded ?? 0}
+                      color="var(--color-loss)"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <StatCard label="Голов" value={stats.totals.goals} highlight />
+                    <StatCard label="Пасов" value={stats.totals.assists ?? 0} />
+                    <StatCard label="Минут" value={stats.totals.minutesPlayed} />
+                  </>
+                )}
                 <StatCard
                   label="ЖК"
                   value={stats.totals.yellowCards}
@@ -310,13 +352,13 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
               </div>
             ) : null}
 
-            {player.bio && (
+            {showBioButton && (
               <button
                 onClick={scrollToBio}
                 className="player-page__bio-btn inline-flex items-center gap-2 bg-transparent border-[1.5px] border-white/20 rounded-lg px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.1em] text-white/70 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-all"
                 style={{ fontFamily: "'Inter Tight', sans-serif" }}
               >
-                Биография
+                {player.bio ? 'Биография' : 'Матчи сезона'}
                 <FontAwesomeIcon icon={faChevronDown} className="w-3.5 h-3.5" />
               </button>
             )}
@@ -334,7 +376,7 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
         </div>
       </section>
 
-      {player.bio && (
+      {showBioSection && (
         <section
           ref={bioRef}
           className="player-page__bio relative flex min-h-screen items-center bg-white overflow-hidden"
@@ -349,25 +391,103 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
             >
               {player.firstName} {player.lastName}
             </h2>
-            <div className="mt-10 text-gray-700 leading-relaxed text-base md:text-lg max-w-3xl space-y-4">
-              {player.bio.split('\n').map((paragraph, i) => (
-                <p key={i}>{paragraph}</p>
-              ))}
-            </div>
-            {stats && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
-                <BottomStatBox label="Матчей" value={stats.totals.appearances} />
-                <BottomStatBox
-                  label={isGoalkeeper ? 'Сухих' : 'Голов'}
-                  value={isGoalkeeper ? (stats.totals.cleanSheets ?? 0) : stats.totals.goals}
-                />
-                <BottomStatBox label="В старте" value={stats.totals.startedMatches} />
-                <BottomStatBox
-                  label={isGoalkeeper ? 'Пропущено' : 'ЖК'}
-                  value={
-                    isGoalkeeper ? (stats.totals.goalsConceded ?? 0) : stats.totals.yellowCards
-                  }
-                />
+
+            {player.cometId && (
+              <div className="player-page__season mt-10 md:mt-12">
+                <h3 className="player-page__season-title">Сезон {season}</h3>
+                {statsLoading ? (
+                  <div className="player-page__season-loading flex items-center gap-3 py-8 text-gray-400">
+                    <div className="w-5 h-5 border-2 border-[#ee862c]/30 border-t-[#ee862c] rounded-full animate-spin" />
+                    <span className="text-sm font-medium">Загрузка матчей...</span>
+                  </div>
+                ) : seasonAppearances.length > 0 ? (
+                  <div className="player-page__matches-wrap">
+                    <table className="player-page__matches-table">
+                      <colgroup>
+                        <col className="player-page__col-date" />
+                        <col className="player-page__col-match" />
+                        <col className="player-page__col-comp player-page__matches-table--hide-sm" />
+                        <col className="player-page__col-stat" />
+                        <col className="player-page__col-stat" />
+                        <col className="player-page__col-stat player-page__matches-table--hide-sm" />
+                        <col className="player-page__col-stat player-page__matches-table--hide-sm" />
+                        <col className="player-page__col-stat" />
+                      </colgroup>
+                      <thead>
+                        <tr>
+                          <th>Дата</th>
+                          <th>Матч</th>
+                          <th className="player-page__matches-table--hide-sm">Турнир</th>
+                          <th className="player-page__matches-table--stat" aria-label="Голы">
+                            <ProtocolGoalIcon className="player-page__th-icon player-page__th-icon--goal" />
+                          </th>
+                          <th className="player-page__matches-table--stat" aria-label="Пасы">
+                            <ProtocolAssistIcon className="player-page__th-icon player-page__th-icon--assist" />
+                          </th>
+                          <th
+                            className="player-page__matches-table--stat player-page__matches-table--hide-sm"
+                            aria-label="Жёлтые карточки"
+                          >
+                            <span className="player-page__th-card player-page__th-card--yellow" />
+                          </th>
+                          <th
+                            className="player-page__matches-table--stat player-page__matches-table--hide-sm"
+                            aria-label="Красные карточки"
+                          >
+                            <span className="player-page__th-card player-page__th-card--red" />
+                          </th>
+                          <th className="player-page__matches-table--stat">Мин</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {seasonAppearances.map((app, index) => (
+                          <tr
+                            key={`${app.date}-${app.match}-${index}`}
+                            data-result={app.result || undefined}
+                          >
+                            <td className="player-page__matches-date">
+                              {new Date(Number(app.date)).toLocaleDateString('ru-RU', {
+                                day: 'numeric',
+                                month: 'short',
+                              })}
+                            </td>
+                            <td className="player-page__matches-name">{app.match}</td>
+                            <td className="player-page__matches-comp player-page__matches-table--hide-sm">
+                              {app.competition}
+                            </td>
+                            <td className="player-page__matches-table--stat">
+                              <MatchGoalsCell count={app.goals} />
+                            </td>
+                            <td className="player-page__matches-table--stat">
+                              <MatchAssistsCell count={app.assists ?? 0} />
+                            </td>
+                            <td className="player-page__matches-table--stat player-page__matches-table--hide-sm">
+                              <MatchCardsCell count={app.yellowCards} type="yellow" />
+                            </td>
+                            <td className="player-page__matches-table--stat player-page__matches-table--hide-sm">
+                              <MatchCardsCell count={app.redCards} type="red" />
+                            </td>
+                            <td className="player-page__matches-table--stat player-page__matches-min">
+                              {app.minutesPlayed}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : stats ? (
+                  <p className="player-page__season-empty text-sm text-gray-400 py-6">
+                    Нет сыгранных матчей в текущем сезоне
+                  </p>
+                ) : null}
+              </div>
+            )}
+
+            {player.bio && (
+              <div className="mt-10 text-gray-700 leading-relaxed text-base md:text-lg max-w-3xl space-y-4">
+                {player.bio.split('\n').map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
               </div>
             )}
           </div>
@@ -385,6 +505,85 @@ export default function PlayerPageClient({ player }: { player: PlayerData }) {
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+function MatchCardsCell({ count, type }: { count: number; type: 'yellow' | 'red' }) {
+  const label = type === 'yellow' ? 'жёлтых карточек' : 'красных карточек';
+  const cardClass =
+    type === 'yellow' ? 'player-page__card player-page__card--yellow' : 'player-page__card player-page__card--red';
+
+  if (count <= 0) {
+    return <span className="player-page__goals-empty">—</span>;
+  }
+
+  if (count > 2) {
+    return (
+      <div className="player-page__cards" aria-label={`${count} ${label}`}>
+        <span className={cardClass} aria-hidden />
+        <span
+          className={
+            type === 'yellow' ? 'player-page__cards-count--yellow' : 'player-page__cards-count--red'
+          }
+        >
+          ×{count}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="player-page__cards" aria-label={`${count} ${label}`}>
+      {Array.from({ length: count }, (_, i) => (
+        <span key={i} className={cardClass} aria-hidden />
+      ))}
+    </div>
+  );
+}
+
+function MatchGoalsCell({ count }: { count: number }) {
+  if (count <= 0) {
+    return <span className="player-page__goals-empty">—</span>;
+  }
+
+  if (count > 3) {
+    return (
+      <div className="player-page__goals" aria-label={`${count} голов`}>
+        <ProtocolGoalIcon className="player-page__goals-icon" />
+        <span className="player-page__goals-count">×{count}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="player-page__goals" aria-label={`${count} голов`}>
+      {Array.from({ length: count }, (_, i) => (
+        <ProtocolGoalIcon key={i} className="player-page__goals-icon" />
+      ))}
+    </div>
+  );
+}
+
+function MatchAssistsCell({ count }: { count: number }) {
+  if (count <= 0) {
+    return <span className="player-page__goals-empty">—</span>;
+  }
+
+  if (count > 3) {
+    return (
+      <div className="player-page__assists" aria-label={`${count} голевых передач`}>
+        <ProtocolAssistIcon className="player-page__assists-icon" />
+        <span className="player-page__assists-count">×{count}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="player-page__assists" aria-label={`${count} голевых передач`}>
+      {Array.from({ length: count }, (_, i) => (
+        <ProtocolAssistIcon key={i} className="player-page__assists-icon" />
+      ))}
     </div>
   );
 }
@@ -432,20 +631,6 @@ function StatCard({
       >
         {label}
       </span>
-    </div>
-  );
-}
-
-function BottomStatBox({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="text-center">
-      <div
-        className="text-4xl font-black text-[#242C41] md:text-5xl"
-        style={{ fontFamily: "'Inter Tight', sans-serif" }}
-      >
-        {value}
-      </div>
-      <div className="text-xs text-gray-400 uppercase tracking-wider mt-2">{label}</div>
     </div>
   );
 }

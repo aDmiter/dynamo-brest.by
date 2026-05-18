@@ -18,7 +18,6 @@ import DashboardUpcomingMatches, {
 } from '@/modules/admin/components/DashboardUpcomingMatches';
 import {
   buildOpponentTeamMap,
-  DYNAMO_BREST_DISPLAY_NAME,
   resolveMatchTeamNames,
 } from '@/modules/team/lib/resolve-match-teams';
 
@@ -125,11 +124,7 @@ export default async function DashboardPage() {
       return { teamLabel: team.label, calendarHref, match: null };
     }
 
-    const { homeTeam, awayTeam } = resolveMatchTeamNames(
-      raw,
-      DYNAMO_BREST_DISPLAY_NAME,
-      opponentMap,
-    );
+    const { homeTeam, awayTeam } = resolveMatchTeamNames(raw, opponentMap);
 
     return {
       teamLabel: team.label,

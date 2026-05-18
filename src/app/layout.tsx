@@ -37,7 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="ru">
+    <html lang="ru" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -46,7 +46,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-[#242C41] text-white antialiased">
+      <body
+        className="min-h-screen bg-[#242C41] text-white antialiased"
+        suppressHydrationWarning
+      >
         <ThemeInitializer settings={settings} />
         {!isAdmin && <AnalyticsScripts />}
         {!isAdmin && <Header />}

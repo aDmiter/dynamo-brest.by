@@ -1,0 +1,589 @@
+// Version 1 — блок матчей на главной (стиль календаря / состава)
+.home-match {
+  font-family: 'Inter Tight', sans-serif;
+  background: var(--color-bg-main, #0d1117);
+  color: #fff;
+  min-height: 100vh;
+  padding: 56px 0 80px;
+}
+
+.home-match__inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.home-match__hero {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.home-match__hero-sub {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 2px;
+}
+
+.home-match__hero-title {
+  font-size: clamp(48px, 7vw, 80px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.home-match__hero-watermark {
+  position: absolute;
+  top: 50%;
+  right: -24px;
+  transform: translateY(-50%);
+  font-size: clamp(100px, 18vw, 220px);
+  font-weight: 900;
+  color: var(--color-accent, #d50000);
+  opacity: 0.055;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+
+.home-match__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.home-match__tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: 1.5px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: all 0.18s ease;
+
+  &:hover {
+    border-color: var(--color-accent-30, rgba(213, 0, 0, 0.3));
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  &--active {
+    border-color: var(--color-accent, #d50000);
+    background: var(--color-accent-10, rgba(213, 0, 0, 0.1));
+    color: var(--color-accent, #d50000);
+  }
+}
+
+.home-match__panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.home-match__panel-label {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.home-match__panel-standings {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.home-match__panel-standings-link {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--color-accent, #d50000);
+  }
+}
+
+.home-match__panel-record {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.home-match__panel-link {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  border-radius: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    color: var(--color-accent, #d50000);
+    border-color: var(--color-accent-30, rgba(213, 0, 0, 0.3));
+  }
+}
+
+.home-match__cards {
+  display: grid;
+  gap: 16px;
+
+  @media (min-width: 960px) {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+}
+
+.home-match__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  background: rgba(255, 255, 255, 0.025);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.34, 1.3, 0.64, 1);
+
+  &[data-hover='true'] {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.13);
+    background: rgba(255, 255, 255, 0.055);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  }
+
+  &--next {
+    min-height: 100%;
+  }
+
+  &--empty {
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    padding: 32px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.25);
+  }
+
+  &--wide {
+    min-height: 240px;
+  }
+
+  &--result-win {
+    border-top: 3px solid var(--color-win, #22c55e);
+  }
+
+  &--result-draw {
+    border-top: 3px solid var(--color-accent-hover, #f0ac74);
+  }
+
+  &--result-loss {
+    border-top: 3px solid var(--color-loss, #ef4444);
+  }
+
+  &--result-neutral {
+    border-top: 3px solid rgba(255, 255, 255, 0.12);
+  }
+}
+
+.home-match__card-body {
+  flex: 1;
+  padding: 16px 20px;
+}
+
+.home-match__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+
+  &--split {
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+}
+
+.home-match__tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.home-match__tournament {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-match__round {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+}
+
+.home-match__teams {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-match__club {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  &--right {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  &--left {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  &--center {
+    align-items: center;
+    text-align: center;
+  }
+
+  &--highlight .home-match__club-name {
+    color: #fff;
+  }
+}
+
+.home-match__table-pos,
+.match__table-pos {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--color-accent, #d50000);
+}
+
+.home-match__club-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.home-match__club-initials {
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: -0.04em;
+}
+
+.home-match__club-name {
+  font-size: clamp(11px, 1.4vw, 14px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-match__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+
+.home-match__kickoff {
+  font-size: clamp(18px, 2.4vw, 24px);
+  font-weight: 900;
+  color: var(--color-accent, #d50000);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.home-match__kickoff-label {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.home-match__center--score .home-match__score {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: #fff;
+}
+
+.home-match__score-colon {
+  margin: 0 0.15em;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.home-match__countdown {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: 4px;
+}
+
+.home-match__countdown--compact .home-match__countdown-value {
+  font-size: 1.125rem;
+}
+
+.home-match__countdown-unit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 2.25rem;
+  padding: 0.25rem 0.2rem 0.35rem;
+  border-radius: 7px;
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.home-match__countdown-value {
+  font-size: 1.25rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: #fff;
+}
+
+.home-match__countdown-label {
+  margin-top: 0.2rem;
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.home-match__countdown-sep {
+  position: absolute;
+  right: -0.4rem;
+  top: 50%;
+  transform: translateY(-70%);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-accent, #d50000);
+}
+
+// Крупный счётчик (блок матчей Base на главной)
+.home-match__countdown--large {
+  gap: clamp(0.25rem, 1.5vw, 0.5rem);
+  margin-top: 0.25rem;
+  max-width: 100%;
+
+  .home-match__countdown-unit {
+    min-width: clamp(2.5rem, 8vw, 3.75rem);
+    padding: clamp(0.35rem, 1.5vw, 0.6rem) clamp(0.25rem, 1vw, 0.4rem)
+      clamp(0.4rem, 1.5vw, 0.65rem);
+    border-radius: 7px;
+  }
+
+  .home-match__countdown-value {
+    font-size: clamp(1.75rem, 5.5vw, 2.75rem);
+  }
+
+  .home-match__countdown-label {
+    margin-top: 0.3rem;
+    font-size: clamp(0.5rem, 1.4vw, 0.625rem);
+    letter-spacing: 0.1em;
+  }
+
+  .home-match__countdown-sep {
+    right: clamp(-0.35rem, -1.2vw, -0.5rem);
+    font-size: clamp(1rem, 3.5vw, 1.5rem);
+  }
+}
+
+.home-match__countdown-soon--large {
+  font-size: clamp(0.875rem, 2.5vw, 1.125rem);
+}
+
+.home-match__countdown-soon {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent, #d50000);
+}
+
+.home-match__date {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+
+  svg {
+    color: var(--color-accent, #d50000);
+    font-size: 10px;
+  }
+}
+
+.home-match__facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 14px;
+  margin-top: 14px;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  svg {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.home-match__outcome {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  &--win {
+    color: var(--color-win, #22c55e);
+    border-color: color-mix(in srgb, var(--color-win, #22c55e) 40%, transparent);
+    background: rgba(34, 197, 94, 0.1);
+  }
+
+  &--draw {
+    color: var(--color-accent-hover, #f0ac74);
+    border-color: color-mix(in srgb, var(--color-accent-hover, #f0ac74) 40%, transparent);
+  }
+
+  &--loss {
+    color: var(--color-loss, #ef4444);
+    border-color: color-mix(in srgb, var(--color-loss, #ef4444) 40%, transparent);
+    background: rgba(239, 68, 68, 0.08);
+  }
+}
+
+.home-match__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
+}
+
+.home-match__ticket {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 7px;
+  background: var(--color-accent, #d50000);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  text-decoration: none;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: var(--color-accent-hover, #b80000);
+  }
+}
+
+.home-match__stadium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.45);
+  max-width: 60%;
+}
+
+@media (max-width: 767px) {
+  .home-match {
+    padding: 40px 0 56px;
+  }
+
+  .home-match__inner {
+    padding: 0 16px;
+  }
+
+  .home-match__teams {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .home-match__center {
+    order: -1;
+  }
+
+  .home-match__club--right,
+  .home-match__club--left {
+    align-items: center;
+    text-align: center;
+  }
+}

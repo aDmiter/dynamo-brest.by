@@ -1,4 +1,6 @@
 // src/styles/header-side-nav.scss — левое вертикальное меню
+$ui-radius: 7px;
+
 .side-nav__item {
   position: relative;
   display: flex;
@@ -17,6 +19,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  border-radius: $ui-radius;
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -58,6 +61,7 @@
   gap: 0.75rem;
   padding: 0 1.25rem 0 4.25rem;
   border: 1px solid transparent;
+  border-radius: $ui-radius;
   background: transparent;
   opacity: 0;
   transform: translateX(-100%);
@@ -118,6 +122,7 @@
   font-weight: 700;
   color: #fff;
   background: var(--color-accent, #d50000);
+  border-radius: $ui-radius;
 }
 
 .side-nav-mobile__link {
@@ -148,6 +153,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  border-radius: $ui-radius;
   background: rgba(255, 255, 255, 0.04);
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.55);

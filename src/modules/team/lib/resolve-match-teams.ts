@@ -1,4 +1,4 @@
-/** Публичное название клуба на сайте (не админское имя состава в БД) */
+/** Публичное название основного состава (билеты, брендинг) */
 export const DYNAMO_BREST_DISPLAY_NAME = 'Динамо-Брест';
 
 type OpponentRow = {
@@ -27,18 +27,58 @@ export function buildOpponentTeamMap(opponents: OpponentRow[]): OpponentTeamMap 
   return teamMap;
 }
 
-/** Названия команд для UI: наш состав из `team.name`, соперник из OpponentTeam по cometId */
-export function resolveMatchTeamNames(
-  match: MatchTeamsSource,
-  ourTeamName: string,
+function nameByCometId(
+  teamId: number | null,
+  fallback: string,
+  opponentMap: OpponentTeamMap
+): string {
+  if (teamId == null) return fallback;
+  return opponentMap[teamId]?.name ?? fallback;
+}
+
+/** Названия хозяев и гостей из OpponentTeam по homeTeamId / awayTeamId */
+export function resolveMatchTeamNames(match: MatchTeamsSource, opponentMap: OpponentTeamMap) {
+  return {
+    homeTeam: nameByCometId(match.homeTeamId, match.homeTeam, opponentMap),
+    awayTeam: nameByCometId(match.awayTeamId, match.awayTeam, opponentMap),
+  };
+}
+
+export function resolveMatchLogos(
+  match: Pick<MatchTeamsSource, 'isHome' | 'homeTeamId' | 'awayTeamId'>,
   opponentMap: OpponentTeamMap
 ) {
   return {
-    homeTeam: match.isHome
-      ? ourTeamName
-      : (match.homeTeamId && opponentMap[match.homeTeamId]?.name) || match.homeTeam,
-    awayTeam: match.isHome
-      ? (match.awayTeamId && opponentMap[match.awayTeamId]?.name) || match.awayTeam
-      : ourTeamName,
+    homeLogoUrl: match.isHome
+      ? null
+      : (match.homeTeamId && opponentMap[match.homeTeamId]?.logoUrl) || null,
+    awayLogoUrl: match.isHome
+      ? (match.awayTeamId && opponentMap[match.awayTeamId]?.logoUrl) || null
+      : null,
   };
+}
+
+type SerializableMatch = MatchTeamsSource & {
+  matchDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export function serializeTeamMatchesForPublic<T extends SerializableMatch>(
+  matches: T[],
+  opponentMap: OpponentTeamMap
+) {
+  return matches.map((m) => {
+    const { homeTeam, awayTeam } = resolveMatchTeamNames(m, opponentMap);
+    const logos = resolveMatchLogos(m, opponentMap);
+    return {
+      ...m,
+      matchDate: m.matchDate.toISOString(),
+      createdAt: m.createdAt.toISOString(),
+      updatedAt: m.updatedAt.toISOString(),
+      homeTeam,
+      awayTeam,
+      ...logos,
+    };
+  });
 }

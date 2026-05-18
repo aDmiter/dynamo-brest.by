@@ -2,6 +2,7 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import PlayersGrid from '@/modules/team/components/PlayersGrid';
+import { getTeamPlayersStatsMap } from '@/lib/player-stats-db';
 
 export default async function ReservePlayersPage() {
   const team = await prisma.team.findUnique({
@@ -42,11 +43,18 @@ export default async function ReservePlayersPage() {
     return (a.lastName || '').localeCompare(b.lastName || '');
   });
 
+  const statsByPlayerId = await getTeamPlayersStatsMap(
+    team.id,
+    'dubliruyushchiy-sostav',
+    sortedPlayers.map((p) => p.id)
+  );
+
   return (
     <PlayersGrid
       players={sortedPlayers}
       teamName="Дублирующий состав"
       teamSlug="dubliruyushchiy-sostav"
+      statsByPlayerId={statsByPlayerId}
     />
   );
 }

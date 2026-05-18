@@ -11,8 +11,9 @@ export default function CompactPageHero({ subtitle, title, watermark }: CompactP
       className="compact-page-hero"
       style={{
         position: 'relative',
+        zIndex: 0,
         overflow: 'hidden',
-        padding: '56px 32px 40px',
+        padding: '56px 32px 24px',
         maxWidth: 1400,
         margin: '0 auto',
       }}

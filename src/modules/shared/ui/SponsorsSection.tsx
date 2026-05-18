@@ -1,12 +1,18 @@
 // src/modules/shared/ui/SponsorsSection.tsx - Секция спонсоров
 import { prisma } from '@/lib/prisma';
+import { withDb } from '@/lib/with-db';
 import SponsorLogo from './SponsorLogo';
 
 export default async function SponsorsSection() {
-  const sponsors = await prisma.sponsor.findMany({
-    where: { isActive: true },
-    orderBy: [{ type: 'asc' }, { order: 'asc' }],
-  });
+  const sponsors = await withDb(
+    () =>
+      prisma.sponsor.findMany({
+        where: { isActive: true },
+        orderBy: [{ type: 'asc' }, { order: 'asc' }],
+      }),
+    [],
+    'sponsors',
+  );
 
   if (sponsors.length === 0) return null;
 
