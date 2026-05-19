@@ -10,7 +10,6 @@ import {
   faNewspaper,
   faUsers,
   faUserTie,
-  faCalendarDays,
   faTableList,
   faAd,
   faTrophy,
@@ -22,13 +21,16 @@ import {
   faShieldHalved,
   faFutbol,
   faCog,
+  faClockRotateLeft,
   IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import { useState } from 'react';
+import type { AdminSectionId } from '@/config/admin-sections';
 
 interface MenuChild {
   title: string;
   href?: string;
+  section?: AdminSectionId;
   children?: MenuChild[];
 }
 
@@ -36,42 +38,84 @@ interface MenuItem {
   title: string;
   href?: string;
   icon: IconDefinition;
+  section?: AdminSectionId;
   children?: MenuChild[];
 }
 
 const menuItems: MenuItem[] = [
-  { title: 'Дашборд', href: '/admin/dashboard', icon: faHome },
-  { title: 'Новости', href: '/admin/news', icon: faNewspaper },
+  { title: 'Дашборд', href: '/admin/dashboard', icon: faHome, section: 'dashboard' },
+  { title: 'Новости', href: '/admin/news', icon: faNewspaper, section: 'news' },
+  {
+    title: 'История',
+    href: '/admin/club-history',
+    icon: faClockRotateLeft,
+    section: 'club_history',
+  },
   {
     title: 'Игроки',
     icon: faUsers,
+    section: 'players',
     children: [
-      { title: 'Все игроки', href: '/admin/players' },
-      { title: 'Основной состав', href: '/admin/players/osnovnoy-sostav' },
-      { title: 'Дублирующий состав', href: '/admin/players/dubliruyushchiy-sostav' },
-      { title: 'Женская команда', href: '/admin/players/zhenskaya-komanda' },
+      { title: 'Все игроки', href: '/admin/players', section: 'players' },
+      { title: 'Основной состав', href: '/admin/players/osnovnoy-sostav', section: 'players' },
+      {
+        title: 'Дублирующий состав',
+        href: '/admin/players/dubliruyushchiy-sostav',
+        section: 'players',
+      },
+      { title: 'Женская команда', href: '/admin/players/zhenskaya-komanda', section: 'players' },
     ],
   },
-  { title: 'Тренеры', href: '/admin/coaches', icon: faUserTie },
-  { title: 'Клубы', href: '/admin/opponent-teams', icon: faShieldHalved },
+  { title: 'Тренеры', href: '/admin/coaches', icon: faUserTie, section: 'coaches' },
+  {
+    title: 'Клубы',
+    href: '/admin/opponent-teams',
+    icon: faShieldHalved,
+    section: 'opponent_teams',
+  },
   {
     title: 'Матчи',
     icon: faFutbol,
+    section: 'matches',
     children: [
       {
         title: 'Календарь',
         children: [
-          { title: 'Основной состав', href: '/admin/matches/calendar/osnovnoy-sostav' },
-          { title: 'Дублирующий состав', href: '/admin/matches/calendar/dubliruyushchiy-sostav' },
-          { title: 'Женская команда', href: '/admin/matches/calendar/zhenskaya-komanda' },
+          {
+            title: 'Основной состав',
+            href: '/admin/matches/calendar/osnovnoy-sostav',
+            section: 'matches',
+          },
+          {
+            title: 'Дублирующий состав',
+            href: '/admin/matches/calendar/dubliruyushchiy-sostav',
+            section: 'matches',
+          },
+          {
+            title: 'Женская команда',
+            href: '/admin/matches/calendar/zhenskaya-komanda',
+            section: 'matches',
+          },
         ],
       },
       {
         title: 'Результаты',
         children: [
-          { title: 'Основной состав', href: '/admin/matches/results/osnovnoy-sostav' },
-          { title: 'Дублирующий состав', href: '/admin/matches/results/dubliruyushchiy-sostav' },
-          { title: 'Женская команда', href: '/admin/matches/results/zhenskaya-komanda' },
+          {
+            title: 'Основной состав',
+            href: '/admin/matches/results/osnovnoy-sostav',
+            section: 'matches',
+          },
+          {
+            title: 'Дублирующий состав',
+            href: '/admin/matches/results/dubliruyushchiy-sostav',
+            section: 'matches',
+          },
+          {
+            title: 'Женская команда',
+            href: '/admin/matches/results/zhenskaya-komanda',
+            section: 'matches',
+          },
         ],
       },
     ],
@@ -79,34 +123,93 @@ const menuItems: MenuItem[] = [
   {
     title: 'Интернет-магазин',
     icon: faStore,
+    section: 'shop',
     children: [
-      { title: 'Обзор', href: '/admin/shop' },
-      { title: 'Товары', href: '/admin/products' },
-      { title: 'Категории', href: '/admin/categories' },
-      { title: 'Заказы', href: '/admin/orders' },
-      { title: 'Страны', href: '/admin/countries' },
-      { title: 'Доп. поля', href: '/admin/shop/fields' },
+      { title: 'Обзор', href: '/admin/shop', section: 'shop' },
+      { title: 'Товары', href: '/admin/products', section: 'shop' },
+      { title: 'Категории', href: '/admin/categories', section: 'shop' },
+      { title: 'Заказы', href: '/admin/orders', section: 'shop' },
+      { title: 'Страны', href: '/admin/countries', section: 'shop' },
+      { title: 'Доп. поля', href: '/admin/shop/fields', section: 'shop' },
     ],
   },
-  { title: 'Таблицы', href: '/admin/standings', icon: faTableList },
-  { title: 'Баннеры', href: '/admin/banners', icon: faAd },
-  { title: 'Спонсоры', href: '/admin/sponsors', icon: faHandshake },
-  { title: 'Титулы', href: '/admin/titles', icon: faTrophy },
-  { title: 'Переводы', href: '/admin/translations', icon: faLanguage },
+  { title: 'Таблицы', href: '/admin/standings', icon: faTableList, section: 'standings' },
+  { title: 'Баннеры', href: '/admin/banners', icon: faAd, section: 'banners' },
+  { title: 'Спонсоры', href: '/admin/sponsors', icon: faHandshake, section: 'sponsors' },
+  { title: 'Титулы', href: '/admin/titles', icon: faTrophy, section: 'titles' },
+  { title: 'Переводы', href: '/admin/translations', icon: faLanguage, section: 'translations' },
   {
     title: 'Настройки',
     icon: faCog,
+    section: 'settings',
     children: [
-      { title: 'Главное меню', href: '/admin/settings/menu' },
-      { title: 'Нижнее меню', href: '/admin/settings/footer-menu' },
-      { title: 'Аналитика', href: '/admin/settings/analytics' },
-      { title: 'Ключи API', href: '/admin/settings/keys' },
-      { title: 'Настройки сайта', href: '/admin/settings' },
+      { title: 'Меню сайта', href: '/admin/settings/menu', section: 'settings' },
+      { title: 'Аналитика', href: '/admin/settings/analytics', section: 'settings' },
+      { title: 'Ключи API', href: '/admin/settings/keys', section: 'settings' },
+      { title: 'Настройки сайта', href: '/admin/settings', section: 'settings' },
     ],
   },
 ];
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  permissions: AdminSectionId[];
+  showUsersLink?: boolean;
+}
+
+function hasSection(permissions: AdminSectionId[], section?: AdminSectionId): boolean {
+  if (!section) return true;
+  return permissions.includes(section);
+}
+
+function filterMenuChildren(
+  children: MenuChild[],
+  permissions: AdminSectionId[]
+): MenuChild[] {
+  return children
+    .map((child) => {
+      if (child.children) {
+        const nested = filterMenuChildren(child.children, permissions);
+        if (nested.length === 0) return null;
+        return { ...child, children: nested };
+      }
+      if (!hasSection(permissions, child.section)) return null;
+      return child;
+    })
+    .filter((c): c is MenuChild => c !== null);
+}
+
+function buildVisibleMenu(
+  items: MenuItem[],
+  permissions: AdminSectionId[],
+  showUsersLink: boolean
+): MenuItem[] {
+  const result: MenuItem[] = [];
+
+  for (const item of items) {
+    if (item.children) {
+      let children = filterMenuChildren(item.children, permissions);
+      if (item.title === 'Настройки' && showUsersLink) {
+        children = [
+          ...children,
+          { title: 'Пользователи', href: '/admin/settings/users' },
+        ];
+      }
+      if (children.length === 0) continue;
+      result.push({ ...item, children });
+      continue;
+    }
+    if (!hasSection(permissions, item.section)) continue;
+    result.push(item);
+  }
+
+  return result;
+}
+
+export default function AdminSidebar({
+  permissions,
+  showUsersLink = false,
+}: AdminSidebarProps) {
+  const visibleMenu = buildVisibleMenu(menuItems, permissions, showUsersLink);
   const pathname = usePathname();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
@@ -177,7 +280,7 @@ export default function AdminSidebar() {
           </Link>
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto p-4">
-          {menuItems.map((item) => {
+          {visibleMenu.map((item) => {
             let menuKey = '';
             if (item.children) {
               if (item.title === 'Игроки') menuKey = 'players';

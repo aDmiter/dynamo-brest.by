@@ -1,6 +1,5 @@
-// src/app/admin/settings/footer-menu/page.tsx
-import FooterMenuAdmin from '@/modules/admin/components/FooterMenuAdmin';
+import { redirect } from 'next/navigation';
 
 export default function FooterMenuAdminPage() {
-  return <FooterMenuAdmin />;
+  redirect('/admin/settings/menu#footer-menu');
 }

@@ -1,6 +1,7 @@
 // src/app/api/products/[id]/route.ts - API конкретного товара
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { auditUpdateData } from '@/lib/admin-audit-route';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -50,7 +51,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.quantity !== undefined) updateData.quantity = data.quantity;
     if (data.resetSold === true) updateData.totalSold = 0;
 
-    const product = await prisma.product.update({ where: { id }, data: updateData });
+    const product = await prisma.product.update({
+      where: { id },
+      data: { ...updateData, ...(await auditUpdateData()) },
+    });
 
     if (data.sizes !== undefined) {
       await prisma.productSize.deleteMany({ where: { productId: id } });

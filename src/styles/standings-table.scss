@@ -1,0 +1,22 @@
+.standings-table {
+  @media (max-width: 767px) {
+    .standings-table__wrap {
+      overflow-x: visible;
+    }
+
+    .standings-table__table {
+      table-layout: fixed;
+      width: 100%;
+    }
+
+    .standings-table__table th:nth-child(2),
+    .standings-table__table td:nth-child(2) {
+      width: auto;
+    }
+
+    .standings-table__table td:nth-child(2) span {
+      padding-left: 8px;
+      font-size: 12px;
+    }
+  }
+}

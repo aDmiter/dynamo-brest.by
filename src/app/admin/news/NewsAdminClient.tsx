@@ -23,6 +23,9 @@ interface NewsItem {
   isFeatured: boolean;
   isPublished: boolean;
   publishedAt: string;
+  createdByName?: string | null;
+  updatedByName?: string | null;
+  updatedAt?: string;
 }
 
 const PAGE_SIZE = 50;
@@ -30,9 +33,10 @@ const PAGE_SIZE = 50;
 interface Props {
   initialNews: NewsItem[];
   initialTotal: number;
+  showAudit?: boolean;
 }
 
-export default function NewsAdminClient({ initialNews, initialTotal }: Props) {
+export default function NewsAdminClient({ initialNews, initialTotal, showAudit = false }: Props) {
   const [news, setNews] = useState<NewsItem[]>(initialNews);
   const [total, setTotal] = useState(initialTotal);
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,6 +96,9 @@ export default function NewsAdminClient({ initialNews, initialTotal }: Props) {
                 <th className="p-3 text-left text-sm font-medium text-gray-400">Заголовок</th>
                 <th className="p-3 text-left text-sm font-medium text-gray-400">Категория</th>
                 <th className="p-3 text-left text-sm font-medium text-gray-400">Дата</th>
+                {showAudit && (
+                  <th className="p-3 text-left text-sm font-medium text-gray-400">Автор / правки</th>
+                )}
                 <th className="p-3 text-center text-sm font-medium text-gray-400 w-12">★</th>
                 <th className="p-3 text-center text-sm font-medium text-gray-400">Статус</th>
                 <th className="p-3 text-center text-sm font-medium text-gray-400">Действия</th>
@@ -100,7 +107,7 @@ export default function NewsAdminClient({ initialNews, initialTotal }: Props) {
             <tbody>
               {news.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-6 text-center text-gray-500">
+                  <td colSpan={showAudit ? 8 : 7} className="p-6 text-center text-gray-500">
                     Нет новостей
                   </td>
                 </tr>
@@ -122,6 +129,21 @@ export default function NewsAdminClient({ initialNews, initialTotal }: Props) {
                     <td className="p-3 text-sm text-gray-400">
                       {new Date(item.publishedAt).toLocaleDateString('ru-RU')}
                     </td>
+                    {showAudit && (
+                      <td className="p-3 text-xs text-gray-500 max-w-[180px]">
+                        <p>{item.createdByName ? `Создал: ${item.createdByName}` : '—'}</p>
+                        <p className="mt-0.5">
+                          {item.updatedByName
+                            ? `Правил: ${item.updatedByName}`
+                            : item.createdByName
+                              ? ''
+                              : '—'}
+                          {item.updatedAt
+                            ? ` · ${new Date(item.updatedAt).toLocaleDateString('ru-RU')}`
+                            : ''}
+                        </p>
+                      </td>
+                    )}
                     <td className="p-3 text-center">
                       <FeaturedButton newsId={item.id} isFeatured={item.isFeatured} />
                     </td>

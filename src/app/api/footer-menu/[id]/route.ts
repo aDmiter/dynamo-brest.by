@@ -18,6 +18,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.type !== undefined) updateData.type = data.type;
     if (data.linkUrl !== undefined) updateData.linkUrl = data.linkUrl;
     if (data.pageContent !== undefined) updateData.pageContent = data.pageContent;
+    if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
+    if (data.subtitle !== undefined) updateData.subtitle = data.subtitle;
+    if (data.heroHeader !== undefined) updateData.heroHeader = data.heroHeader;
     if (data.order !== undefined) updateData.order = data.order;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
     if (data.isExternal !== undefined) updateData.isExternal = data.isExternal;

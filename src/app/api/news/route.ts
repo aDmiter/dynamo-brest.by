@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { transliterate } from '@/lib/utils';
+import { auditCreateData } from '@/lib/admin-audit-route';
 
 // GET — список новостей с пагинацией
 export async function GET(request: NextRequest) {
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
         isFeatured: data.isFeatured || false,
         isPublished: data.isPublished ?? true,
         publishedAt: data.publishedAt ? new Date(data.publishedAt) : new Date(),
+        ...(await auditCreateData()),
       },
     });
 

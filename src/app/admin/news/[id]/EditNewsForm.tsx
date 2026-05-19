@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import ImageUpload from '@/modules/admin/components/ImageUpload';
 import TipTapEditor from '@/modules/admin/components/TipTapEditor';
+import AdminAuditMeta from '@/modules/admin/components/AdminAuditMeta';
 
 const categories = [
   { value: 'general', label: 'Общее' },
@@ -40,9 +41,19 @@ interface NewsItem {
   isFeatured: boolean;
   isPublished: boolean;
   publishedAt: Date;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  createdByName?: string | null;
+  updatedByName?: string | null;
 }
 
-export default function EditNewsForm({ news }: { news: NewsItem }) {
+export default function EditNewsForm({
+  news,
+  showAudit = false,
+}: {
+  news: NewsItem;
+  showAudit?: boolean;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -223,6 +234,18 @@ export default function EditNewsForm({ news }: { news: NewsItem }) {
                 <FontAwesomeIcon icon={faTrash} className="mr-2" /> Удалить
               </Button>
             </div>
+
+            {showAudit && (
+              <AdminAuditMeta
+                className="mt-6"
+                record={{
+                  createdAt: news.createdAt,
+                  updatedAt: news.updatedAt,
+                  createdByName: news.createdByName,
+                  updatedByName: news.updatedByName,
+                }}
+              />
+            )}
           </form>
         </CardContent>
       </Card>

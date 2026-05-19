@@ -1,8 +1,10 @@
 // src/app/admin/news/page.tsx - Управление новостями с пагинацией
 import { prisma } from '@/lib/prisma';
+import { getAdminPageFlags } from '@/lib/admin-page';
 import NewsAdminClient from './NewsAdminClient';
 
 export default async function NewsAdminPage() {
+  const { showAudit } = await getAdminPageFlags();
   const total = await prisma.news.count();
 
   // Первая страница
@@ -24,7 +26,7 @@ export default async function NewsAdminPage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold text-white">Новости</h1>
       </div>
-      <NewsAdminClient initialNews={serializedNews} initialTotal={total} />
+      <NewsAdminClient initialNews={serializedNews} initialTotal={total} showAudit={showAudit} />
     </div>
   );
 }

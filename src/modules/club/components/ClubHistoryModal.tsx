@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import type { ClubHistoryYear } from '@/config/club-history';
-import ClubHistoryBlocks from './ClubHistoryBlocks';
+import type { PublicClubHistoryYear } from '@/lib/club-history-types';
+import ClubHistoryYearContent from './ClubHistoryYearContent';
 
 type Props = {
-  entry: ClubHistoryYear | null;
+  entry: PublicClubHistoryYear | null;
   onClose: () => void;
 };
 
@@ -67,7 +67,7 @@ export default function ClubHistoryModal({ entry, onClose }: Props) {
           </button>
         </header>
         <div className="club-history-modal__body club-history-content">
-          <ClubHistoryBlocks blocks={entry.blocks} idPrefix={`year-${entry.year}`} />
+          <ClubHistoryYearContent entry={entry} />
         </div>
       </div>
     </div>

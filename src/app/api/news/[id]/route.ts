@@ -1,6 +1,7 @@
 // src/app/api/news/[id]/route.ts - API для конкретной новости
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { auditUpdateData } from '@/lib/admin-audit-route';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -28,7 +29,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const news = await prisma.news.update({
       where: { id },
-      data: updateData,
+      data: { ...updateData, ...(await auditUpdateData()) },
     });
 
     return NextResponse.json(news);

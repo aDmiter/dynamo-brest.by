@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { transliterate } from '@/lib/utils';
+import { auditCreateData } from '@/lib/admin-audit-route';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
         useSizes: Boolean(data.useSizes),
         quantity: data.useSizes ? 0 : data.quantity || 0,
         hasCustomization: Boolean(data.hasCustomization),
+        ...(await auditCreateData()),
       },
     });
 

@@ -1,6 +1,7 @@
 // src/app/api/categories/route.ts - API категорий товаров
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { auditCreateData } from '@/lib/admin-audit-route';
 
 export async function GET() {
   const categories = await prisma.productcategory.findMany({
@@ -18,6 +19,7 @@ export async function POST(request: NextRequest) {
         slug: data.slug,
         imageUrl: data.imageUrl || null,
         order: data.order || 0,
+        ...(await auditCreateData()),
       },
     });
     return NextResponse.json(category, { status: 201 });

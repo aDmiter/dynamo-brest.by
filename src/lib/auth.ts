@@ -2,7 +2,33 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
+import {
+  isSuperAdmin,
+  parseAdminPermissions,
+  SUPERADMIN_ROLE,
+} from '@/lib/admin-permissions';
+import { ALL_ADMIN_SECTION_IDS } from '@/config/admin-sections';
 import bcrypt from 'bcryptjs';
+
+function mapAdminToAuthUser(admin: {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  permissions: unknown;
+}) {
+  const permissions = isSuperAdmin(admin.role)
+    ? ALL_ADMIN_SECTION_IDS
+    : parseAdminPermissions(admin.permissions);
+
+  return {
+    id: admin.id,
+    email: admin.email,
+    name: admin.name,
+    role: admin.role,
+    permissions,
+  };
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -21,7 +47,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { email: credentials.email as string },
         });
 
-        if (!admin) {
+        if (!admin || !admin.isActive) {
           return null;
         }
 
@@ -34,26 +60,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        return {
-          id: admin.id,
-          email: admin.email,
-          name: admin.name,
-          role: admin.role,
-        };
+        return mapAdminToAuthUser(admin);
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as { role?: string }).role || 'editor';
+        token.id = user.id;
+        token.role = user.role;
+        token.permissions = user.permissions;
       }
+
+      if (token.id) {
+        const admin = await prisma.admin.findUnique({
+          where: { id: token.id as string },
+        });
+
+        if (!admin || !admin.isActive) {
+          return null;
+        }
+
+        const mapped = mapAdminToAuthUser(admin);
+        token.role = mapped.role;
+        token.permissions = mapped.permissions;
+      }
+
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        (session.user as { role?: string }).role = token.role as string;
+      if (!token.id || !token.role) {
+        return session;
       }
+
+      session.user.id = token.id as string;
+      session.user.role = token.role as string;
+      session.user.permissions = (token.permissions as typeof ALL_ADMIN_SECTION_IDS) ?? [];
       return session;
     },
   },
@@ -65,3 +107,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   secret: process.env.AUTH_SECRET,
 });
+
+export { SUPERADMIN_ROLE };

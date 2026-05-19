@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faTimes, faChevronRight, faCartShopping } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { useCartCount } from '@/modules/shared/hooks/useCartCount';
+import { resolveMainMenuTextPageUrl } from '@/lib/cms-text-page-paths';
 
 function isMenuLinkActive(href: string, pathname: string): boolean {
   if (!href || href === '#' || href.startsWith('http')) return false;
@@ -57,8 +58,8 @@ export default function BurgerMenu() {
   };
 
   const getUrl = (item: MenuItem): string => {
+    if (item.type === 'page') return resolveMainMenuTextPageUrl(item.slug);
     if (item.linkUrl) return item.linkUrl;
-    if (item.type === 'page') return `/page/${item.slug}`;
     return '#';
   };
 
@@ -73,12 +74,12 @@ export default function BurgerMenu() {
       </Link>
 
       <div className="burger-menu__actions">
-        <Link href="/shop/cart" className="burger-menu__btn burger-menu__btn--cart" aria-label="Корзина">
-          <FontAwesomeIcon icon={faCartShopping} className="burger-menu__btn-icon" />
-          {cartCount > 0 && (
+        {cartCount > 0 && (
+          <Link href="/shop/cart" className="burger-menu__btn burger-menu__btn--cart" aria-label="Корзина">
+            <FontAwesomeIcon icon={faCartShopping} className="burger-menu__btn-icon" />
             <span className="burger-menu__cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>
-          )}
-        </Link>
+          </Link>
+        )}
         <button
           type="button"
           onClick={() => setIsOpen(true)}
@@ -138,7 +139,7 @@ export default function BurgerMenu() {
                         style={{
                           color: sectionActive
                             ? 'var(--color-accent)'
-                            : 'var(--color-text-heading)',
+                            : 'var(--color-text-heading, #ffffff)',
                         }}
                       >
                         {item.title}

@@ -20,6 +20,14 @@ import ImageUpload from '@/modules/admin/components/ImageUpload';
 import TipTapEditor from '@/modules/admin/components/TipTapEditor';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { CODED_MENU_ROUTES } from '@/config/coded-menu-routes';
+import { resolveMainMenuTextPageUrl } from '@/lib/cms-text-page-paths';
+import TextPagesOverview, {
+  type TextPageOverviewItem,
+} from '@/modules/admin/components/TextPagesOverview';
+import FooterMenuPanel, {
+  collectFooterTextPages,
+  type FooterMenuItem,
+} from '@/modules/admin/components/FooterMenuAdmin';
 
 export interface MenuItem {
   id: string;
@@ -30,6 +38,7 @@ export interface MenuItem {
   pageContent: string | null;
   imageUrl: string | null;
   subtitle: string | null;
+  heroHeader: boolean;
   parentId: string | null;
   order: number;
   isActive: boolean;
@@ -42,7 +51,7 @@ const QUICK_CHILD_LINKS: { title: string; slug: string; linkUrl: string }[] = [
   { title: 'Билеты', slug: 'menu-link-tickets', linkUrl: '/page/tickets' },
   { title: 'Зал', slug: 'menu-link-gym', linkUrl: '/services/gym' },
   { title: 'Поля', slug: 'menu-link-fields', linkUrl: '/services/fields' },
-  { title: 'Транспорт', slug: 'menu-link-transport', linkUrl: '/page/services-transport' },
+  { title: 'Транспорт', slug: 'menu-link-transport', linkUrl: '/services/transport' },
   { title: 'Состав', slug: 'menu-link-players', linkUrl: '/team/main/players' },
   { title: 'Магазин', slug: 'menu-link-shop', linkUrl: '/shop/catalog' },
   { title: 'Доставка', slug: 'menu-link-shop-delivery', linkUrl: '/shop/delivery' },
@@ -58,10 +67,41 @@ const emptyForm = {
   pageContent: '',
   imageUrl: '',
   subtitle: '',
+  heroHeader: false,
   parentId: '',
   isActive: true,
   isExternal: false,
 };
+
+function collectMenuTextPages(menu: MenuItem[]): TextPageOverviewItem[] {
+  const pages: TextPageOverviewItem[] = [];
+  for (const section of menu) {
+    if (section.type === 'page') {
+      pages.push({
+        id: section.id,
+        title: section.title,
+        url: resolveMainMenuTextPageUrl(section.slug),
+        subtitle: section.subtitle,
+        heroHeader: section.heroHeader ?? false,
+        isActive: section.isActive,
+      });
+    }
+    for (const child of section.children) {
+      if (child.type === 'page') {
+        pages.push({
+          id: child.id,
+          title: child.title,
+          url: resolveMainMenuTextPageUrl(child.slug),
+          group: section.title,
+          subtitle: child.subtitle,
+          heroHeader: child.heroHeader ?? false,
+          isActive: child.isActive,
+        });
+      }
+    }
+  }
+  return pages;
+}
 
 function slugify(text: string): string {
   return text
@@ -72,12 +112,14 @@ function slugify(text: string): string {
 }
 
 function getItemUrlPreview(item: Pick<MenuItem, 'type' | 'slug' | 'linkUrl'>): string {
-  if (item.type === 'page') return `/page/${item.slug}`;
+  if (item.type === 'page') return resolveMainMenuTextPageUrl(item.slug);
   return item.linkUrl || '—';
 }
 
 export default function MainMenuAdmin() {
   const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [footerItems, setFooterItems] = useState<FooterMenuItem[]>([]);
+  const [footerEditRequestId, setFooterEditRequestId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
@@ -105,6 +147,7 @@ export default function MainMenuAdmin() {
       pageContent: item.pageContent || '',
       imageUrl: item.imageUrl || '',
       subtitle: item.subtitle || '',
+      heroHeader: item.heroHeader,
       parentId: '',
       isActive: item.isActive,
       isExternal: item.isExternal,
@@ -122,10 +165,31 @@ export default function MainMenuAdmin() {
       pageContent: item.pageContent || '',
       imageUrl: item.imageUrl || '',
       subtitle: item.subtitle || '',
+      heroHeader: item.heroHeader,
       parentId: item.parentId || '',
       isActive: item.isActive,
       isExternal: item.isExternal,
     });
+  };
+
+  const openTextPageEdit = (id: string) => {
+    const footerPage = footerItems.find((i) => i.id === id && i.type === 'page');
+    if (footerPage) {
+      setFooterEditRequestId(id);
+      document.getElementById('footer-menu')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    for (const section of menu) {
+      if (section.id === id) {
+        startEditSection(section);
+        return;
+      }
+      const child = section.children.find((c) => c.id === id);
+      if (child) {
+        startEditChild(child);
+        return;
+      }
+    }
   };
 
   const startNewSection = () => {
@@ -241,7 +305,10 @@ export default function MainMenuAdmin() {
           />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-white">{child.title}</p>
-            <p className="truncate text-xs text-gray-500">{getItemUrlPreview(child)}</p>
+            <p className="truncate text-xs text-gray-500">
+              {getItemUrlPreview(child)}
+              {child.type === 'page' && child.heroHeader ? ' · Hero' : ''}
+            </p>
           </div>
           {!child.isActive && <span className="text-xs text-gray-500">скрыт</span>}
           <button
@@ -374,9 +441,9 @@ export default function MainMenuAdmin() {
     <div>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-bold text-white">Главное меню</h1>
+          <h1 className="font-heading text-2xl font-bold text-white">Меню сайта</h1>
           <p className="mt-1 text-sm text-gray-400">
-            Разделы бургер-меню и подпункты внутри каждого блока
+            Главное меню (бургер), нижнее меню в подвале и CMSTextPage
           </p>
         </div>
         <Button
@@ -387,6 +454,16 @@ export default function MainMenuAdmin() {
           <FontAwesomeIcon icon={faPlus} className="mr-2" />
           Добавить раздел
         </Button>
+      </div>
+
+      <TextPagesOverview
+        pages={[...collectMenuTextPages(menu), ...collectFooterTextPages(footerItems)]}
+        onEdit={openTextPageEdit}
+      />
+
+      <div className="mb-4">
+        <h2 className="font-heading text-xl font-bold text-white">Главное меню</h2>
+        <p className="mt-1 text-sm text-gray-400">Разделы бургер-меню и подпункты</p>
       </div>
 
       {menu.length === 0 ? (
@@ -414,13 +491,22 @@ export default function MainMenuAdmin() {
         </DragDropContext>
       )}
 
+      <FooterMenuPanel
+        embedded
+        editRequestId={footerEditRequestId}
+        onEditRequestHandled={() => setFooterEditRequestId(null)}
+        onItemsChange={setFooterItems}
+      />
+
       <div className="border border-white/10 bg-white/5 p-6">
         <h2 className="mb-2 font-heading text-lg font-bold text-white">Подсказка</h2>
         <p className="text-sm leading-relaxed text-gray-400">
           Страницы, свёрстанные в коде (билеты, зал, поля, транспорт), добавляйте как тип{' '}
           <strong className="text-gray-300">«Ссылка»</strong> с точным URL. Тип{' '}
-          <strong className="text-gray-300">«Текстовая страница»</strong> — для контента из
-          редактора на <code className="text-[#ee862c]/90">/page/[slug]</code>.
+          <strong className="text-gray-300">«Текстовая страница»</strong> (CMSTextPage) — контент из
+          редактора: <code className="text-[#ee862c]/90">/page/[slug]</code>,{' '}
+          <code className="text-[#ee862c]/90">/legal/[slug]</code>,{' '}
+          <code className="text-[#ee862c]/90">/club/contacts</code> и др.
         </p>
         <ul className="mt-3 space-y-1 text-xs text-gray-500">
           {Object.entries(CODED_MENU_ROUTES).map(([slug, path]) => (
@@ -498,9 +584,11 @@ export default function MainMenuAdmin() {
                 />
               </div>
 
-              {editContext === 'section' && (
+              {editContext === 'section' && editForm.type !== 'page' && (
                 <div>
-                  <label className="mb-1 block text-sm text-gray-400">Подзаголовок</label>
+                  <label className="mb-1 block text-sm text-gray-400">
+                    Подзаголовок раздела (бургер-меню)
+                  </label>
                   <Input
                     value={editForm.subtitle}
                     onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
@@ -519,21 +607,54 @@ export default function MainMenuAdmin() {
                 />
                 {editForm.type === 'page' && (
                   <p className="mt-1 text-xs text-gray-500">
-                    Страница: /page/{editForm.slug || '…'}
+                    Страница: {resolveMainMenuTextPageUrl(editForm.slug || '…')}
                   </p>
                 )}
               </div>
 
-              {editContext === 'section' && editForm.type === 'page' && (
-                <div>
-                  <label className="mb-2 block text-sm text-gray-400">Баннер страницы</label>
-                  <ImageUpload
-                    value={editForm.imageUrl}
-                    onChange={(url) => setEditForm({ ...editForm, imageUrl: url })}
-                    folder="headers"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">Рекомендуемый размер: 1920×1080px</p>
-                </div>
+              {editForm.type === 'page' && (
+                <>
+                  <div>
+                    <label className="mb-1 block text-sm text-gray-400">
+                      Подзаголовок страницы
+                    </label>
+                    <Input
+                      value={editForm.subtitle}
+                      onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
+                      className="border-white/10 bg-white/5 text-white"
+                      placeholder="Динамо-Брест или legal"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Текст над заголовком и водяной знак в шапке (компактная вёрстка)
+                    </p>
+                  </div>
+
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-300">
+                    <input
+                      type="checkbox"
+                      checked={editForm.heroHeader}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, heroHeader: e.target.checked })
+                      }
+                      className="accent-[#ee862c]"
+                    />
+                    Hero header (полноэкранный баннер)
+                  </label>
+
+                  {editForm.heroHeader && (
+                    <div>
+                      <label className="mb-2 block text-sm text-gray-400">Баннер страницы</label>
+                      <ImageUpload
+                        value={editForm.imageUrl}
+                        onChange={(url) => setEditForm({ ...editForm, imageUrl: url })}
+                        folder="headers"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Рекомендуемый размер: 1920×1080px
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
 
               <div>
@@ -552,7 +673,9 @@ export default function MainMenuAdmin() {
                     <input
                       type="radio"
                       checked={editForm.type === 'page'}
-                      onChange={() => setEditForm({ ...editForm, type: 'page' })}
+                      onChange={() =>
+                        setEditForm({ ...editForm, type: 'page' })
+                      }
                       className="accent-[#ee862c]"
                     />
                     Текстовая страница

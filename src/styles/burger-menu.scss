@@ -124,6 +124,7 @@ $ui-radius: 7px;
   z-index: 50;
   display: flex;
   background: var(--color-bg-main, #242c41);
+  --color-text-heading: #ffffff;
 }
 
 .burger-menu__aside {
@@ -147,6 +148,10 @@ $ui-radius: 7px;
 .burger-menu__panel {
   flex: 1;
   overflow-y: auto;
+
+  .font-heading {
+    color: var(--color-text-heading);
+  }
 }
 
 .burger-menu__header {

@@ -48,11 +48,12 @@ COMET
 Магазин
 WebPay: src/app/api/webpay/, src/lib/webpay
 Товары, размеры, нанесения — Prisma + админка
-Главное меню (`menuitem`, админка `/admin/settings/menu`)
+Главное и нижнее меню — админка `/admin/settings/menu` (`menuitem` + `footermenuitem`)
 
-- **Страница в коде** (`src/app/.../page.tsx`) → тип **Ссылка**, поле URL = маршрут (`/page/tickets`, `/services/gym`, `/team/main/players`). Реестр coded-путей: `src/config/coded-menu-routes.ts`.
-- **Текстовая CMS-страница** (контент только из редактора в БД) → тип **Текстовая страница**, slug без отдельного `page.tsx` с тем же именем.
-- Исправление БД после сидов: `npx tsx prisma/fix-menu-coded-links.ts` (без удаления всего меню).
+- **Страница в коде** → тип **Ссылка**, URL из `src/config/coded-menu-routes.ts`.
+- **CMSTextPage** — тип `page`, TipTap: `/page/[slug]`, `/legal/[slug]`, `/club/contacts` и др. Компонент `CmsTextPage`.
+- `/admin/settings/footer-menu` → редирект на `/admin/settings/menu#footer-menu`.
+- Исправление БД после сидов: `npx tsx prisma/fix-menu-coded-links.ts`.
 
 Правила работы
 Менять только то, что нужно для задачи.

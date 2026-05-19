@@ -224,6 +224,72 @@
   line-height: 1.8;
 }
 
+.transport-services__schedule-list--ordered {
+  list-style: decimal;
+  padding-left: 1.25rem;
+}
+
+.transport-services__subsection-title {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 800;
+  margin: 1.5rem 0 0.75rem;
+  color: #242c41;
+}
+
+.transport-services__list {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+
+  a {
+    color: #ee862c;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.media-anthems__player {
+  margin: 1rem 0 1.25rem;
+  max-width: 100%;
+}
+
+.media-anthems__player-iframe {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+
+.media-anthems__lyrics {
+  margin-top: 0.5rem;
+
+  p {
+    line-height: 1.7;
+    white-space: normal;
+  }
+}
+
+.legal-page__body.prose .cms-page-content.transport-services {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+
+  table {
+    margin: 0;
+  }
+
+  .transport-services__gallery-item {
+    text-decoration: none;
+  }
+}
+
 .transport-services__schedule-list span {
   font-weight: 600;
 }

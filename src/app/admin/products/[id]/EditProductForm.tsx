@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import ImageUpload from '@/modules/admin/components/ImageUpload';
+import AdminAuditMeta from '@/modules/admin/components/AdminAuditMeta';
 
 interface Product {
   id: string;
@@ -36,9 +37,19 @@ interface Product {
   totalSold?: number;
   productcategory?: { id: string; name: string } | null;
   productsize: { id: string; size: string; quantity: number }[];
+  createdAt?: string;
+  updatedAt?: string;
+  createdByName?: string | null;
+  updatedByName?: string | null;
 }
 
-export default function EditProductForm({ product }: { product: Product }) {
+export default function EditProductForm({
+  product,
+  showAudit = false,
+}: {
+  product: Product;
+  showAudit?: boolean;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -421,6 +432,18 @@ export default function EditProductForm({ product }: { product: Product }) {
                 <FontAwesomeIcon icon={faTrash} className="mr-2" /> Удалить
               </Button>
             </div>
+
+            {showAudit && (
+              <AdminAuditMeta
+                className="mt-6"
+                record={{
+                  createdAt: product.createdAt,
+                  updatedAt: product.updatedAt,
+                  createdByName: product.createdByName,
+                  updatedByName: product.updatedByName,
+                }}
+              />
+            )}
           </form>
         </CardContent>
       </Card>

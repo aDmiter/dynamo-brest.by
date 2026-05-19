@@ -14,6 +14,8 @@ import {
 import OrderStatusBadge from '../OrderStatusBadge';
 import TrackingCodeInput from './TrackingCodeInput';
 import DeleteOrderButton from '../DeleteOrderButton';
+import { getAdminPageFlags } from '@/lib/admin-page';
+import AdminAuditMeta from '@/modules/admin/components/AdminAuditMeta';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -27,6 +29,8 @@ export default async function OrderDetailPage({ params }: Props) {
   });
 
   if (!order) notFound();
+
+  const { showAudit } = await getAdminPageFlags();
 
   return (
     <div>
@@ -219,6 +223,15 @@ export default async function OrderDetailPage({ params }: Props) {
                 })}
               </p>
             </div>
+            {showAudit && (
+              <AdminAuditMeta
+                showCreated={false}
+                record={{
+                  updatedAt: order.updatedAt,
+                  updatedByName: order.updatedByName,
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

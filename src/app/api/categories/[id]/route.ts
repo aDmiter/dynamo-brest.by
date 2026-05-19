@@ -1,6 +1,7 @@
 // src/app/api/categories/[id]/route.ts - API конкретной категории
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { auditUpdateData } from '@/lib/admin-audit-route';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -17,7 +18,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
     if (data.order !== undefined) updateData.order = data.order;
 
-    const category = await prisma.productcategory.update({ where: { id }, data: updateData });
+    const category = await prisma.productcategory.update({
+      where: { id },
+      data: { ...updateData, ...(await auditUpdateData()) },
+    });
     return NextResponse.json(category);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';

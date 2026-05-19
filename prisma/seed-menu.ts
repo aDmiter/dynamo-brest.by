@@ -1,11 +1,28 @@
 // prisma/seed-menu.ts - Заполнение меню начальными данными
 import { PrismaClient } from '@prisma/client';
 import { CODED_MENU_ROUTES } from '../src/config/coded-menu-routes';
+import { CODED_CMS_PAGES } from '../src/config/coded-cms-pages';
+import { CLUB_CONTACT_SECTIONS } from '../src/config/club-contacts';
+import { clubContactSectionsToHtml } from '../src/lib/club-contacts-html';
+import { CMS_PAGE_HTML_BY_SLUG } from '../src/lib/cms-page-html/pages';
 
 const prisma = new PrismaClient();
 
-/** Страница из src/app — только type: link + linkUrl (не «Текстовая страница») */
+/** Страница из src/app — только type: link + linkUrl (не CMSTextPage) */
 const link = 'link' as const;
+const page = 'page' as const;
+
+function cmsPage(slug: keyof typeof CMS_PAGE_HTML_BY_SLUG) {
+  const cfg = CODED_CMS_PAGES[slug];
+  return {
+    type: page,
+    linkUrl: null,
+    subtitle: cfg.defaultSubtitle,
+    pageContent: CMS_PAGE_HTML_BY_SLUG[slug](),
+    heroHeader: cfg.defaultHeroHeader ?? false,
+    imageUrl: cfg.defaultImageUrl ?? null,
+  };
+}
 
 async function seedMenu() {
   console.log('🌱 Заполнение меню...');
@@ -156,14 +173,14 @@ async function seedMenu() {
       {
         title: 'О школе',
         slug: 'school-about',
-        linkUrl: '/school/about',
+        ...cmsPage('school-about'),
         parentId: school.id,
         order: 1,
       },
       {
         title: 'Как стать игроком',
         slug: 'school-join',
-        linkUrl: '/school/join',
+        ...cmsPage('school-join'),
         parentId: school.id,
         order: 2,
       },
@@ -177,14 +194,14 @@ async function seedMenu() {
       {
         title: 'Турниры',
         slug: 'school-tournaments',
-        linkUrl: '/school/tournaments',
+        ...cmsPage('school-tournaments'),
         parentId: school.id,
         order: 4,
       },
       {
         title: 'Команды',
         slug: 'school-teams',
-        linkUrl: '/school/teams',
+        ...cmsPage('school-teams'),
         parentId: school.id,
         order: 5,
       },
@@ -204,34 +221,35 @@ async function seedMenu() {
         parentId: club.id,
         order: 1,
       },
-      { title: 'О клубе', slug: 'club-about', linkUrl: '/club/about', parentId: club.id, order: 2 },
       {
         title: 'История',
         slug: 'club-history',
         linkUrl: '/club/history',
         parentId: club.id,
-        order: 3,
+        order: 2,
       },
       {
         title: 'Партнеры и спонсоры',
         slug: 'club-partners',
-        linkUrl: '/club/partners',
+        ...cmsPage('club-partners'),
         parentId: club.id,
-        order: 4,
+        order: 3,
       },
       {
         title: 'Стадион',
         slug: 'club-stadium',
-        linkUrl: '/club/stadium',
+        ...cmsPage('club-stadium'),
         parentId: club.id,
-        order: 5,
+        order: 4,
       },
       {
         title: 'Контакты',
         slug: 'club-contacts',
-        linkUrl: '/club/contacts',
+        type: 'page',
+        subtitle: 'Клуб',
+        pageContent: clubContactSectionsToHtml(CLUB_CONTACT_SECTIONS),
         parentId: club.id,
-        order: 6,
+        order: 5,
       },
     ],
   });
@@ -244,7 +262,7 @@ async function seedMenu() {
     data: {
       title: 'Болельщики',
       slug: 'fans-supporters',
-      linkUrl: '/fans',
+      ...cmsPage('fans-supporters'),
       parentId: fans.id,
       order: 1,
     },
@@ -259,40 +277,35 @@ async function seedMenu() {
       {
         title: 'Услуги транспорта',
         slug: 'services-transport',
-        type: link,
-        linkUrl: CODED_MENU_ROUTES['services-transport'],
+        ...cmsPage('services-transport'),
         parentId: services.id,
         order: 1,
       },
       {
         title: 'Услуги полей',
         slug: 'services-fields',
-        type: link,
-        linkUrl: CODED_MENU_ROUTES['services-fields'],
+        ...cmsPage('services-fields'),
         parentId: services.id,
         order: 2,
       },
       {
         title: 'Кафе',
         slug: 'services-cafe',
-        type: link,
-        linkUrl: '/services/cafe',
+        ...cmsPage('services-cafe'),
         parentId: services.id,
         order: 3,
       },
       {
         title: 'Гостиница',
         slug: 'services-hotel',
-        type: link,
-        linkUrl: '/services/hotel',
+        ...cmsPage('services-hotel'),
         parentId: services.id,
         order: 4,
       },
       {
         title: 'Тренажерный зал',
         slug: 'services-gym',
-        type: link,
-        linkUrl: CODED_MENU_ROUTES['services-gym'],
+        ...cmsPage('services-gym'),
         parentId: services.id,
         order: 5,
       },
@@ -324,26 +337,46 @@ async function seedMenu() {
       {
         title: 'Доставка',
         slug: 'shop-delivery',
-        type: link,
-        linkUrl: CODED_MENU_ROUTES['shop-delivery'],
+        ...cmsPage('shop-delivery'),
         parentId: shop.id,
         order: 2,
       },
       {
         title: 'Оплата',
         slug: 'shop-payment',
-        type: link,
-        linkUrl: CODED_MENU_ROUTES['shop-payment'],
+        ...cmsPage('shop-payment'),
         parentId: shop.id,
         order: 3,
       },
       {
         title: 'Возврат товара',
         slug: 'shop-returns',
-        type: link,
-        linkUrl: CODED_MENU_ROUTES['shop-returns'],
+        ...cmsPage('shop-returns'),
         parentId: shop.id,
         order: 4,
+      },
+    ],
+  });
+
+  const media = await prisma.menuitem.create({
+    data: { title: 'Медиа', slug: 'media', type: 'link', order: 9 },
+  });
+
+  await prisma.menuitem.createMany({
+    data: [
+      {
+        title: 'Для СМИ',
+        slug: 'media-press',
+        ...cmsPage('media-press'),
+        parentId: media.id,
+        order: 1,
+      },
+      {
+        title: 'Гимны',
+        slug: 'media-anthems',
+        ...cmsPage('media-anthems'),
+        parentId: media.id,
+        order: 2,
       },
     ],
   });

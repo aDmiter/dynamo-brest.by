@@ -4,6 +4,9 @@
 import { useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 
+import { createJoditGalleryButton } from '@/modules/admin/components/jodit-gallery-button';
+import { buildCmsGalleryHtml } from '@/lib/cms-gallery';
+
 interface JoditEditorProps {
   content: string;
   onChange: (html: string) => void;
@@ -55,8 +58,10 @@ export default function TipTapEditor({ content, onChange }: JoditEditorProps) {
         'copyformat',
         '|',
         'spoiler',
+        'cmsGallery',
       ],
       extraButtons: [
+        createJoditGalleryButton(buildCmsGalleryHtml),
         {
           name: 'spoiler',
           tooltip: 'Вставить спойлер',

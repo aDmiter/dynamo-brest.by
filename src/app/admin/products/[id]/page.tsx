@@ -1,6 +1,7 @@
 // src/app/admin/products/[id]/page.tsx - Редактирование товара
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import { getAdminPageFlags } from '@/lib/admin-page';
 import EditProductForm from './EditProductForm';
 
 interface Props {
@@ -18,6 +19,8 @@ export default async function EditProductPage({ params }: Props) {
   });
 
   if (!product) notFound();
+
+  const { showAudit } = await getAdminPageFlags();
 
   const serializedProduct = {
     ...product,
@@ -38,7 +41,7 @@ export default async function EditProductPage({ params }: Props) {
       <div className="mb-6">
         <h1 className="font-heading text-2xl font-bold text-white">Редактирование товара</h1>
       </div>
-      <EditProductForm product={serializedProduct} />
+      <EditProductForm product={serializedProduct} showAudit={showAudit} />
     </div>
   );
 }

@@ -8,13 +8,15 @@ datasource db {
 }
 
 model admin {
-  id        String   @id @default(cuid())
-  email     String   @unique(map: "Admin_email_key")
-  password  String
-  name      String
-  role      String   @default("editor")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  email       String   @unique(map: "Admin_email_key")
+  password    String
+  name        String
+  role        String   @default("editor")
+  permissions Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model banner {
@@ -149,35 +151,41 @@ model Facility {
 }
 
 model news {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique(map: "News_slug_key")
-  content     String   @db.Text
-  excerpt     String   @db.Text
-  imageUrl    String?
-  isFeatured  Boolean  @default(false)
-  publishedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  category    String   @default("general")
-  isPublished Boolean  @default(true)
+  id               String   @id @default(cuid())
+  title            String
+  slug             String   @unique(map: "News_slug_key")
+  content          String   @db.Text
+  excerpt          String   @db.Text
+  imageUrl         String?
+  isFeatured       Boolean  @default(false)
+  publishedAt      DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  category         String   @default("general")
+  isPublished      Boolean  @default(true)
+  createdByAdminId String?
+  createdByName    String?
+  updatedByAdminId String?
+  updatedByName    String?
 }
 
 model order {
-  id            String      @id @default(cuid())
-  customerName  String
-  customerEmail String?
-  customerPhone String
-  address       String?
-  comment       String?     @db.Text
-  status        String      @default("new")
-  total         Decimal     @db.Decimal(10, 2)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  orderNumber   String?     @unique
-  trackingCode  String?
-  deliveryPrice Decimal?    @db.Decimal(10, 2)
-  orderitem     orderitem[]
+  id               String      @id @default(cuid())
+  customerName     String
+  customerEmail    String?
+  customerPhone    String
+  address          String?
+  comment          String?     @db.Text
+  status           String      @default("new")
+  total            Decimal     @db.Decimal(10, 2)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  orderNumber      String?     @unique
+  trackingCode     String?
+  deliveryPrice    Decimal?    @db.Decimal(10, 2)
+  updatedByAdminId String?
+  updatedByName    String?
+  orderitem        orderitem[]
 }
 
 model orderitem {
@@ -291,6 +299,10 @@ model product {
   hasCustomization  Boolean           @default(false)
   useSizes          Boolean           @default(false)
   totalSold         Int               @default(0)
+  createdByAdminId  String?
+  createdByName     String?
+  updatedByAdminId  String?
+  updatedByName     String?
   orderitem         orderitem[]
   productsize       ProductSize[]
   productcategory   productcategory   @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
@@ -299,14 +311,18 @@ model product {
 }
 
 model productcategory {
-  id        String    @id @default(cuid())
-  name      String
-  slug      String    @unique(map: "ProductCategory_slug_key")
-  imageUrl  String?
-  order     Int       @default(0)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  product   product[]
+  id               String    @id @default(cuid())
+  name             String
+  slug             String    @unique(map: "ProductCategory_slug_key")
+  imageUrl         String?
+  order            Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  createdByAdminId String?
+  createdByName    String?
+  updatedByAdminId String?
+  updatedByName    String?
+  product          product[]
 }
 
 model sponsor {
@@ -427,6 +443,7 @@ model menuitem {
   pageContent String?   @db.LongText
   imageUrl    String?
   subtitle    String?
+  heroHeader  Boolean   @default(false)
   parentId    String?
   parent      menuitem? @relation("MenuChildren", fields: [parentId], references: [id])
   children    menuitem[] @relation("MenuChildren")
@@ -454,6 +471,9 @@ model footermenuitem {
   type        String   @default("page")
   linkUrl     String?
   pageContent String?  @db.LongText
+  imageUrl    String?
+  subtitle    String?
+  heroHeader  Boolean  @default(false)
   order       Int      @default(0)
   isActive    Boolean  @default(true)
   isExternal  Boolean  @default(false)
@@ -470,4 +490,91 @@ model footercontacts {
   addressLabel String   @default("Адрес офиса в Бресте")
   address      String   @default("г. Брест, ул. Гоголя, 9")
   updatedAt    DateTime @updatedAt
+}
+
+model clubHistoryIntro {
+  id               String   @id @default("main")
+  contentHtml      String   @db.LongText
+  coverUrl         String?
+  updatedAt        DateTime @updatedAt
+  updatedByAdminId String?
+  updatedByName    String?
+}
+
+model clubHistoryYear {
+  id               String                 @id @default(cuid())
+  label            String
+  year             Int
+  sortOrder        Int                    @default(0)
+  highlight        Boolean                @default(false)
+  contentHtml      String                 @db.LongText
+  isActive         Boolean                @default(true)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  createdByAdminId String?
+  createdByName    String?
+  updatedByAdminId String?
+  updatedByName    String?
+  images           clubHistoryYearImage[]
+
+  @@index([sortOrder])
+  @@index([year])
+}
+
+model clubHistoryYearImage {
+  id        String          @id @default(cuid())
+  yearId    String
+  url       String
+  alt       String          @default("")
+  sortOrder Int             @default(0)
+  year      clubHistoryYear @relation(fields: [yearId], references: [id], onDelete: Cascade)
+
+  @@index([yearId, sortOrder])
+}
+
+model clubContactsPage {
+  id        String   @id @default("main")
+  title     String   @default("Контакты")
+  subtitle  String?  @default("Клуб")
+  lead      String?  @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+model clubContactSection {
+  id        String              @id @default(cuid())
+  slug      String              @unique
+  title     String
+  legalName String              @db.Text
+  address   String              @db.Text
+  email     String
+  sortOrder Int                 @default(0)
+  phones    clubContactPhone[]
+  staff     clubContactStaff[]
+
+  @@index([sortOrder])
+}
+
+model clubContactPhone {
+  id        String             @id @default(cuid())
+  sectionId String
+  label     String
+  display   String
+  href      String
+  sortOrder Int                @default(0)
+  section   clubContactSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId, sortOrder])
+}
+
+model clubContactStaff {
+  id        String             @id @default(cuid())
+  sectionId String
+  position  String
+  name      String
+  phone     String
+  phoneHref String
+  sortOrder Int                @default(0)
+  section   clubContactSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId, sortOrder])
 }

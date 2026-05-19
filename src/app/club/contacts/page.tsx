@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
-import ClubContactsView from '@/modules/club/components/ClubContactsView';
+import { CODED_CMS_PAGES } from '@/config/coded-cms-pages';
+import { CodedCmsPageView } from '@/lib/coded-cms-page';
 
-export const metadata: Metadata = {
-  title: 'Контакты | Динамо-Брест',
-  description:
-    'Контакты ФК «Динамо-Брест»: адрес, телефоны, e-mail и руководство клуба и СДЮШОР олимпийского резерва.',
-};
+const SLUG = 'club-contacts';
+
+export const metadata: Metadata = CODED_CMS_PAGES[SLUG].metadata;
 
 export default function ClubContactsPage() {
-  return <ClubContactsView />;
+  return <CodedCmsPageView slug={SLUG} />;
 }

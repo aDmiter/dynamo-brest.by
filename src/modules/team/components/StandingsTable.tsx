@@ -98,9 +98,9 @@ export default function StandingsTable({ cometId, onTournamentName }: Props) {
   const totalTeams = standings.length;
 
   return (
-    <div style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+    <div className="standings-table" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
       <div
-        className="overflow-x-auto"
+        className="standings-table__wrap"
         style={{
           border: '1px solid var(--color-border)',
           borderRadius: 16,
@@ -108,7 +108,7 @@ export default function StandingsTable({ cometId, onTournamentName }: Props) {
           overflow: 'hidden',
         }}
       >
-        <table className="min-w-full border-collapse">
+        <table className="standings-table__table min-w-full border-collapse">
           <thead>
             <tr
               style={{
@@ -117,61 +117,61 @@ export default function StandingsTable({ cometId, onTournamentName }: Props) {
               }}
             >
               <th
-                className="py-3 px-4 text-center text-xs font-bold uppercase tracking-wider w-12"
+                className="py-3 px-2 text-center text-xs font-bold uppercase tracking-wider w-10 md:w-12 md:px-4"
                 style={{ color: 'var(--color-accent)' }}
               >
                 #
               </th>
               <th
-                className="py-3 px-4 text-left text-xs font-bold uppercase tracking-wider"
+                className="py-3 px-2 text-left text-xs font-bold uppercase tracking-wider md:px-4"
                 style={{ color: 'var(--color-accent)' }}
               >
                 Команда
               </th>
               <th
-                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                className="py-3 px-2 text-center text-xs font-bold uppercase tracking-wider w-9 md:w-10 md:px-3"
                 style={{ color: 'var(--color-accent)' }}
               >
                 И
               </th>
               <th
-                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                className="standings-table__col--wide hidden py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10 md:table-cell"
                 style={{ color: 'var(--color-accent)' }}
               >
                 В
               </th>
               <th
-                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                className="standings-table__col--wide hidden py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10 md:table-cell"
                 style={{ color: 'var(--color-accent)' }}
               >
                 Н
               </th>
               <th
-                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                className="standings-table__col--wide hidden py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10 md:table-cell"
                 style={{ color: 'var(--color-accent)' }}
               >
                 П
               </th>
               <th
-                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                className="standings-table__col--wide hidden py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10 md:table-cell"
                 style={{ color: 'var(--color-accent)' }}
               >
                 ЗМ
               </th>
               <th
-                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                className="standings-table__col--wide hidden py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10 md:table-cell"
                 style={{ color: 'var(--color-accent)' }}
               >
                 ПМ
               </th>
               <th
-                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10"
+                className="standings-table__col--wide hidden py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-10 md:table-cell"
                 style={{ color: 'var(--color-accent)' }}
               >
                 ±
               </th>
               <th
-                className="py-3 px-3 text-center text-xs font-bold uppercase tracking-wider w-12"
+                className="py-3 px-2 text-center text-xs font-bold uppercase tracking-wider w-10 md:w-12 md:px-3"
                 style={{ color: 'var(--color-accent)' }}
               >
                 О
@@ -206,7 +206,7 @@ export default function StandingsTable({ cometId, onTournamentName }: Props) {
                         : 'transparent';
                   }}
                 >
-                  <td className="py-3 px-4 text-center relative z-10">
+                  <td className="py-3 px-2 text-center relative z-10 md:px-4">
                     {showZones && (
                       <div
                         style={{
@@ -232,7 +232,7 @@ export default function StandingsTable({ cometId, onTournamentName }: Props) {
                       {team.position}
                     </span>
                   </td>
-                  <td className="py-3 px-4 relative z-10" style={{ overflow: 'hidden' }}>
+                  <td className="py-3 px-2 relative z-10 md:px-4" style={{ overflow: 'hidden' }}>
                     <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
                       {team.logoUrl && (
                         <img
@@ -269,43 +269,43 @@ export default function StandingsTable({ cometId, onTournamentName }: Props) {
                     </div>
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm relative z-10"
+                    className="py-3 px-2 text-center text-sm relative z-10 md:px-3"
                     style={{ color: 'rgba(255,255,255,0.5)' }}
                   >
                     {team.matches}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm relative z-10"
+                    className="standings-table__col--wide hidden py-3 px-3 text-center text-sm relative z-10 md:table-cell"
                     style={{ color: 'var(--color-win)' }}
                   >
                     {team.wins}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm relative z-10"
+                    className="standings-table__col--wide hidden py-3 px-3 text-center text-sm relative z-10 md:table-cell"
                     style={{ color: 'rgba(255,255,255,0.4)' }}
                   >
                     {team.draws}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm relative z-10"
+                    className="standings-table__col--wide hidden py-3 px-3 text-center text-sm relative z-10 md:table-cell"
                     style={{ color: 'var(--color-loss)' }}
                   >
                     {team.losses}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm relative z-10"
+                    className="standings-table__col--wide hidden py-3 px-3 text-center text-sm relative z-10 md:table-cell"
                     style={{ color: 'rgba(255,255,255,0.6)' }}
                   >
                     {team.goalsFor}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm relative z-10"
+                    className="standings-table__col--wide hidden py-3 px-3 text-center text-sm relative z-10 md:table-cell"
                     style={{ color: 'rgba(255,255,255,0.6)' }}
                   >
                     {team.goalsAgainst}
                   </td>
                   <td
-                    className="py-3 px-3 text-center text-sm font-mono relative z-10"
+                    className="standings-table__col--wide hidden py-3 px-3 text-center text-sm font-mono relative z-10 md:table-cell"
                     style={{
                       color:
                         team.goalDifference > 0
@@ -318,7 +318,7 @@ export default function StandingsTable({ cometId, onTournamentName }: Props) {
                     {team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}
                   </td>
                   <td
-                    className="py-3 px-3 text-center relative z-10"
+                    className="py-3 px-2 text-center relative z-10 md:px-3"
                     style={{
                       fontFamily: "'Inter Tight', sans-serif",
                       fontSize: 15,

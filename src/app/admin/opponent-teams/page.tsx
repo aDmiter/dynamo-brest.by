@@ -48,10 +48,8 @@ export default function OpponentTeamsPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [syncing, setSyncing] = useState(false);
-  const [syncingProtocol, setSyncingProtocol] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
-  const [showSyncModal, setShowSyncModal] = useState(false);
-  const [showProtocolSyncModal, setShowProtocolSyncModal] = useState(false);
+  const [showCometSyncModal, setShowCometSyncModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
@@ -152,46 +150,49 @@ export default function OpponentTeamsPage() {
     };
   }, [search, page, fetchTeams, sortTeamsWithPinned]);
 
-  const handleSync = async () => {
-    setShowSyncModal(false);
+  const handleCometSync = async () => {
+    setShowCometSyncModal(false);
     setSyncing(true);
     setSyncResult(null);
-    try {
-      const res = await fetch('/api/sync/matches', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        setSyncResult('✅ Матчи и клубы синхронизированы.');
-        await refreshData();
-      } else {
-        setSyncResult(`❌ Матчи: ${data.error || 'Неизвестная ошибка'}`);
-      }
-    } catch {
-      setSyncResult('❌ Матчи: ошибка соединения');
-    } finally {
-      setSyncing(false);
-      setTimeout(() => setSyncResult(null), 6000);
-    }
-  };
 
-  const handleProtocolSync = async () => {
-    setShowProtocolSyncModal(false);
-    setSyncingProtocol(true);
-    setSyncResult(null);
+    const lines: string[] = [];
+    let matchesOk = false;
+
     try {
-      const res = await fetch('/api/sync/match-protocol', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        const tail = Array.isArray(data.logs) ? data.logs.slice(-4).join(' · ') : '';
-        setSyncResult(tail ? `✅ Протоколы синхронизированы. ${tail}` : '✅ Протоколы синхронизированы.');
+      const matchesRes = await fetch('/api/sync/matches', { method: 'POST' });
+      const matchesData = await matchesRes.json();
+      if (matchesData.success) {
+        matchesOk = true;
+        lines.push('✅ Матчи и клубы синхронизированы.');
       } else {
-        setSyncResult(`❌ Протоколы: ${data.error || 'Неизвестная ошибка'}`);
+        lines.push(`❌ Матчи: ${matchesData.error || 'Неизвестная ошибка'}`);
       }
     } catch {
-      setSyncResult('❌ Протоколы: ошибка соединения');
-    } finally {
-      setSyncingProtocol(false);
-      setTimeout(() => setSyncResult(null), 10000);
+      lines.push('❌ Матчи: ошибка соединения');
     }
+
+    try {
+      const protocolRes = await fetch('/api/sync/match-protocol', { method: 'POST' });
+      const protocolData = await protocolRes.json();
+      if (protocolData.success) {
+        const tail = Array.isArray(protocolData.logs)
+          ? protocolData.logs.slice(-4).join(' · ')
+          : '';
+        lines.push(tail ? `✅ Протоколы синхронизированы. ${tail}` : '✅ Протоколы синхронизированы.');
+      } else {
+        lines.push(`❌ Протоколы: ${protocolData.error || 'Неизвестная ошибка'}`);
+      }
+    } catch {
+      lines.push('❌ Протоколы: ошибка соединения');
+    }
+
+    if (matchesOk) {
+      await refreshData();
+    }
+
+    setSyncResult(lines.join('\n'));
+    setSyncing(false);
+    setTimeout(() => setSyncResult(null), 12000);
   };
 
   const startEdit = (team: OpponentTeam) => {
@@ -282,26 +283,13 @@ export default function OpponentTeamsPage() {
         <div className="flex items-center gap-3">
           <Button
             size="sm"
-            onClick={() => setShowSyncModal(true)}
-            disabled={syncing || syncingProtocol}
+            onClick={() => setShowCometSyncModal(true)}
+            disabled={syncing}
             variant="outline"
             className="border-[#ee862c]/30 text-[#ee862c] hover:bg-[#ee862c]/10 hover:border-[#ee862c]"
           >
             <FontAwesomeIcon icon={faSync} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
-            Синхронизировать матчи
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setShowProtocolSyncModal(true)}
-            disabled={syncing || syncingProtocol}
-            variant="outline"
-            className="border-[#ee862c]/30 text-[#ee862c] hover:bg-[#ee862c]/10 hover:border-[#ee862c]"
-          >
-            <FontAwesomeIcon
-              icon={faSync}
-              className={`mr-2 ${syncingProtocol ? 'animate-spin' : ''}`}
-            />
-            Синхронизировать протоколы
+            Синхронизация Comet
           </Button>
           <Button
             size="sm"
@@ -316,7 +304,7 @@ export default function OpponentTeamsPage() {
 
       {syncResult && (
         <div
-          className={`mb-4 border p-3 text-sm whitespace-pre-wrap ${syncResult.startsWith('✅') ? 'border-green-500/20 bg-green-500/10 text-green-400' : 'border-red-500/20 bg-red-500/10 text-red-400'}`}
+          className={`mb-4 border p-3 text-sm whitespace-pre-wrap ${syncResult.includes('❌') ? 'border-red-500/20 bg-red-500/10 text-red-400' : 'border-green-500/20 bg-green-500/10 text-green-400'}`}
         >
           {syncResult}
         </div>
@@ -567,23 +555,13 @@ export default function OpponentTeamsPage() {
       )}
 
       <ConfirmModal
-        isOpen={showSyncModal}
-        title="Синхронизация матчей"
-        message="Будут загружены матчи и клубы соперников из COMET. Это может занять некоторое время."
+        isOpen={showCometSyncModal}
+        title="Синхронизация Comet"
+        message="Будут загружены матчи и клубы соперников, затем составы, голы, карточки и замены по сыгранным матчам. Нужны ключи API COMET (матчи, статистика игроков, события матчей). Может занять несколько минут."
         confirmLabel="Синхронизировать"
-        onConfirm={handleSync}
-        onCancel={() => setShowSyncModal(false)}
+        onConfirm={handleCometSync}
+        onCancel={() => setShowCometSyncModal(false)}
         loading={syncing}
-      />
-
-      <ConfirmModal
-        isOpen={showProtocolSyncModal}
-        title="Синхронизация протоколов"
-        message="Загрузятся составы, голы, карточки и замены по сыгранным матчам (нужны ключи «Статистика игроков» и «События матчей» в настройках API). Обычно 1–3 минуты."
-        confirmLabel="Синхронизировать"
-        onConfirm={handleProtocolSync}
-        onCancel={() => setShowProtocolSyncModal(false)}
-        loading={syncingProtocol}
       />
 
       {showAddModal && (

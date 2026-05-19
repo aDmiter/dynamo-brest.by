@@ -1,13 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  CLUB_HISTORY_INTRO_BLOCKS,
-  CLUB_HISTORY_YEARS,
-  getClubHistoryDecades,
-  type ClubHistoryYear,
-} from '@/config/club-history';
-import ClubHistoryBlocks from './ClubHistoryBlocks';
+import type { PublicClubHistory, PublicClubHistoryYear } from '@/lib/club-history-types';
+import { getClubHistoryDecades } from '@/lib/club-history';
+import CompactPageHero from '@/modules/shared/ui/CompactPageHero';
+import ClubHistoryIntroContent from './ClubHistoryIntroContent';
 import ClubHistoryModal from './ClubHistoryModal';
 
 function useInView(threshold = 0.12) {
@@ -38,13 +35,12 @@ function TimelineItem({
   index,
   onOpen,
 }: {
-  entry: ClubHistoryYear;
+  entry: PublicClubHistoryYear;
   index: number;
-  onOpen: (entry: ClubHistoryYear) => void;
+  onOpen: (entry: PublicClubHistoryYear) => void;
 }) {
   const { ref, visible } = useInView();
   const side = index % 2 === 0 ? 'left' : 'right';
-  const cover = entry.blocks.find((b) => b.type === 'image');
 
   return (
     <li
@@ -60,10 +56,10 @@ function TimelineItem({
       >
         <span className="club-history-timeline__year">{entry.year}</span>
         <span className="club-history-timeline__label">{entry.label}</span>
-        {cover && cover.type === 'image' ? (
+        {entry.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={cover.src}
+            src={entry.coverUrl}
             alt=""
             className="club-history-timeline__thumb"
             loading="lazy"
@@ -76,50 +72,43 @@ function TimelineItem({
   );
 }
 
-export default function ClubHistoryView() {
-  const currentYear = new Date().getFullYear();
-  const decades = useMemo(() => getClubHistoryDecades(), []);
+type Props = {
+  data: PublicClubHistory;
+};
+
+export default function ClubHistoryView({ data }: Props) {
+  const decades = useMemo(() => getClubHistoryDecades(data.years), [data.years]);
   const [activeDecade, setActiveDecade] = useState<number | 'all'>('all');
-  const [modalEntry, setModalEntry] = useState<ClubHistoryYear | null>(null);
+  const [modalEntry, setModalEntry] = useState<PublicClubHistoryYear | null>(null);
 
   const filteredYears = useMemo(() => {
-    if (activeDecade === 'all') return CLUB_HISTORY_YEARS;
-    return CLUB_HISTORY_YEARS.filter(
+    if (activeDecade === 'all') return data.years;
+    return data.years.filter(
       (y) => y.year >= activeDecade && y.year < activeDecade + 10,
     );
-  }, [activeDecade]);
+  }, [activeDecade, data.years]);
 
-  const openModal = useCallback((entry: ClubHistoryYear) => {
+  const openModal = useCallback((entry: PublicClubHistoryYear) => {
     setModalEntry(entry);
   }, []);
 
   const closeModal = useCallback(() => setModalEntry(null), []);
 
   return (
-    <div className="club-history">
-      <div className="club-history__glow club-history__glow--accent" aria-hidden />
-      <div className="club-history__glow club-history__glow--primary" aria-hidden />
+    <article className="legal-page club-history-page">
+      <div className="legal-page__header">
+        <CompactPageHero subtitle="Клуб" title="История" watermark="Клуб" />
+      </div>
 
-      <header className="club-history__hero">
-        <div className="club-history__hero-inner">
-          <p className="club-history__eyebrow">Клуб</p>
-          <h1 className="club-history__title">История</h1>
-          <p className="club-history__lead">
-            От «Спартака»-1960 до чемпионства и еврокубков — путь «Динамо-Брест» по сезонам
-          </p>
-        </div>
-        <div className="club-history__hero-badge" aria-hidden>
-          <span className="club-history__hero-badge-year">1960</span>
-          <span className="club-history__hero-badge-dash" />
-          <span className="club-history__hero-badge-year">{currentYear}</span>
-        </div>
-      </header>
+      <section className="legal-page__content club-history">
+        <div className="club-history__glow club-history__glow--accent" aria-hidden />
+        <div className="club-history__glow club-history__glow--primary" aria-hidden />
 
-      <section className="club-history__intro club-history-glass club-history-content">
-        <ClubHistoryBlocks blocks={CLUB_HISTORY_INTRO_BLOCKS} idPrefix="intro" />
-      </section>
+        <section className="club-history__intro club-history-glass club-history-content">
+          <ClubHistoryIntroContent intro={data.intro} />
+        </section>
 
-      <section className="club-history__timeline-section">
+        <section className="club-history__timeline-section">
         <div className="club-history__timeline-head">
           <h2 className="club-history__section-title">Хронология</h2>
           <div className="club-history__filters" role="tablist" aria-label="Фильтр по десятилетиям">
@@ -150,12 +139,18 @@ export default function ClubHistoryView() {
         <ol className="club-history-timeline">
           <div className="club-history-timeline__line" aria-hidden />
           {filteredYears.map((entry, index) => (
-            <TimelineItem key={`${entry.year}-${entry.label}`} entry={entry} index={index} onOpen={openModal} />
+            <TimelineItem
+              key={entry.id}
+              entry={entry}
+              index={index}
+              onOpen={openModal}
+            />
           ))}
         </ol>
       </section>
 
-      <ClubHistoryModal entry={modalEntry} onClose={closeModal} />
-    </div>
+        <ClubHistoryModal entry={modalEntry} onClose={closeModal} />
+      </section>
+    </article>
   );
 }

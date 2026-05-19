@@ -2,17 +2,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendOrderEmails } from '@/lib/mailer';
+import { auth } from '@/lib/auth';
+import { canAccessSection } from '@/lib/admin-permissions';
+import { auditUpdateData } from '@/lib/admin-audit-route';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+function isGuestPaidStatusUpdate(data: Record<string, unknown>): boolean {
+  const keys = Object.keys(data);
+  return keys.length === 1 && keys[0] === 'status' && data.status === 'paid';
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const data = await request.json();
+    const session = await auth();
+    const user = session?.user;
 
-    // Получаем заказ до обновления
+    const guestPaidOnly = !user && isGuestPaidStatusUpdate(data);
+    if (!user && !guestPaidOnly) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
+    }
+    if (user && !canAccessSection(user, 'shop')) {
+      return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 });
+    }
+    if (guestPaidOnly && Object.keys(data).some((k) => k !== 'status')) {
+      return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 });
+    }
+
     const oldOrder = await prisma.order.findUnique({
       where: { id },
       include: { orderitem: { include: { product: true } } },
@@ -22,10 +42,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Заказ не найден' }, { status: 404 });
     }
 
-    // Обновляем заказ
     const updateData: Record<string, unknown> = {};
     if (data.status !== undefined) updateData.status = data.status;
-    if (data.trackingCode !== undefined) updateData.trackingCode = data.trackingCode;
+    if (user && data.trackingCode !== undefined) updateData.trackingCode = data.trackingCode;
+    if (user) Object.assign(updateData, await auditUpdateData());
 
     const updatedOrder = await prisma.order.update({
       where: { id },
@@ -33,7 +53,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       include: { orderitem: { include: { product: true } } },
     });
 
-    // Преобразуем Decimal в number
     const orderForEmail = {
       id: updatedOrder.id,
       orderNumber: updatedOrder.orderNumber,
@@ -53,7 +72,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       })),
     };
 
-    // Если статус изменился — отправляем письмо
     if (data.status && data.status !== oldOrder.status) {
       await sendOrderEmails(orderForEmail, data.status);
     }
@@ -67,6 +85,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
+    const session = await auth();
+    const user = session?.user;
+    if (!user) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
+    }
+    if (!canAccessSection(user, 'shop')) {
+      return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 });
+    }
+
     const { id } = await params;
 
     const order = await prisma.order.findUnique({ where: { id } });

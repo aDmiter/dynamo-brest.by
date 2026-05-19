@@ -15,9 +15,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import TipTapEditor from '@/modules/admin/components/TipTapEditor';
+import ImageUpload from '@/modules/admin/components/ImageUpload';
+import TextPagesOverview from '@/modules/admin/components/TextPagesOverview';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { resolveFooterMenuTextPageUrl } from '@/lib/cms-text-page-paths';
 
-interface FooterMenuItem {
+export interface FooterMenuItem {
   id: string;
   block: number;
   title: string;
@@ -25,6 +28,9 @@ interface FooterMenuItem {
   type: string;
   linkUrl: string | null;
   pageContent: string | null;
+  imageUrl: string | null;
+  subtitle: string | null;
+  heroHeader: boolean;
   order: number;
   isActive: boolean;
   isExternal: boolean;
@@ -45,9 +51,35 @@ const emptyForm = {
   type: 'page' as string,
   linkUrl: '',
   pageContent: '',
+  imageUrl: '',
+  subtitle: '',
+  heroHeader: false,
   isActive: true,
   isExternal: false,
 };
+
+function collectFooterTextPages(items: FooterMenuItem[]) {
+  return items
+    .filter((item) => item.type === 'page')
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      url: resolveFooterMenuTextPageUrl(item.slug),
+      group: `Нижнее меню · блок ${item.block}`,
+      subtitle: item.subtitle,
+      heroHeader: item.heroHeader ?? false,
+      isActive: item.isActive,
+    }));
+}
+
+export { collectFooterTextPages };
+
+interface FooterMenuPanelProps {
+  embedded?: boolean;
+  editRequestId?: string | null;
+  onEditRequestHandled?: () => void;
+  onItemsChange?: (items: FooterMenuItem[]) => void;
+}
 
 function slugify(text: string): string {
   return text
@@ -57,7 +89,12 @@ function slugify(text: string): string {
     .replace(/[^a-z0-9а-яё-]/gi, '');
 }
 
-export default function FooterMenuAdmin() {
+export function FooterMenuPanel({
+  embedded = false,
+  editRequestId,
+  onEditRequestHandled,
+  onItemsChange,
+}: FooterMenuPanelProps) {
   const [items, setItems] = useState<FooterMenuItem[]>([]);
   const [contacts, setContacts] = useState<FooterContacts | null>(null);
   const [contactsForm, setContactsForm] = useState({
@@ -75,6 +112,7 @@ export default function FooterMenuAdmin() {
     const res = await fetch('/api/footer-menu');
     const data = await res.json();
     setItems(data.items);
+    onItemsChange?.(data.items);
     if (data.contacts) {
       setContacts(data.contacts);
       setContactsForm({
@@ -85,7 +123,7 @@ export default function FooterMenuAdmin() {
       });
     }
     setLoading(false);
-  }, []);
+  }, [onItemsChange]);
 
   useEffect(() => {
     loadData();
@@ -102,6 +140,9 @@ export default function FooterMenuAdmin() {
       type: item.type,
       linkUrl: item.linkUrl || '',
       pageContent: item.pageContent || '',
+      imageUrl: item.imageUrl || '',
+      subtitle: item.subtitle || '',
+      heroHeader: item.heroHeader ?? false,
       isActive: item.isActive,
       isExternal: item.isExternal,
     });
@@ -111,6 +152,15 @@ export default function FooterMenuAdmin() {
     setEditingId('new');
     setEditForm({ ...emptyForm, block });
   };
+
+  useEffect(() => {
+    if (!editRequestId) return;
+    const item = items.find((i) => i.id === editRequestId);
+    if (item) {
+      startEdit(item);
+      onEditRequestHandled?.();
+    }
+  }, [editRequestId, items, onEditRequestHandled]);
 
   const saveEdit = async () => {
     const payload = {
@@ -210,7 +260,9 @@ export default function FooterMenuAdmin() {
                           <FontAwesomeIcon icon={faGripLines} />
                         </span>
                         <FontAwesomeIcon
-                          icon={item.type === 'page' ? faFileAlt : faExternalLinkAlt}
+                          icon={
+                            item.type === 'page' ? faFileAlt : faExternalLinkAlt
+                          }
                           className="text-[#ee862c]/80"
                         />
                         <div className="min-w-0 flex-1">
@@ -260,15 +312,36 @@ export default function FooterMenuAdmin() {
   }
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="font-heading text-2xl font-bold text-white">Нижнее меню</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Пункты в подвале сайта: два блока ссылок и блок контактов
-        </p>
-      </div>
+    <div id={embedded ? 'footer-menu' : undefined}>
+      {!embedded && (
+        <div className="mb-6">
+          <h1 className="font-heading text-2xl font-bold text-white">Нижнее меню</h1>
+          <p className="mt-1 text-sm text-gray-400">
+            Пункты в подвале сайта: два блока ссылок и блок контактов
+          </p>
+        </div>
+      )}
 
-      <div className="mb-8 grid gap-6 lg:grid-cols-2">
+      {embedded && (
+        <div className="mb-6 border-t border-white/10 pt-8">
+          <h2 className="font-heading text-xl font-bold text-white">Нижнее меню</h2>
+          <p className="mt-1 text-sm text-gray-400">
+            Пункты в подвале сайта: блоки 1–2 и контакты в подвале
+          </p>
+        </div>
+      )}
+
+      {!embedded && (
+        <TextPagesOverview
+          pages={collectFooterTextPages(items)}
+          onEdit={(id) => {
+            const item = items.find((i) => i.id === id);
+            if (item) startEdit(item);
+          }}
+        />
+      )}
+
+      <div className={`grid gap-6 lg:grid-cols-2 ${embedded ? 'mb-8' : 'mb-8'}`}>
         {renderBlock(1, 'Блок 1')}
         {renderBlock(2, 'Блок 2')}
       </div>
@@ -439,13 +512,53 @@ export default function FooterMenuAdmin() {
                   </label>
                 </div>
               ) : (
-                <div>
-                  <label className="mb-1 block text-sm text-gray-400">Содержимое</label>
-                  <TipTapEditor
-                    content={editForm.pageContent}
-                    onChange={(html) => setEditForm({ ...editForm, pageContent: html })}
-                  />
-                </div>
+                <>
+                  <div>
+                    <label className="mb-1 block text-sm text-gray-400">
+                      Подзаголовок страницы
+                    </label>
+                    <Input
+                      value={editForm.subtitle}
+                      onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
+                      className="border-white/10 bg-white/5 text-white"
+                      placeholder="legal"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Текст над заголовком и водяной знак (компактная вёрстка)
+                    </p>
+                  </div>
+
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-300">
+                    <input
+                      type="checkbox"
+                      checked={editForm.heroHeader}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, heroHeader: e.target.checked })
+                      }
+                      className="accent-[#ee862c]"
+                    />
+                    Hero header (полноэкранный баннер)
+                  </label>
+
+                  {editForm.heroHeader && (
+                    <div>
+                      <label className="mb-2 block text-sm text-gray-400">Баннер страницы</label>
+                      <ImageUpload
+                        value={editForm.imageUrl}
+                        onChange={(url) => setEditForm({ ...editForm, imageUrl: url })}
+                        folder="headers"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="mb-1 block text-sm text-gray-400">Содержимое</label>
+                    <TipTapEditor
+                      content={editForm.pageContent}
+                      onChange={(html) => setEditForm({ ...editForm, pageContent: html })}
+                    />
+                  </div>
+                </>
               )}
 
               <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-400">
@@ -477,4 +590,8 @@ export default function FooterMenuAdmin() {
       )}
     </div>
   );
+}
+
+export default function FooterMenuAdmin() {
+  return <FooterMenuPanel />;
 }

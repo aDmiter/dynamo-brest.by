@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
         pageContent: data.pageContent || null,
         imageUrl: data.imageUrl || null,
         subtitle: data.subtitle || null,
+        heroHeader: data.heroHeader ?? false,
         parentId: data.parentId || null,
         order: data.order || 0,
         isActive: data.isActive ?? true,

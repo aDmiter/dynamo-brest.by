@@ -1,0 +1,67 @@
+.club-stadium-content {
+  max-width: none;
+}
+
+.club-stadium-content__photo {
+  margin: 0 0 2rem;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 32px rgba(36, 44, 65, 0.08);
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 420px;
+    object-fit: cover;
+  }
+}
+
+.club-stadium-content__title {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 800;
+  margin: 0 0 1.25rem;
+  color: #242c41;
+  line-height: 1.2;
+}
+
+.club-stadium-content__subtitle {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 1.75rem 0 0.75rem;
+  color: #242c41;
+}
+
+.club-stadium-content__p {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #374151;
+}
+
+.club-stadium-content__list {
+  margin: 0 0 1.25rem;
+  padding-left: 1.25rem;
+  color: #374151;
+
+  li {
+    margin-bottom: 0.5rem;
+    line-height: 1.65;
+  }
+}
+
+.legal-page__body.prose .club-stadium-content {
+  max-width: none;
+
+  .club-stadium-content__title,
+  .club-stadium-content__subtitle {
+    margin-top: 0;
+  }
+
+  .club-stadium-content__subtitle {
+    margin-top: 1.75rem;
+  }
+}
