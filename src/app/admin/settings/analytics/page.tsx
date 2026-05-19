@@ -1,6 +1,11 @@
 // src/app/admin/settings/analytics/page.tsx
 import { prisma } from '@/lib/prisma';
-import { ANALYTICS_SETTING_KEYS } from '@/lib/analytics';
+import {
+  ANALYTICS_SETTING_KEYS,
+  parseGoogleAnalyticsId,
+  parseSettingFlag,
+  parseYandexMetrikaId,
+} from '@/lib/analytics';
 import AnalyticsSettingsForm from './AnalyticsSettingsForm';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export default async function AnalyticsSettingsPage() {
   const settings = await prisma.setting.findMany({
     where: {
-      key: { in: [ANALYTICS_SETTING_KEYS.google, ANALYTICS_SETTING_KEYS.yandex] },
+      key: { in: Object.values(ANALYTICS_SETTING_KEYS) },
     },
   });
 
@@ -24,8 +29,10 @@ export default async function AnalyticsSettingsPage() {
         Google Analytics и Яндекс.Метрика на публичном сайте
       </p>
       <AnalyticsSettingsForm
-        initialGoogle={values[ANALYTICS_SETTING_KEYS.google] ?? ''}
-        initialYandex={values[ANALYTICS_SETTING_KEYS.yandex] ?? ''}
+        initialGoogle={parseGoogleAnalyticsId(values[ANALYTICS_SETTING_KEYS.google] ?? '')}
+        initialYandex={parseYandexMetrikaId(values[ANALYTICS_SETTING_KEYS.yandex] ?? '')}
+        initialGoogleEnabled={parseSettingFlag(values[ANALYTICS_SETTING_KEYS.googleEnabled])}
+        initialYandexEnabled={parseSettingFlag(values[ANALYTICS_SETTING_KEYS.yandexEnabled])}
       />
     </div>
   );

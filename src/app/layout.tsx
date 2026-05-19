@@ -1,6 +1,7 @@
 // src/app/layout.tsx - Корневой layout
 import type { Metadata } from 'next';
 import { after } from 'next/server';
+import { redirect } from 'next/navigation';
 import '@/lib/fontawesome';
 import '@/styles/globals.scss';
 import Header from '@/modules/shared/ui/Header';
@@ -10,14 +11,34 @@ import BurgerMenu from '@/modules/shared/ui/BurgerMenu';
 import TicketBuyFabLoader from '@/modules/shared/ui/TicketBuyFabLoader';
 import ThemeInitializer from '@/modules/shared/ui/ThemeInitializer';
 import AnalyticsScripts from '@/modules/shared/ui/AnalyticsScripts';
-import { DEFAULT_METADATA, recordSitePageVisit, resolveSiteMetadata } from '@/lib/site-page-meta';
+import { getAllSettings } from '@/lib/settings';
+import {
+  DEFAULT_METADATA,
+  getSitePageRedirect,
+  recordSitePageVisit,
+  resolveSiteMetadata,
+} from '@/lib/site-page-meta';
+
+function isPartialNavigationRequest(headersList: Headers): boolean {
+  return (
+    headersList.get('rsc') === '1' ||
+    headersList.get('next-router-prefetch') === '1' ||
+    headersList.get('purpose') === 'prefetch'
+  );
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const headersList = await headers();
-  const pathname = headersList.get('x-pathname') || '/';
+  const pathname = headersList.get('x-pathname') ?? '';
+
   if (pathname.startsWith('/admin')) {
     return { title: 'Админ-панель' };
   }
+
+  if (!pathname || isPartialNavigationRequest(headersList)) {
+    return DEFAULT_METADATA;
+  }
+
   return resolveSiteMetadata(pathname, DEFAULT_METADATA);
 }
 
@@ -25,21 +46,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const headersList = await headers();
   const pathname = headersList.get('x-pathname') || '';
   const isAdmin = pathname.startsWith('/admin');
+  const isPartialNav = isPartialNavigationRequest(headersList);
 
-  if (!isAdmin && pathname) {
+  if (!isAdmin && pathname && !isPartialNav) {
+    const redirectTo = await getSitePageRedirect(pathname);
+    if (redirectTo) redirect(redirectTo);
+
     after(() => recordSitePageVisit(pathname));
   }
 
-  let settings: Record<string, string> = {};
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/settings?full=1`, { next: { revalidate: 300 } });
-    if (res.ok) {
-      settings = await res.json();
-    }
-  } catch {
-    // если не удалось — используем дефолтные из CSS
-  }
+  const settings = await getAllSettings();
 
   return (
     <html lang="ru" suppressHydrationWarning>

@@ -93,12 +93,6 @@ async function loadMatchSectionData(): Promise<{
     }),
   ]);
 
-  console.log('📊 Матчи для главной:', {
-    osnova: { next: osnovaNext?.id, last: osnovaLast?.id },
-    dubl: { next: dublNext?.id, nextDate: dublNext?.matchDate, last: dublLast?.id },
-    women: { next: womenNext?.id, nextDate: womenNext?.matchDate, last: womenLast?.id },
-  });
-
   // Собираем все ID соперников для логотипов
   const allMatches = [osnovaNext, osnovaLast, dublNext, dublLast, womenNext, womenLast];
   const opponentIds = new Set<number>();

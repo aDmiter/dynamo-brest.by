@@ -31,6 +31,7 @@ function mapAdminToAuthUser(admin: {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   providers: [
     Credentials({
       name: 'credentials',
@@ -39,22 +40,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: 'Пароль', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        const email = String(credentials?.email ?? '').trim();
+        const password = String(credentials?.password ?? '');
+        if (!email || !password) {
           return null;
         }
 
         const admin = await prisma.admin.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
         });
 
         if (!admin || !admin.isActive) {
           return null;
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          admin.password
-        );
+        const isPasswordValid = await bcrypt.compare(password, admin.password);
 
         if (!isPasswordValid) {
           return null;
@@ -72,7 +72,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.permissions = user.permissions;
       }
 
-      if (token.id) {
+      // Повторный запрос в БД только если в токене нет роли (старые сессии)
+      if (token.id && !token.role) {
         const admin = await prisma.admin.findUnique({
           where: { id: token.id as string },
         });

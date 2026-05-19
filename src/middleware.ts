@@ -1,38 +1,26 @@
-// Middleware: pathname для layout + защита admin API
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+// Middleware: pathname для layout + защита admin API (без auth() на каждый RSC-запрос)
+import { NextRequest, NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 import { checkAdminApiRequest } from '@/lib/admin-api-guard';
+import type { AdminSessionUser } from '@/lib/admin-permissions';
 
-export default auth(async (req) => {
+export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-pathname', pathname);
 
-  if (
-    !pathname.startsWith('/admin') &&
-    !pathname.startsWith('/api') &&
-    !pathname.startsWith('/_next')
-  ) {
-    try {
-      const resolveUrl = new URL('/api/site-pages/resolve', req.url);
-      resolveUrl.searchParams.set('path', pathname);
-      const res = await fetch(resolveUrl, { headers: { 'x-middleware': '1' } });
-      if (res.ok) {
-        const data = (await res.json()) as { redirectTo?: string | null };
-        if (data.redirectTo) {
-          const destination = data.redirectTo.startsWith('http')
-            ? data.redirectTo
-            : new URL(data.redirectTo, req.url).toString();
-          return NextResponse.redirect(destination, 307);
-        }
-      }
-    } catch {
-      /* редирект из БД необязателен */
-    }
-  }
-
   if (pathname.startsWith('/api/')) {
-    const access = checkAdminApiRequest(pathname, req.method, req.auth?.user ?? null);
+    const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+    const user: AdminSessionUser | null =
+      token?.id && token.role
+        ? {
+            id: token.id as string,
+            role: token.role as string,
+            permissions: (token.permissions as AdminSessionUser['permissions']) ?? [],
+          }
+        : null;
+
+    const access = checkAdminApiRequest(pathname, req.method, user);
     if (access === 'unauthorized') {
       return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
     }
@@ -46,7 +34,7 @@ export default auth(async (req) => {
       headers: requestHeaders,
     },
   });
-});
+}
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],

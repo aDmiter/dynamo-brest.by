@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
+import { hasSitePageMetaTable } from '@/lib/site-page-meta';
 import { syncSitePageRegistry } from '@/lib/site-pages-registry';
 import SitePageMetaAdmin from '@/modules/admin/components/SitePageMetaAdmin';
 
@@ -10,6 +11,20 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function SiteSeoAdminPage() {
+  if (!hasSitePageMetaTable()) {
+    return (
+      <div>
+        <h1 className="font-heading text-2xl font-bold text-white mb-4">SEO и Meta страниц</h1>
+        <p className="text-sm text-amber-400">
+          Таблица sitePageMeta ещё не подключена. Выполните в терминале проекта:{' '}
+          <code className="text-[#ee862c]">npx prisma migrate deploy</code> и затем{' '}
+          <code className="text-[#ee862c]">npx prisma generate</code>, перезапустите{' '}
+          <code className="text-[#ee862c]">pnpm dev</code>.
+        </p>
+      </div>
+    );
+  }
+
   const count = await prisma.sitePageMeta.count();
   if (count === 0) {
     await syncSitePageRegistry();

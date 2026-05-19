@@ -18,10 +18,6 @@ export default function TicketBuyFab({ match }: TicketBuyFabProps) {
         className="ticket-buy-fab__link"
         aria-label="Купить билет на ближайший матч"
       >
-        <span className="ticket-buy-fab__icon" aria-hidden>
-          <FontAwesomeIcon icon={faTicket} className="text-lg" />
-        </span>
-
         <span className="ticket-buy-fab__panel">
           <span className="ticket-buy-fab__logos">
             <img
@@ -42,6 +38,10 @@ export default function TicketBuyFab({ match }: TicketBuyFabProps) {
           </span>
 
           <span className="ticket-buy-fab__cta">Купить билет</span>
+        </span>
+
+        <span className="ticket-buy-fab__icon" aria-hidden>
+          <FontAwesomeIcon icon={faTicket} className="text-lg" />
         </span>
       </a>
     </div>

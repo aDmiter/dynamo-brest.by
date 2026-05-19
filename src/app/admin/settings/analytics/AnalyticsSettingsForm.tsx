@@ -2,38 +2,109 @@
 
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faSave, faCheck, faPowerOff } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
-import { ANALYTICS_SETTING_KEYS } from '@/lib/analytics';
+import { Input } from '@/components/ui/input';
+import {
+  ANALYTICS_SETTING_KEYS,
+  isValidGoogleAnalyticsId,
+  isValidYandexMetrikaId,
+  parseGoogleAnalyticsId,
+  parseYandexMetrikaId,
+  settingFlagToString,
+} from '@/lib/analytics';
 
 interface Props {
   initialGoogle: string;
   initialYandex: string;
+  initialGoogleEnabled: boolean;
+  initialYandexEnabled: boolean;
 }
 
-export default function AnalyticsSettingsForm({ initialGoogle, initialYandex }: Props) {
-  const [google, setGoogle] = useState(initialGoogle);
-  const [yandex, setYandex] = useState(initialYandex);
+function CounterEnableButton({
+  enabled,
+  onToggle,
+  label,
+}: {
+  enabled: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      onClick={onToggle}
+      className={
+        enabled
+          ? 'border-green-500/50 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300'
+          : 'border-white/20 text-gray-400 hover:border-[#ee862c]/50 hover:text-white'
+      }
+    >
+      <FontAwesomeIcon icon={faPowerOff} className="mr-2" />
+      {enabled ? `${label}: включён` : `Включить ${label}`}
+    </Button>
+  );
+}
+
+export default function AnalyticsSettingsForm({
+  initialGoogle,
+  initialYandex,
+  initialGoogleEnabled,
+  initialYandexEnabled,
+}: Props) {
+  const [googleId, setGoogleId] = useState(initialGoogle);
+  const [yandexId, setYandexId] = useState(initialYandex);
+  const [googleEnabled, setGoogleEnabled] = useState(initialGoogleEnabled);
+  const [yandexEnabled, setYandexEnabled] = useState(initialYandexEnabled);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSave = async () => {
+    const google = parseGoogleAnalyticsId(googleId);
+    const yandex = parseYandexMetrikaId(yandexId);
+
+    if (!isValidGoogleAnalyticsId(google)) {
+      setError('Некорректный ID Google Analytics. Пример: G-XXXXXXXXXX');
+      return;
+    }
+    if (!isValidYandexMetrikaId(yandex)) {
+      setError('Некорректный номер счётчика Яндекс.Метрики. Только цифры, 5–12 знаков.');
+      return;
+    }
+    if (googleEnabled && !google) {
+      setError('Укажите ID Google Analytics или отключите счётчик.');
+      return;
+    }
+    if (yandexEnabled && !yandex) {
+      setError('Укажите номер счётчика Яндекс.Метрики или отключите счётчик.');
+      return;
+    }
+
     setSaving(true);
     setSaved(false);
+    setError('');
 
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           [ANALYTICS_SETTING_KEYS.google]: google,
           [ANALYTICS_SETTING_KEYS.yandex]: yandex,
+          [ANALYTICS_SETTING_KEYS.googleEnabled]: settingFlagToString(googleEnabled),
+          [ANALYTICS_SETTING_KEYS.yandexEnabled]: settingFlagToString(yandexEnabled),
         }),
       });
+      if (!res.ok) throw new Error('Ошибка сохранения');
+      setGoogleId(google);
+      setYandexId(yandex);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (error) {
-      console.error('Ошибка сохранения:', error);
+    } catch (e) {
+      console.error('Ошибка сохранения:', e);
+      setError('Не удалось сохранить настройки');
     } finally {
       setSaving(false);
     }
@@ -41,48 +112,60 @@ export default function AnalyticsSettingsForm({ initialGoogle, initialYandex }: 
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {error}
+        </div>
+      )}
+
       <div className="border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
         <p className="mb-6 text-sm leading-relaxed text-gray-400">
-          Вставьте полный код счётчика из личного кабинета Google Analytics и Яндекс.Метрики.
-          Скрипты подключаются на публичных страницах (не в админке). После сохранения обновите
-          сайт и проверьте счётчик в режиме отладки.
+          ID можно сохранить на локальной копии, а счётчики включить только на боевом сервере.
+          Пока кнопка «Включить» выключена, скрипты на сайт не попадают.
         </p>
 
-        <div className="space-y-6">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-300">
-              Google Analytics
-            </label>
-            <p className="mb-2 text-xs text-gray-500">
-              Код из раздела «Установка тега» / gtag.js — обычно один или несколько тегов{' '}
-              <code className="text-[#ee862c]/90">&lt;script&gt;</code> для вставки в{' '}
-              <code className="text-[#ee862c]/90">&lt;head&gt;</code>
+        <div className="space-y-8">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="text-sm font-medium text-gray-300">Google Analytics — ID тега</label>
+              <CounterEnableButton
+                enabled={googleEnabled}
+                onToggle={() => setGoogleEnabled((v) => !v)}
+                label="счётчик Google"
+              />
+            </div>
+            <p className="text-xs text-gray-500">
+              Measurement ID, формат <code className="text-[#ee862c]/90">G-XXXXXXXXXX</code>
             </p>
-            <textarea
-              value={google}
-              onChange={(e) => setGoogle(e.target.value)}
-              rows={10}
-              className="w-full resize-y border border-white/10 bg-[#1a1f2e] p-3 font-mono text-xs leading-relaxed text-white focus:border-[#ee862c]/50 focus:outline-none"
-              placeholder={'<!-- Google tag (gtag.js) -->\n<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXX"></script>\n<script>...</script>'}
+            <Input
+              value={googleId}
+              onChange={(e) => setGoogleId(e.target.value)}
+              className="border-white/10 bg-[#1a1f2e] font-mono text-sm text-white"
+              placeholder="G-XXXXXXXXXX"
               spellCheck={false}
             />
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-300">
-              Яндекс.Метрика
-            </label>
-            <p className="mb-2 text-xs text-gray-500">
-              Полный код счётчика: <code className="text-[#ee862c]/90">&lt;script&gt;</code> и, если
-              есть, <code className="text-[#ee862c]/90">&lt;noscript&gt;</code> — блок noscript
-              автоматически попадёт в начало страницы
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="text-sm font-medium text-gray-300">
+                Яндекс.Метрика — номер счётчика
+              </label>
+              <CounterEnableButton
+                enabled={yandexEnabled}
+                onToggle={() => setYandexEnabled((v) => !v)}
+                label="счётчик Метрики"
+              />
+            </div>
+            <p className="text-xs text-gray-500">
+              Номер из кабинета, например <code className="text-[#ee862c]/90">12345678</code>
             </p>
-            <textarea
-              value={yandex}
-              onChange={(e) => setYandex(e.target.value)}
-              rows={12}
-              className="w-full resize-y border border-white/10 bg-[#1a1f2e] p-3 font-mono text-xs leading-relaxed text-white focus:border-[#ee862c]/50 focus:outline-none"
-              placeholder={'<!-- Yandex.Metrika counter -->\n<script type="text/javascript">...</script>\n<noscript>...</noscript>'}
+            <Input
+              value={yandexId}
+              onChange={(e) => setYandexId(e.target.value.replace(/\D/g, ''))}
+              className="border-white/10 bg-[#1a1f2e] font-mono text-sm text-white"
+              placeholder="12345678"
+              inputMode="numeric"
               spellCheck={false}
             />
           </div>

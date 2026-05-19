@@ -6,7 +6,8 @@
     "seed": "tsx prisma/seed.ts && tsx prisma/seed-countries.ts"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
+    "dev:webpack": "next dev --webpack",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",

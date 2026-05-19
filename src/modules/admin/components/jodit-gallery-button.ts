@@ -1,5 +1,6 @@
 import type { CmsGalleryImage } from '@/lib/cms-gallery';
 import { escapeHtml } from '@/lib/html';
+import { uploadImageToServer } from '@/lib/jodit-uploader';
 
 type JoditEditorLike = {
   selection: { insertHTML: (html: string) => void };
@@ -12,13 +13,7 @@ type JoditEditorLike = {
 };
 
 async function uploadGalleryImage(file: File): Promise<string | null> {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('folder', 'cms-galleries');
-  formData.append('storage', 'images');
-
-  const res = await fetch('/api/upload', { method: 'POST', body: formData });
-  const data = (await res.json()) as { url?: string };
+  const data = await uploadImageToServer(file, 'cms-galleries');
   return data.url ?? null;
 }
 

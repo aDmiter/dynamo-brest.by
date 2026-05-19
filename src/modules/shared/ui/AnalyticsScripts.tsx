@@ -1,15 +1,12 @@
-import { getAnalyticsSettings, splitYandexMetrika } from '@/lib/analytics';
-import AnalyticsInjector from './AnalyticsInjector';
+import { getAnalyticsConfig } from '@/lib/analytics';
+import AnalyticsCounters from './AnalyticsCounters';
 
 export default async function AnalyticsScripts() {
-  const { google, yandex } = await getAnalyticsSettings();
-  const { head: yandexHead, body: yandexBody } = splitYandexMetrika(yandex);
-
-  if (!google && !yandexHead && !yandexBody) {
-    return null;
-  }
-
+  const { googleId, yandexId, googleEnabled, yandexEnabled } = await getAnalyticsConfig();
   return (
-    <AnalyticsInjector googleHead={google} yandexHead={yandexHead} yandexBody={yandexBody} />
+    <AnalyticsCounters
+      googleId={googleEnabled ? googleId : ''}
+      yandexId={yandexEnabled ? yandexId : ''}
+    />
   );
 }

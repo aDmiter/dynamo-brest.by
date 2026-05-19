@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       url: publicUrl,
+      files: [publicUrl],
       success: true,
     });
   } catch (error: unknown) {

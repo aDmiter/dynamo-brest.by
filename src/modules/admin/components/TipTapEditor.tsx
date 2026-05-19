@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 
 import { createJoditGalleryButton } from '@/modules/admin/components/jodit-gallery-button';
 import { buildCmsGalleryHtml } from '@/lib/cms-gallery';
+import { createJoditUploaderConfig } from '@/lib/jodit-uploader';
 
 interface JoditEditorProps {
   content: string;
@@ -16,6 +17,8 @@ const JoditEditor = dynamic(() => import('jodit-react'), { ssr: false });
 
 export default function TipTapEditor({ content, onChange }: JoditEditorProps) {
   const editor = useRef(null);
+
+  const uploader = useMemo(() => createJoditUploaderConfig('cms'), []);
 
   const config = useMemo(
     () => ({
@@ -133,13 +136,7 @@ export default function TipTapEditor({ content, onChange }: JoditEditorProps) {
                   'hr',
                   'fullsize',
                 ],
-                uploader: {
-                  url: '/api/upload',
-                  format: 'json',
-                  filesVariableName: 'file',
-                  isSuccess: (resp: { url?: string }) => !!resp.url,
-                  process: (resp: { url?: string }) => resp.url || '',
-                },
+                uploader,
                 style: {
                   background: 'var(--color-bg-admin, #1a1a2e)',
                   color: '#ffffff',
@@ -168,19 +165,13 @@ export default function TipTapEditor({ content, onChange }: JoditEditorProps) {
           },
         },
       ],
-      uploader: {
-        url: '/api/upload',
-        format: 'json',
-        filesVariableName: 'file',
-        isSuccess: (resp: { url?: string; error?: string }) => !!resp.url,
-        process: (resp: { url?: string }) => resp.url || '',
-      },
+      uploader,
       style: {
         background: 'var(--color-bg-admin, #1a1a2e)',
         color: '#ffffff',
       },
     }),
-    []
+    [uploader]
   );
 
   return (

@@ -1,5 +1,6 @@
 // src/styles/ticket-buy-fab.scss — плавающая кнопка «Купить билет»
 $ui-radius: 7px;
+$icon-size: 3rem;
 
 .ticket-buy-fab {
   position: fixed;
@@ -15,11 +16,11 @@ $ui-radius: 7px;
 
 .ticket-buy-fab__link {
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   align-items: center;
-  justify-content: flex-start;
-  height: 3rem;
-  width: 3rem;
+  justify-content: flex-end;
+  height: $icon-size;
+  width: $icon-size;
   max-width: min(20rem, calc(100vw - 3rem));
   overflow: hidden;
   border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
@@ -38,7 +39,8 @@ $ui-radius: 7px;
 
   &:hover,
   &:focus-visible {
-    width: 11.5rem;
+    width: 14rem;
+    padding-left: 0.5rem;
     border-color: var(--color-accent, #d50000);
     background: rgba(36, 44, 65, 0.78);
     box-shadow:
@@ -48,12 +50,12 @@ $ui-radius: 7px;
 }
 
 .ticket-buy-fab__icon {
-  flex-shrink: 0;
+  flex: 0 0 $icon-size;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3rem;
-  height: 3rem;
+  width: $icon-size;
+  height: $icon-size;
   color: #fff;
   transition: color 0.25s ease;
 
@@ -68,7 +70,6 @@ $ui-radius: 7px;
   }
 }
 
-// Периодический «рывок» иконки, чтобы привлечь внимание
 @keyframes ticket-fab-jerk {
   0%,
   72%,
@@ -124,21 +125,18 @@ $ui-radius: 7px;
 
 .ticket-buy-fab__panel {
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
-  padding: 0 0.65rem 0 0.5rem;
+  padding-right: 0.625rem;
   opacity: 0;
-  transform: translateX(8px);
-  transition:
-    opacity 0.3s ease 0.05s,
-    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.05s;
   pointer-events: none;
+  transition: opacity 0.3s ease 0.08s;
 
   .ticket-buy-fab__link:hover &,
   .ticket-buy-fab__link:focus-visible & {
     opacity: 1;
-    transform: translateX(0);
     pointer-events: auto;
   }
 }
@@ -186,6 +184,6 @@ $ui-radius: 7px;
 @media (max-width: 380px) {
   .ticket-buy-fab__link:hover,
   .ticket-buy-fab__link:focus-visible {
-    width: 10.5rem;
+    width: 12.5rem;
   }
 }

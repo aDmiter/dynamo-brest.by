@@ -14,6 +14,10 @@ export function checkAdminApiRequest(
 ): AdminApiAccess {
   if (!pathname.startsWith('/api/')) return 'public';
 
+  if (pathname === '/api/upload' && method.toUpperCase() === 'POST') {
+    return user?.id ? 'ok' : 'unauthorized';
+  }
+
   const section = resolveAdminApiSection(pathname, method);
   if (!section) {
     const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase());

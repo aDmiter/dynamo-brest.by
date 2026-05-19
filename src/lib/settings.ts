@@ -52,7 +52,31 @@ export async function getSettings(keys: string[]): Promise<Record<string, string
   return result;
 }
 
+let allSettingsCache: { data: Record<string, string>; expiresAt: number } | null = null;
+
+/** Все настройки (для ThemeInitializer в layout) */
+export async function getAllSettings(): Promise<Record<string, string>> {
+  if (allSettingsCache && allSettingsCache.expiresAt > Date.now()) {
+    return allSettingsCache.data;
+  }
+
+  try {
+    const settings = await prisma.setting.findMany();
+    const result: Record<string, string> = {};
+    for (const s of settings) {
+      result[s.key] = s.value;
+      cache.set(s.key, { value: s.value, expiresAt: Date.now() + CACHE_TTL });
+    }
+    allSettingsCache = { data: result, expiresAt: Date.now() + CACHE_TTL };
+    return result;
+  } catch (error) {
+    logSettingsUnavailable(error);
+    return {};
+  }
+}
+
 // Инвалидация кэша
 export function clearSettingsCache(): void {
   cache.clear();
+  allSettingsCache = null;
 }

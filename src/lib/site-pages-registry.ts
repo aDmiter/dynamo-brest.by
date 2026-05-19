@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { CODED_CMS_PAGES } from '@/config/coded-cms-pages';
 import { CODED_MENU_ROUTES } from '@/config/coded-menu-routes';
 import { resolveFooterMenuTextPageUrl, resolveMainMenuTextPageUrl } from '@/lib/cms-text-page-paths';
+import { hasSitePageMetaTable } from '@/lib/site-page-meta';
 import { prisma } from '@/lib/prisma';
 
 export type SitePageRegistryEntry = {
@@ -66,6 +67,9 @@ function staticPages(): SitePageRegistryEntry[] {
       label: 'Игрок (шаблон)',
       source: 'template',
       isTemplate: true,
+      defaultTitle: '{firstName} {lastName} - {position} - ФК «Динамо-Брест»',
+      defaultDescription:
+        '{position} {number} — {team}. Профиль игрока на официальном сайте ФК «Динамо-Брест».',
     },
     {
       path: '/page/[slug]',
@@ -157,14 +161,40 @@ export async function collectSitePageRegistry(): Promise<SitePageRegistryEntry[]
     }
   }
 
+  const players = await prisma.player.findMany({
+    where: { isPublished: true, slug: { not: null } },
+    select: { slug: true, firstName: true, lastName: true },
+    orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+  });
+
+  for (const player of players) {
+    if (!player.slug) continue;
+    const path = `/team/player/${player.slug}`;
+    const fullName = `${player.firstName} ${player.lastName}`.trim();
+
+    map.set(path, {
+      path,
+      label: `Игрок: ${fullName}`,
+      source: 'player',
+    });
+  }
+
   return [...map.values()].sort((a, b) => a.path.localeCompare(b.path, 'ru'));
 }
 
 export async function syncSitePageRegistry(): Promise<number> {
   const registry = await collectSitePageRegistry();
+  const client = (prisma as unknown as { sitePageMeta?: { upsert: typeof prisma.menuitem.upsert } })
+    .sitePageMeta;
+
+  if (!client?.upsert) {
+    throw new Error(
+      'Модель sitePageMeta недоступна. Выполните: npx prisma migrate deploy && npx prisma generate'
+    );
+  }
 
   for (const entry of registry) {
-    await prisma.sitePageMeta.upsert({
+    await client.upsert({
       where: { path: entry.path },
       create: {
         path: entry.path,

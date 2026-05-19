@@ -35,16 +35,33 @@ export default function CountdownTimer({
   compact = false,
   size = 'default',
 }: CountdownTimerProps) {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(() => calculateTimeLeft(targetDate));
+  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft(targetDate));
-    }, 1000);
+    const tick = () => setTimeLeft(calculateTimeLeft(targetDate));
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [targetDate]);
 
   const sizeClass = size === 'large' ? ' home-match__countdown--large' : '';
+
+  if (timeLeft === null) {
+    return (
+      <div
+        className={`home-match__countdown${compact ? ' home-match__countdown--compact' : ''}${sizeClass}`}
+        role="timer"
+        aria-hidden
+      >
+        {LABELS.map((label) => (
+          <div key={label} className="home-match__countdown-unit">
+            <span className="home-match__countdown-value">--</span>
+            <span className="home-match__countdown-label">{label}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (!timeLeft) {
     return (

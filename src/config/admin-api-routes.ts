@@ -12,6 +12,7 @@ const PUBLIC_API: Array<{ methods: string[]; pattern: RegExp }> = [
   { methods: ['GET', 'HEAD'], pattern: /^\/api\/menu$/ },
   { methods: ['GET', 'HEAD'], pattern: /^\/api\/footer-menu$/ },
   { methods: ['GET', 'HEAD'], pattern: /^\/api\/footer-contacts$/ },
+  { methods: ['GET', 'HEAD'], pattern: /^\/api\/settings$/ },
   { methods: ['GET', 'HEAD'], pattern: /^\/api\/team\/standings$/ },
   { methods: ['GET', 'HEAD'], pattern: /^\/api\/youtube$/ },
   { methods: ['GET'], pattern: /^\/api\/site-pages\/resolve$/ },

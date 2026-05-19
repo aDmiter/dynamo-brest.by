@@ -3,8 +3,18 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRotate, faSave, faSearch, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { SITE_PAGE_TEMPLATE_PLACEHOLDERS } from '@/config/site-page-templates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+function templatePlaceholderHint(path: string): string[] | null {
+  if (path === '/team/player/[slug]') return SITE_PAGE_TEMPLATE_PLACEHOLDERS.player;
+  if (path === '/news/[slug]') return SITE_PAGE_TEMPLATE_PLACEHOLDERS.news;
+  if (path === '/shop/product/[slug]') return SITE_PAGE_TEMPLATE_PLACEHOLDERS.product;
+  if (path === '/page/[slug]') return SITE_PAGE_TEMPLATE_PLACEHOLDERS['cms-page'];
+  if (path === '/legal/[slug]') return SITE_PAGE_TEMPLATE_PLACEHOLDERS['legal-page'];
+  return null;
+}
 
 interface SitePageRow {
   id: string;
@@ -146,7 +156,8 @@ export default function SitePageMetaAdmin({ initialPages }: Props) {
       <p className="text-sm text-gray-400">
         Укажите title и description для SEO. Поле «Редирект» отправит посетителей с исходного URL на
         новый (относительный путь или полный URL). Счётчик посещений увеличивается при каждом заходе
-        на страницу.
+        на страницу. Для всех игроков сразу — строка «Игрок (шаблон)»; для одного игрока — его URL
+        после «Обновить список страниц».
       </p>
 
       <div className="border border-white/10 overflow-x-auto">
@@ -224,6 +235,15 @@ export default function SitePageMetaAdmin({ initialPages }: Props) {
                 <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
+
+            {editing.isTemplate && templatePlaceholderHint(editing.path) && (
+              <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-gray-400 space-y-1">
+                <p className="text-amber-500/90">Подстановки в title и description:</p>
+                <p className="font-mono text-gray-300">
+                  {templatePlaceholderHint(editing.path)!.join(', ')}
+                </p>
+              </div>
+            )}
 
             {(editing.defaultTitle || editing.defaultDescription) && (
               <div className="rounded border border-white/10 bg-white/5 p-3 text-xs text-gray-500 space-y-1">
