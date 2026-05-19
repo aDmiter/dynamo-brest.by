@@ -578,3 +578,21 @@ model clubContactStaff {
 
   @@index([sectionId, sortOrder])
 }
+
+model sitePageMeta {
+  id                 String   @id @default(cuid())
+  path               String   @unique
+  label              String
+  source             String   @default("static")
+  title              String?  @db.VarChar(500)
+  description        String?  @db.Text
+  redirectTo         String?
+  visitCount         Int      @default(0)
+  defaultTitle       String?  @db.VarChar(500)
+  defaultDescription String?  @db.Text
+  isTemplate         Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([source])
+}

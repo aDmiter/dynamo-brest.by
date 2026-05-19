@@ -1,5 +1,6 @@
 // src/app/layout.tsx - Корневой layout
 import type { Metadata } from 'next';
+import { after } from 'next/server';
 import '@/lib/fontawesome';
 import '@/styles/globals.scss';
 import Header from '@/modules/shared/ui/Header';
@@ -9,22 +10,26 @@ import BurgerMenu from '@/modules/shared/ui/BurgerMenu';
 import TicketBuyFabLoader from '@/modules/shared/ui/TicketBuyFabLoader';
 import ThemeInitializer from '@/modules/shared/ui/ThemeInitializer';
 import AnalyticsScripts from '@/modules/shared/ui/AnalyticsScripts';
+import { DEFAULT_METADATA, recordSitePageVisit, resolveSiteMetadata } from '@/lib/site-page-meta';
 
-export const metadata: Metadata = {
-  title: 'Официальный сайт футбольного клуба «Динамо-Брест»',
-  description: 'Официальный сайт футбольного клуба «Динамо-Брест»',
-  icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname') || '/';
+  if (pathname.startsWith('/admin')) {
+    return { title: 'Админ-панель' };
+  }
+  return resolveSiteMetadata(pathname, DEFAULT_METADATA);
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
   const pathname = headersList.get('x-pathname') || '';
   const isAdmin = pathname.startsWith('/admin');
 
-  // Загружаем настройки цветов из БД
+  if (!isAdmin && pathname) {
+    after(() => recordSitePageVisit(pathname));
+  }
+
   let settings: Record<string, string> = {};
   try {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';

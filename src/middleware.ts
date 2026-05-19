@@ -3,10 +3,33 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { checkAdminApiRequest } from '@/lib/admin-api-guard';
 
-export default auth((req) => {
+export default auth(async (req) => {
   const pathname = req.nextUrl.pathname;
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-pathname', pathname);
+
+  if (
+    !pathname.startsWith('/admin') &&
+    !pathname.startsWith('/api') &&
+    !pathname.startsWith('/_next')
+  ) {
+    try {
+      const resolveUrl = new URL('/api/site-pages/resolve', req.url);
+      resolveUrl.searchParams.set('path', pathname);
+      const res = await fetch(resolveUrl, { headers: { 'x-middleware': '1' } });
+      if (res.ok) {
+        const data = (await res.json()) as { redirectTo?: string | null };
+        if (data.redirectTo) {
+          const destination = data.redirectTo.startsWith('http')
+            ? data.redirectTo
+            : new URL(data.redirectTo, req.url).toString();
+          return NextResponse.redirect(destination, 307);
+        }
+      }
+    } catch {
+      /* редирект из БД необязателен */
+    }
+  }
 
   if (pathname.startsWith('/api/')) {
     const access = checkAdminApiRequest(pathname, req.method, req.auth?.user ?? null);
