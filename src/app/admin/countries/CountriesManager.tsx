@@ -1,12 +1,33 @@
 // src/app/admin/countries/CountriesManager.tsx - Управление странами
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faCheck, faToggleOn, faToggleOff } from '@fortawesome/free-solid-svg-icons';
+import {
+  faSave,
+  faCheck,
+  faToggleOn,
+  faToggleOff,
+  faSync,
+  faSpinner,
+} from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+interface BelpostSyncSummary {
+  updated: number;
+  unavailable: number;
+  skipped: number;
+  errors: number;
+  items: Array<{
+    code: string;
+    name: string;
+    status: string;
+    price?: number;
+    message?: string;
+  }>;
+}
 
 interface Country {
   id: string;
@@ -22,14 +43,22 @@ interface CountriesManagerProps {
 
 export default function CountriesManager({ countries }: CountriesManagerProps) {
   const router = useRouter();
-  const [data, setData] = useState(
-    countries.map((c) => ({
+  const mapCountriesToForm = (list: Country[]) =>
+    list.map((c) => ({
       ...c,
       price: c.price?.toString() || '',
-    }))
-  );
+    }));
+
+  const [data, setData] = useState(mapCountriesToForm(countries));
+
+  useEffect(() => {
+    setData(mapCountriesToForm(countries));
+  }, [countries]);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<BelpostSyncSummary | null>(null);
+  const [syncError, setSyncError] = useState('');
 
   const updatePrice = (id: string, value: string) => {
     const numPrice = parseFloat(value);
@@ -50,6 +79,38 @@ export default function CountriesManager({ countries }: CountriesManagerProps) {
 
   const toggleActive = (id: string) => {
     setData((prev) => prev.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c)));
+  };
+
+  const handleBelpostSync = async () => {
+    if (
+      !confirm(
+        'Загрузить тарифы с tarifikator.belpost.by?\n\n' +
+          'Параметры: юр. лицо, приоритет, без объявленной ценности, 1 кг.\n' +
+          'Цена: округление вверх до десятков + 20 BYN.\n' +
+          'Беларусь не изменяется. Недоступные в Belpost страны будут отключены.'
+      )
+    ) {
+      return;
+    }
+
+    setSyncing(true);
+    setSyncError('');
+    setSyncResult(null);
+
+    try {
+      const res = await fetch('/api/countries/sync-belpost', { method: 'POST' });
+      const body = await res.json();
+      if (!res.ok) {
+        setSyncError(body.error || 'Ошибка синхронизации');
+        return;
+      }
+      setSyncResult(body as BelpostSyncSummary);
+      router.refresh();
+    } catch {
+      setSyncError('Ошибка сети при синхронизации');
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const handleSave = async () => {
@@ -80,16 +141,78 @@ export default function CountriesManager({ countries }: CountriesManagerProps) {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm text-gray-400">
-          Введите цену доставки (BYN) — страна активируется автоматически. Беларусь — всегда активна
-          и бесплатно.
-        </p>
-        <Button onClick={handleSave} disabled={saving} className="bg-[#ee862c] hover:bg-[#f0ac74]">
-          <FontAwesomeIcon icon={success ? faCheck : faSave} className="mr-2" />
-          {success ? 'Сохранено!' : saving ? 'Сохранение...' : 'Сохранить все'}
-        </Button>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+        <div className="text-sm text-gray-400 max-w-2xl space-y-1">
+          <p>
+            Введите цену доставки (BYN) — страна активируется автоматически. Беларусь задаётся
+            вручную.
+          </p>
+          <p>
+            «Синхронизировать Belpost» — тарификатор (1 кг, юр. лицо, приоритет), округление вверх
+            до десятков + 20 BYN; недоступные страны отключаются.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleBelpostSync}
+            disabled={syncing || saving}
+            className="border-white/10 text-gray-200 hover:bg-white/10"
+          >
+            <FontAwesomeIcon
+              icon={syncing ? faSpinner : faSync}
+              className={`mr-2 ${syncing ? 'animate-spin' : ''}`}
+            />
+            {syncing ? 'Синхронизация…' : 'Синхронизировать Belpost'}
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={saving || syncing}
+            className="bg-[#ee862c] hover:bg-[#f0ac74]"
+          >
+            <FontAwesomeIcon icon={success ? faCheck : faSave} className="mr-2" />
+            {success ? 'Сохранено!' : saving ? 'Сохранение...' : 'Сохранить все'}
+          </Button>
+        </div>
       </div>
+
+      {syncError && (
+        <p className="mb-4 text-sm text-red-400">{syncError}</p>
+      )}
+
+      {syncResult && (
+        <div className="mb-4 rounded border border-white/10 bg-white/[0.03] p-4 text-sm text-gray-300">
+          <p className="text-white font-medium mb-2">Синхронизация Belpost завершена</p>
+          <p>
+            Обновлено: {syncResult.updated}, отключено: {syncResult.unavailable}, пропущено:{' '}
+            {syncResult.skipped}
+            {syncResult.errors > 0 ? `, ошибок: ${syncResult.errors}` : ''}.
+          </p>
+          {syncResult.errors > 0 && (
+            <ul className="mt-2 text-xs text-red-300/90 list-disc pl-5">
+              {syncResult.items
+                .filter((i) => i.status === 'error')
+                .map((i) => (
+                  <li key={i.code}>
+                    {i.code} — {i.name}: {i.message}
+                  </li>
+                ))}
+            </ul>
+          )}
+          {syncResult.unavailable > 0 && (
+            <ul className="mt-2 text-xs text-gray-500 list-disc pl-5">
+              {syncResult.items
+                .filter((i) => i.status === 'unavailable')
+                .map((i) => (
+                  <li key={i.code}>
+                    {i.code} — {i.name}
+                  </li>
+                ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       <div className="border border-white/10 bg-white/5 backdrop-blur-sm">
         <table className="w-full">
