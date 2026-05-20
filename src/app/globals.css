@@ -329,3 +329,16 @@ select option {
 .menu-page__social a:hover {
   color: var(--color-accent) !important;
 }
+
+/* Админка: нативный <select> — в Windows/Chrome список option часто светлый;
+   тёмный текст на светлом фоне совпадает с системным выпадающим списком. */
+.admin-app select {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  color-scheme: light;
+}
+
+.admin-app select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}

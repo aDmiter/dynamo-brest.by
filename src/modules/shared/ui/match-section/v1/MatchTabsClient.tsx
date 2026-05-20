@@ -13,7 +13,7 @@ import {
   faTicket,
   faUsers,
 } from '@fortawesome/free-solid-svg-icons';
-import CountdownTimer from './CountdownTimer';
+import TicketBuyLink from '@/modules/shared/ui/TicketBuyLink';
 import MatchClubBadge from './MatchClubBadge';
 import MatchStadiumButton from '../../MatchStadiumButton';
 import {
@@ -158,16 +158,11 @@ function NextMatchCard({
       <footer className="home-match__footer">
         <MatchStadiumButton facilityId={match.facilityId} stadiumName={match.stadium} />
         {match.ticketUrl ? (
-          <a
-            href={match.ticketUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="home-match__ticket"
-          >
+          <TicketBuyLink href={match.ticketUrl} className="home-match__ticket">
             <FontAwesomeIcon icon={faTicket} />
             Билеты
             <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
-          </a>
+          </TicketBuyLink>
         ) : null}
       </footer>
     </MatchCardShell>

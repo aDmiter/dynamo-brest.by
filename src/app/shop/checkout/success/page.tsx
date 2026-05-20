@@ -7,49 +7,69 @@ import { faCheck, faEnvelope, faArrowRight, faSpinner } from '@fortawesome/free-
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
+const USE_WEBPAY = process.env.NEXT_PUBLIC_SHOP_PAYMENT_PROVIDER === 'webpay';
+
 export default function SuccessPage() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const wsbTid = searchParams.get('wsb_tid');
+  const bepaidStatus = searchParams.get('status');
+  const bepaidToken =
+    searchParams.get('token') ||
+    (typeof window !== 'undefined' ? sessionStorage.getItem('bepaid_payment_token') : null);
+
+  const initialPaid =
+    !orderId ? false : USE_WEBPAY ? Boolean(wsbTid) : bepaidStatus === 'successful';
 
   const [status, setStatus] = useState<'loading' | 'paid' | 'failed'>(
-    !orderId ? 'failed' : wsbTid ? 'paid' : 'loading'
+    !orderId ? 'failed' : initialPaid ? 'paid' : 'loading'
   );
   const [errorMessage, setErrorMessage] = useState(!orderId ? 'Номер заказа не найден' : '');
   const [attemptCount, setAttemptCount] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // При возврате с WebPay — обновляем статус заказа и списываем остатки
+  const finalizePaid = async () => {
+    if (USE_WEBPAY) {
+      const pendingOrderId = sessionStorage.getItem('pending_order_id');
+      if (pendingOrderId) {
+        await fetch(`/api/orders/${pendingOrderId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'paid' }),
+        });
+      }
+    }
+    sessionStorage.removeItem('pending_order_id');
+    sessionStorage.removeItem('bepaid_payment_token');
+    localStorage.removeItem('cart');
+    window.dispatchEvent(new Event('cartUpdated'));
+    setStatus('paid');
+  };
+
   useEffect(() => {
-    if (!orderId || !wsbTid) return;
+    if (!orderId || !USE_WEBPAY || !wsbTid) return;
 
-    const pendingOrderId = sessionStorage.getItem('pending_order_id');
-
-    // Обновляем заказ через callback
     fetch(`/api/webpay/callback?wsb_order_num=${orderId}&wsb_tid=${wsbTid}`)
       .then((r) => r.json())
-      .then((data) => {
-        console.log('📡 Статус обновлён:', data);
-        // Если есть pending_order_id — меняем статус на paid и списываем остатки
-        if (pendingOrderId) {
-          fetch(`/api/orders/${pendingOrderId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'paid' }),
-          }).then(() => {
-            sessionStorage.removeItem('pending_order_id');
-            // Удаляем корзину
-            localStorage.removeItem('cart');
-            window.dispatchEvent(new Event('cartUpdated'));
-          });
-        }
-      })
-      .catch((err) => console.error('❌ Ошибка:', err));
+      .then(() => finalizePaid())
+      .catch((err) => console.error('❌ WebPay return:', err));
   }, [orderId, wsbTid]);
 
-  // Проверяем статус если нет wsbTid
   useEffect(() => {
-    if (!orderId || wsbTid) return;
+    if (!orderId || USE_WEBPAY) return;
+    if (bepaidStatus === 'successful') {
+      void finalizePaid();
+    }
+  }, [orderId, bepaidStatus]);
+
+  useEffect(() => {
+    if (!orderId || (USE_WEBPAY && !wsbTid) || (!USE_WEBPAY && bepaidStatus === 'successful')) {
+      return;
+    }
+
+    const statusUrl = USE_WEBPAY
+      ? `/api/webpay/status?orderNum=${orderId}`
+      : `/api/bepaid/status?orderNum=${orderId}${bepaidToken ? `&token=${encodeURIComponent(bepaidToken)}` : ''}`;
 
     const maxAttempts = 10;
     let attempts = 0;
@@ -59,23 +79,12 @@ export default function SuccessPage() {
         attempts++;
         setAttemptCount(attempts);
 
-        const res = await fetch(`/api/webpay/status?orderNum=${orderId}`);
+        const res = await fetch(statusUrl);
 
         if (res.ok) {
           const data = await res.json();
           if (data.isPaid) {
-            setStatus('paid');
-            const pendingOrderId = sessionStorage.getItem('pending_order_id');
-            if (pendingOrderId) {
-              await fetch(`/api/orders/${pendingOrderId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'paid' }),
-              });
-              sessionStorage.removeItem('pending_order_id');
-              localStorage.removeItem('cart');
-              window.dispatchEvent(new Event('cartUpdated'));
-            }
+            await finalizePaid();
             return;
           }
         }
@@ -101,7 +110,7 @@ export default function SuccessPage() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [orderId, wsbTid]);
+  }, [orderId, wsbTid, bepaidStatus, bepaidToken]);
 
   return (
     <div

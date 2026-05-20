@@ -25,6 +25,7 @@ interface Product {
   hasCustomization?: boolean;
   useSizes?: boolean;
   productcategory?: { name: string } | null;
+  manufacturer?: { name: string } | null;
   productsize: { size: string; quantity: number }[];
 }
 
@@ -53,7 +54,7 @@ export default function ProductPageClient({ product, customizations, players }: 
 
   const images: string[] = product.images ? JSON.parse(product.images) : [];
   const productSizes = product.productsize || [];
-  const hasCustomization = product.hasCustomization === true;
+  const hasCustomization = Boolean(product.hasCustomization);
   const useSizes = product.useSizes === true;
   const basePrice = Number(product.price);
   const oldPrice = product.oldPrice ? Number(product.oldPrice) : null;
@@ -78,6 +79,14 @@ export default function ProductPageClient({ product, customizations, players }: 
         >
           {product.productcategory?.name || 'Товар'}
         </p>
+        {product.manufacturer?.name && (
+          <p
+            className="mt-1 text-xs text-right opacity-80"
+            style={{ color: 'var(--color-text-stat)' }}
+          >
+            Производитель: {product.manufacturer.name}
+          </p>
+        )}
 
         {/* Name */}
         <h1
@@ -145,7 +154,7 @@ export default function ProductPageClient({ product, customizations, players }: 
         </div>
 
         {/* Блок с кастомизацией или без */}
-        {hasCustomization && customizations.length > 0 ? (
+        {hasCustomization ? (
           <ProductPrice basePrice={basePrice} oldPrice={oldPrice}>
             <ProductCustomization
               customizations={customizations}

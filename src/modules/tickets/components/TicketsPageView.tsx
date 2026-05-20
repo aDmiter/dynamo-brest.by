@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import TicketBuyLink from '@/modules/shared/ui/TicketBuyLink';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowRight,
@@ -117,15 +118,10 @@ export default function TicketsPageView({ nextMatch }: Props) {
                       </>
                     )}
                   </p>
-                  <a
-                    href={buyUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="tickets-page__cta"
-                  >
+                  <TicketBuyLink href={buyUrl} className="tickets-page__cta">
                     Купить билеты
                     <FontAwesomeIcon icon={faArrowRight} />
-                  </a>
+                  </TicketBuyLink>
                 </>
               ) : (
                 <>
@@ -135,15 +131,10 @@ export default function TicketsPageView({ nextMatch }: Props) {
                     Расписание домашних игр — в календаре команды. Покупка через официального
                     оператора.
                   </p>
-                  <a
-                    href={TICKETS_AFISHA_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="tickets-page__cta"
-                  >
+                  <TicketBuyLink href={TICKETS_AFISHA_URL} className="tickets-page__cta">
                     Перейти к покупке
                     <FontAwesomeIcon icon={faArrowRight} />
-                  </a>
+                  </TicketBuyLink>
                 </>
               )}
             </div>

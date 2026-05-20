@@ -262,10 +262,10 @@ export default function EditMatchForm({
                 value={form.ticketUrl}
                 onChange={(e) => setForm({ ...form, ticketUrl: e.target.value })}
                 className="border-white/10 bg-white/5 text-white"
-                placeholder="https://tickets.by/..."
+                placeholder="https://saleframe.24afisha.by/session/..."
               />
               <p className="text-xs text-gray-500 mt-1">
-                Если указана — кнопка «Билеты» появится на сайте
+                Ссылка saleframe.24afisha.by — покупка откроется в модальном окне на сайте
               </p>
             </div>
 

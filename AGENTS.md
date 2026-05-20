@@ -46,7 +46,7 @@ COMET
 Ключи и URL — из env или настроек админки, не в коде
 При sync позиции игроков не перезаписывать без явной задачи
 Магазин
-WebPay: src/app/api/webpay/, src/lib/webpay
+Оплата магазина: bePaid (виджет, по умолчанию) — `src/lib/bepaid.ts`, `src/app/api/bepaid/`; WebPay сохранён — `src/app/api/webpay/`, `src/lib/webpay`. Переключение: `NEXT_PUBLIC_SHOP_PAYMENT_PROVIDER=webpay`. Без ключей в dev: mock-оплата (`BEPAID_MOCK=1` или авто). Ключи: `BEPAID_SHOP_ID`, `BEPAID_SECRET_KEY`, `BEPAID_PUBLIC_KEY`, `BEPAID_TEST=1`
 Товары, размеры, нанесения — Prisma + админка
 Главное и нижнее меню — админка `/admin/settings/menu` (`menuitem` + `footermenuitem`)
 

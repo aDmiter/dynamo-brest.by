@@ -9,8 +9,8 @@ export default function AdminSelect({ children, className = '', ...props }: Sele
   return (
     <select
       {...props}
-      className={`w-full border border-white/10 bg-white/5 p-2 text-sm text-white ${className}`}
-      style={{ backgroundImage: 'none' }}
+      className={`w-full rounded-md border border-slate-300 bg-slate-100 p-2 text-sm text-slate-900 shadow-sm ${className}`}
+      style={{ backgroundImage: 'none', colorScheme: 'light' }}
     >
       {children}
     </select>

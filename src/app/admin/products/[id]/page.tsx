@@ -14,7 +14,8 @@ export default async function EditProductPage({ params }: Props) {
     where: { id },
     include: {
       productcategory: true,
-      productsize: { orderBy: { size: 'asc' } },
+      manufacturer: true,
+      productsize: { orderBy: [{ sortOrder: 'asc' }, { size: 'asc' }] },
     },
   });
 

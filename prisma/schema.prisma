@@ -183,6 +183,7 @@ model order {
   orderNumber      String?     @unique
   trackingCode     String?
   deliveryPrice    Decimal?    @db.Decimal(10, 2)
+  stockReserved    Boolean     @default(false)
   updatedByAdminId String?
   updatedByName    String?
   orderitem        orderitem[]
@@ -279,9 +280,18 @@ model CoachTeam {
   @@id([coachId, teamId])
 }
 
+model productmanufacturer {
+  id        String    @id @default(cuid())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  product   product[]
+}
+
 model product {
   id                String            @id @default(cuid())
   categoryId        String
+  manufacturerId    String?
   name              String
   slug              String            @unique(map: "Product_slug_key")
   description       String            @db.Text
@@ -305,9 +315,11 @@ model product {
   updatedByName     String?
   orderitem         orderitem[]
   productsize       ProductSize[]
-  productcategory   productcategory   @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
+  productcategory   productcategory       @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
+  manufacturer      productmanufacturer?  @relation(fields: [manufacturerId], references: [id], onDelete: SetNull)
 
   @@index([categoryId], map: "Product_categoryId_fkey")
+  @@index([manufacturerId])
 }
 
 model productcategory {
@@ -406,10 +418,12 @@ model ProductSize {
   product   product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   size      String
   quantity  Int      @default(0)
+  sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([productId, size])
+  @@index([productId, sortOrder])
 }
 
 model Customization {

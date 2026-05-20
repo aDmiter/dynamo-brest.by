@@ -4,19 +4,21 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faArrowLeft, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import ImageUpload from '@/modules/admin/components/ImageUpload';
 import { transliterate } from '@/lib/utils';
+import ProductSizesEditor from '@/modules/admin/components/ProductSizesEditor';
 
 export default function NewProductPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [manufacturers, setManufacturers] = useState<{ id: string; name: string }[]>([]);
 
   const [form, setForm] = useState({
     name: '',
@@ -26,6 +28,7 @@ export default function NewProductPage() {
     price: '',
     oldPrice: '',
     categoryId: '',
+    manufacturerId: '',
     images: [] as string[],
     inStock: true,
     isFeatured: false,
@@ -34,8 +37,6 @@ export default function NewProductPage() {
   });
 
   const [sizes, setSizes] = useState<{ size: string; quantity: number }[]>([]);
-  const [newSize, setNewSize] = useState('');
-  const [newSizeQty, setNewSizeQty] = useState(1);
   const [hasCustomization, setHasCustomization] = useState(false);
 
   useEffect(() => {
@@ -43,30 +44,15 @@ export default function NewProductPage() {
       .then((r) => r.json())
       .then(setCategories)
       .catch(console.error);
+    fetch('/api/manufacturers')
+      .then((r) => r.json())
+      .then(setManufacturers)
+      .catch(console.error);
   }, []);
 
   const addImage = (url: string) => setForm({ ...form, images: [...form.images, url] });
   const removeImage = (index: number) =>
     setForm({ ...form, images: form.images.filter((_, i) => i !== index) });
-
-  const addSize = () => {
-    if (newSize.trim() && newSizeQty > 0) {
-      const existing = sizes.find((s) => s.size === newSize.trim());
-      if (existing) {
-        setSizes(
-          sizes.map((s) =>
-            s.size === newSize.trim() ? { ...s, quantity: s.quantity + newSizeQty } : s
-          )
-        );
-      } else {
-        setSizes([...sizes, { size: newSize.trim(), quantity: newSizeQty }]);
-      }
-      setNewSize('');
-      setNewSizeQty(1);
-    }
-  };
-
-  const removeSize = (size: string) => setSizes(sizes.filter((s) => s.size !== size));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +74,7 @@ export default function NewProductPage() {
           slug: transliterate(form.name),
           price: parseFloat(form.price),
           oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : null,
+          manufacturerId: form.manufacturerId || null,
           sizes: form.useSizes ? sizes : [],
           hasCustomization,
           quantity: form.useSizes ? 0 : form.quantity,
@@ -207,6 +194,21 @@ export default function NewProductPage() {
               </select>
             </div>
             <div>
+              <label className="text-sm text-gray-400">Производитель</label>
+              <select
+                value={form.manufacturerId}
+                onChange={(e) => setForm({ ...form, manufacturerId: e.target.value })}
+                className="w-full border border-white/10 bg-white/5 p-2 text-sm text-white"
+              >
+                <option value="">Не указан</option>
+                {manufacturers.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="text-sm text-gray-400">Описание</label>
               <textarea
                 value={form.description}
@@ -240,57 +242,7 @@ export default function NewProductPage() {
 
             {/* Размеры (если чекбокс выбран) */}
             {form.useSizes ? (
-              <div>
-                <label className="text-sm text-gray-400 mb-2 block">Размеры и количество</label>
-                <div className="flex gap-2 mb-3">
-                  <Input
-                    value={newSize}
-                    onChange={(e) => setNewSize(e.target.value)}
-                    className="border-white/10 bg-white/5 text-white flex-1"
-                    placeholder="Размер (S, M, L...)"
-                  />
-                  <Input
-                    type="number"
-                    value={newSizeQty}
-                    onChange={(e) => setNewSizeQty(parseInt(e.target.value) || 1)}
-                    className="border-white/10 bg-white/5 text-white w-20"
-                    placeholder="Кол-во"
-                    min="1"
-                  />
-                  <Button
-                    type="button"
-                    onClick={addSize}
-                    size="sm"
-                    variant="outline"
-                    className="border-white/10 text-gray-400"
-                  >
-                    <FontAwesomeIcon icon={faPlus} />
-                  </Button>
-                </div>
-                {sizes.length > 0 && (
-                  <div className="space-y-2">
-                    {sizes.map((s) => (
-                      <div
-                        key={s.size}
-                        className="flex items-center gap-4 border border-white/10 bg-white/5 px-3 py-2"
-                      >
-                        <span className="text-white text-sm font-bold w-10">{s.size}</span>
-                        <span className="text-gray-400 text-sm">×{s.quantity} шт.</span>
-                        <button
-                          type="button"
-                          onClick={() => removeSize(s.size)}
-                          className="ml-auto text-red-400 hover:text-red-300"
-                        >
-                          <FontAwesomeIcon icon={faTimes} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {sizes.length === 0 && (
-                  <p className="text-xs text-gray-600">Добавьте хотя бы один размер</p>
-                )}
-              </div>
+              <ProductSizesEditor sizes={sizes} onSizesChange={setSizes} droppableId="new-product-sizes" />
             ) : (
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Количество на складе</label>

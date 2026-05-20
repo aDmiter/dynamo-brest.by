@@ -112,7 +112,7 @@ export const CODED_CMS_PAGES: Record<string, CodedCmsPageConfig> = {
     watermark: 'Магазин',
     metadata: {
       title: 'Оплата | Интернет-магазин | Динамо-Брест',
-      description: 'Оплата заказов через WebPay.',
+      description: 'Оплата заказов через bePaid.',
     },
   },
   'shop-returns': {

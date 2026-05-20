@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faCalendarAlt, faUsers } from '@fortawesome/free-solid-svg-icons';
 import CountdownTimer from '../v1/CountdownTimer';
 import MatchStadiumButton from '../../MatchStadiumButton';
+import TicketBuyLink from '@/modules/shared/ui/TicketBuyLink';
 import {
   MATCH_TABS,
   type MatchData,
@@ -346,14 +347,12 @@ function MatchCard({
               )}
               {isNext && match.ticketUrl ? (
                 <div className="match__card-tickets shrink-0">
-                  <a
+                  <TicketBuyLink
                     href={match.ticketUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="match__card-ticket-link inline-flex items-center gap-2 bg-[var(--color-accent)] px-5 py-3 text-xs font-bold uppercase tracking-wider text-white hover:bg-[var(--color-accent-hover)] transition-colors"
                   >
                     БИЛЕТЫ <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
-                  </a>
+                  </TicketBuyLink>
                 </div>
               ) : null}
             </div>

@@ -24,6 +24,7 @@ const PUBLIC_API: Array<{ methods: string[]; pattern: RegExp }> = [
   { methods: ['POST'], pattern: /^\/api\/orders$/ },
   { methods: ['PUT'], pattern: /^\/api\/orders\/[^/]+$/ },
   { methods: ['GET', 'POST'], pattern: /^\/api\/webpay\// },
+  { methods: ['GET', 'POST'], pattern: /^\/api\/bepaid\// },
   { methods: ['GET', 'POST'], pattern: /^\/api\/auth\// },
   { methods: ['GET'], pattern: /^\/api\/cron\// },
   { methods: ['GET', 'POST'], pattern: /^\/api\/test-/ },

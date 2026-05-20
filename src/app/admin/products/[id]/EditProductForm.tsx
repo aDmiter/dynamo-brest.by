@@ -8,8 +8,6 @@ import {
   faSave,
   faArrowLeft,
   faTrash,
-  faPlus,
-  faTimes,
   faChartBar,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
@@ -18,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import ImageUpload from '@/modules/admin/components/ImageUpload';
 import AdminAuditMeta from '@/modules/admin/components/AdminAuditMeta';
+import ProductSizesEditor from '@/modules/admin/components/ProductSizesEditor';
 
 interface Product {
   id: string;
@@ -36,7 +35,9 @@ interface Product {
   quantity?: number;
   totalSold?: number;
   productcategory?: { id: string; name: string } | null;
-  productsize: { id: string; size: string; quantity: number }[];
+  manufacturerId?: string | null;
+  manufacturer?: { id: string; name: string } | null;
+  productsize: { id: string; size: string; quantity: number; sortOrder?: number }[];
   createdAt?: string;
   updatedAt?: string;
   createdByName?: string | null;
@@ -55,6 +56,7 @@ export default function EditProductForm({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [manufacturers, setManufacturers] = useState<{ id: string; name: string }[]>([]);
 
   const [form, setForm] = useState({
     name: product.name,
@@ -64,6 +66,7 @@ export default function EditProductForm({
     price: product.price,
     oldPrice: product.oldPrice || '',
     categoryId: product.categoryId,
+    manufacturerId: product.manufacturerId || '',
     images: (product.images ? JSON.parse(product.images) : []) as string[],
     inStock: product.inStock,
     isFeatured: product.isFeatured,
@@ -71,11 +74,14 @@ export default function EditProductForm({
     quantity: product.quantity || 0,
   });
 
-  const [sizes, setSizes] = useState<{ size: string; quantity: number }[]>(
-    product.productsize?.map((s) => ({ size: s.size, quantity: s.quantity })) || []
+  const [sizes, setSizes] = useState<{ size: string; quantity: number }[]>(() =>
+    [...(product.productsize ?? [])]
+      .sort(
+        (a, b) =>
+          (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.size.localeCompare(b.size, undefined, { numeric: true })
+      )
+      .map((s) => ({ size: s.size, quantity: s.quantity }))
   );
-  const [newSize, setNewSize] = useState('');
-  const [newSizeQty, setNewSizeQty] = useState(1);
   const [hasCustomization, setHasCustomization] = useState(product.hasCustomization || false);
   const [totalSold, setTotalSold] = useState(product.totalSold || 0);
   const [resettingSold, setResettingSold] = useState(false);
@@ -85,28 +91,15 @@ export default function EditProductForm({
       .then((r) => r.json())
       .then(setCategories)
       .catch(console.error);
+    fetch('/api/manufacturers')
+      .then((r) => r.json())
+      .then(setManufacturers)
+      .catch(console.error);
   }, []);
 
   const addImage = (url: string) => setForm({ ...form, images: [...form.images, url] });
   const removeImage = (i: number) =>
     setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) });
-
-  const addSize = () => {
-    if (newSize.trim() && newSizeQty > 0) {
-      const existing = sizes.find((s) => s.size === newSize.trim());
-      if (existing)
-        setSizes(
-          sizes.map((s) =>
-            s.size === newSize.trim() ? { ...s, quantity: s.quantity + newSizeQty } : s
-          )
-        );
-      else setSizes([...sizes, { size: newSize.trim(), quantity: newSizeQty }]);
-      setNewSize('');
-      setNewSizeQty(1);
-    }
-  };
-
-  const removeSize = (size: string) => setSizes(sizes.filter((s) => s.size !== size));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +115,7 @@ export default function EditProductForm({
           ...form,
           price: parseFloat(form.price),
           oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : null,
+          manufacturerId: form.manufacturerId || null,
           sizes: form.useSizes ? sizes : [],
           hasCustomization,
           quantity: form.useSizes ? 0 : form.quantity,
@@ -185,7 +179,10 @@ export default function EditProductForm({
       <Card className="max-w-2xl border-white/10 bg-white/5 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-white">{product.name}</CardTitle>
-          <p className="text-sm text-gray-500">Категория: {product.productcategory?.name || '—'}</p>
+          <p className="text-sm text-gray-500">
+            Категория: {product.productcategory?.name || '—'}
+            {product.manufacturer ? ` · Производитель: ${product.manufacturer.name}` : ''}
+          </p>
         </CardHeader>
         <CardContent>
           {error && (
@@ -301,6 +298,21 @@ export default function EditProductForm({
               </select>
             </div>
             <div>
+              <label className="text-sm text-gray-400">Производитель</label>
+              <select
+                value={form.manufacturerId}
+                onChange={(e) => setForm({ ...form, manufacturerId: e.target.value })}
+                className="w-full border border-white/10 bg-white/5 p-2 text-sm text-white"
+              >
+                <option value="">Не указан</option>
+                {manufacturers.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="text-sm text-gray-400">Описание</label>
               <textarea
                 value={form.description}
@@ -333,53 +345,7 @@ export default function EditProductForm({
             </div>
 
             {form.useSizes ? (
-              <div>
-                <label className="text-sm text-gray-400 mb-2 block">Размеры и количество</label>
-                <div className="flex gap-2 mb-3">
-                  <Input
-                    value={newSize}
-                    onChange={(e) => setNewSize(e.target.value)}
-                    className="border-white/10 bg-white/5 text-white flex-1"
-                    placeholder="Размер"
-                  />
-                  <Input
-                    type="number"
-                    value={newSizeQty}
-                    onChange={(e) => setNewSizeQty(parseInt(e.target.value) || 1)}
-                    className="border-white/10 bg-white/5 text-white w-20"
-                    placeholder="Кол-во"
-                    min="1"
-                  />
-                  <Button
-                    type="button"
-                    onClick={addSize}
-                    size="sm"
-                    variant="outline"
-                    className="border-white/10 text-gray-400"
-                  >
-                    <FontAwesomeIcon icon={faPlus} />
-                  </Button>
-                </div>
-                {sizes.map((s) => (
-                  <div
-                    key={s.size}
-                    className="flex items-center gap-4 border border-white/10 bg-white/5 px-3 py-2 mb-1"
-                  >
-                    <span className="text-white text-sm font-bold w-10">{s.size}</span>
-                    <span className="text-gray-400 text-sm flex-1">×{s.quantity} шт.</span>
-                    <button
-                      type="button"
-                      onClick={() => removeSize(s.size)}
-                      className="text-red-400 hover:text-red-300"
-                    >
-                      <FontAwesomeIcon icon={faTimes} />
-                    </button>
-                  </div>
-                ))}
-                {sizes.length === 0 && (
-                  <p className="text-xs text-gray-600">Добавьте хотя бы один размер</p>
-                )}
-              </div>
+              <ProductSizesEditor sizes={sizes} onSizesChange={setSizes} droppableId="edit-product-sizes" />
             ) : (
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Количество на складе</label>

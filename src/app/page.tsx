@@ -34,7 +34,7 @@ export default async function Home() {
           where: { inStock: true },
           orderBy: { createdAt: 'desc' },
           take: 4,
-          include: { productcategory: { select: { id: true, name: true } } },
+          include: { productcategory: { select: { id: true, name: true } }, manufacturer: { select: { name: true } } },
         }),
       ]);
       return { featuredNews, latestNews, banner, featuredProducts };
@@ -51,6 +51,7 @@ export default async function Home() {
     oldPrice: p.oldPrice?.toString() ?? null,
     images: p.images,
     productcategory: p.productcategory,
+    manufacturer: p.manufacturer,
   }));
 
   return (

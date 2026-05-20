@@ -1,7 +1,8 @@
 // src/app/shop/cart/page.tsx - Корзина
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faShoppingCart,
@@ -9,8 +10,11 @@ import {
   faMinus,
   faPlus,
   faArrowRight,
+  faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
+import type { StockAvailability } from '@/lib/shop-stock';
+import { maxQuantityForCartLine } from '@/lib/shop-stock';
 
 interface CartItem {
   cartKey: string;
@@ -37,29 +41,145 @@ function getInitialCart(): CartItem[] {
   }
 }
 
+function persistCart(cart: CartItem[]) {
+  localStorage.setItem('cart', JSON.stringify(cart));
+  window.dispatchEvent(new Event('cartUpdated'));
+}
+
+function toStockPayload(items: CartItem[]) {
+  return items.map((i) => ({
+    productId: i.productId,
+    quantity: i.quantity,
+    size: i.size ?? null,
+  }));
+}
+
 export default function CartPage() {
+  const router = useRouter();
   const [cart, setCart] = useState<CartItem[]>(getInitialCart);
+  const [stockLines, setStockLines] = useState<StockAvailability[]>([]);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [stockError, setStockError] = useState('');
+
+  const refreshStock = useCallback(async (items: CartItem[]) => {
+    if (items.length === 0) {
+      setStockLines([]);
+      setStockError('');
+      return;
+    }
+
+    setStockLoading(true);
+    try {
+      const res = await fetch('/api/shop/cart/stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: toStockPayload(items) }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStockError(data.error || 'Не удалось проверить наличие');
+        return;
+      }
+
+      setStockLines(data.lines ?? []);
+      if (!data.ok) {
+        const details = (data.lines as StockAvailability[])
+          .filter((l) => !l.ok)
+          .map(
+            (l) =>
+              `${l.productName}${l.size ? ` (${l.size})` : ''}: доступно ${l.available} шт.`
+          )
+          .join('; ');
+        setStockError(
+          details ? `Недостаточно на складе: ${details}` : 'Недостаточно товара на складе'
+        );
+      } else {
+        setStockError('');
+      }
+    } catch {
+      setStockError('Не удалось проверить наличие на складе');
+    } finally {
+      setStockLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshStock(cart);
+  }, [cart, refreshStock]);
+
+  const getMaxQty = (item: CartItem) =>
+    maxQuantityForCartLine(
+      { productId: item.productId, quantity: item.quantity, size: item.size ?? null },
+      toStockPayload(cart),
+      stockLines
+    );
 
   const updateQuantity = (cartKey: string, delta: number) => {
+    const item = cart.find((i) => i.cartKey === cartKey);
+    if (!item) return;
+
+    const maxQty = getMaxQty(item);
+    if (delta > 0 && item.quantity >= maxQty) return;
+
     const newCart = cart
-      .map((item) =>
-        item.cartKey === cartKey ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item
+      .map((i) =>
+        i.cartKey === cartKey
+          ? { ...i, quantity: Math.max(0, Math.min(maxQty, i.quantity + delta)) }
+          : i
       )
-      .filter((item) => item.quantity > 0);
+      .filter((i) => i.quantity > 0);
+
     setCart(newCart);
-    localStorage.setItem('cart', JSON.stringify(newCart));
-    window.dispatchEvent(new Event('cartUpdated'));
+    persistCart(newCart);
   };
 
   const removeItem = (cartKey: string) => {
     const newCart = cart.filter((item) => item.cartKey !== cartKey);
     setCart(newCart);
-    localStorage.setItem('cart', JSON.stringify(newCart));
-    window.dispatchEvent(new Event('cartUpdated'));
+    persistCart(newCart);
+  };
+
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    setStockError('');
+
+    try {
+      const res = await fetch('/api/shop/cart/stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: toStockPayload(cart) }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        const details = (data.lines as StockAvailability[] | undefined)
+          ?.filter((l) => !l.ok)
+          .map(
+            (l) =>
+              `${l.productName}${l.size ? ` (${l.size})` : ''}: доступно ${l.available} шт.`
+          )
+          .join('; ');
+        setStockError(
+          details
+            ? `Нельзя оформить заказ. ${details}`
+            : data.error || 'Недостаточно товара на складе'
+        );
+        return;
+      }
+
+      router.push('/shop/checkout');
+    } catch {
+      setStockError('Не удалось проверить наличие. Попробуйте снова.');
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const stockOk = stockLines.length > 0 && stockLines.every((l) => l.ok);
+  const canCheckout = cart.length > 0 && !stockLoading && !stockError && stockOk;
 
   if (cart.length === 0) {
     return (
@@ -110,93 +230,124 @@ export default function CartPage() {
           </span>
         </h1>
 
+        {stockLoading && (
+          <p className="mt-4 text-right text-sm" style={{ color: 'var(--color-text-stat)' }}>
+            <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-2" />
+            Проверка наличия…
+          </p>
+        )}
+
+        {stockError && (
+          <div
+            className="mt-4 p-3 text-sm text-right"
+            style={{
+              border: '1px solid rgba(239,68,68,0.3)',
+              background: 'rgba(239,68,68,0.1)',
+              color: 'var(--color-loss)',
+              borderRadius: 8,
+            }}
+          >
+            {stockError}
+          </div>
+        )}
+
         <div className="mt-8 space-y-3">
-          {cart.map((item) => (
-            <div
-              key={item.cartKey}
-              className="flex items-center gap-4 p-4"
-              style={{
-                border: '1px solid var(--color-border)',
-                borderRadius: 12,
-                background: 'var(--color-bg-card)',
-              }}
-            >
+          {cart.map((item) => {
+            const maxQty = getMaxQty(item);
+            const atMax = maxQty > 0 && item.quantity >= maxQty;
+
+            return (
               <div
-                className="h-16 w-16 flex-shrink-0 overflow-hidden"
-                style={{ background: 'var(--color-bg-photo-placeholder)', borderRadius: 8 }}
+                key={item.cartKey}
+                className="flex items-center gap-4 p-4"
+                style={{
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 12,
+                  background: 'var(--color-bg-card)',
+                }}
               >
-                {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={item.productName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <FontAwesomeIcon
-                      icon={faShoppingCart}
-                      style={{ color: 'var(--color-text-label)' }}
+                <div
+                  className="h-16 w-16 flex-shrink-0 overflow-hidden"
+                  style={{ background: 'var(--color-bg-photo-placeholder)', borderRadius: 8 }}
+                >
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.productName}
+                      className="h-full w-full object-cover"
                     />
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <FontAwesomeIcon
+                        icon={faShoppingCart}
+                        style={{ color: 'var(--color-text-label)' }}
+                      />
+                    </div>
+                  )}
+                </div>
 
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{item.productName}</p>
-                {item.size && (
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-stat)' }}>
-                    Размер: {item.size}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{item.productName}</p>
+                  {item.size && (
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-stat)' }}>
+                      Размер: {item.size}
+                    </p>
+                  )}
+                  {item.customization && (
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--color-accent)' }}>
+                      Нанесение (+{item.customization.extraPrice.toFixed(2)} BYN)
+                      {item.customization.playerName &&
+                        ` — #${item.customization.playerNumber} ${item.customization.playerName}`}
+                    </p>
+                  )}
+                  <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-stat)' }}>
+                    {item.price.toFixed(2)} BYN
                   </p>
-                )}
-                {item.customization && (
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-accent)' }}>
-                    Нанесение (+{item.customization.extraPrice.toFixed(2)} BYN)
-                    {item.customization.playerName &&
-                      ` — #${item.customization.playerNumber} ${item.customization.playerName}`}
-                  </p>
-                )}
-                <p className="text-sm mt-0.5" style={{ color: 'var(--color-text-stat)' }}>
-                  {item.price.toFixed(2)} BYN
-                </p>
-              </div>
+                </div>
 
-              <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.cartKey, -1)}
+                    className="flex h-8 w-8 items-center justify-center transition-colors"
+                    style={{
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 6,
+                      color: 'var(--color-text-stat)',
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faMinus} className="text-xs" />
+                  </button>
+                  <span className="w-8 text-center text-sm font-medium text-white">
+                    {item.quantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.cartKey, 1)}
+                    disabled={atMax || maxQty === 0}
+                    title={atMax ? `Доступно не более ${maxQty} шт.` : undefined}
+                    className="flex h-8 w-8 items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 6,
+                      color: 'var(--color-text-stat)',
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                  </button>
+                </div>
+
                 <button
-                  onClick={() => updateQuantity(item.cartKey, -1)}
+                  type="button"
+                  onClick={() => removeItem(item.cartKey)}
                   className="flex h-8 w-8 items-center justify-center transition-colors"
-                  style={{
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 6,
-                    color: 'var(--color-text-stat)',
-                  }}
+                  style={{ color: 'var(--color-text-stat)' }}
                 >
-                  <FontAwesomeIcon icon={faMinus} className="text-xs" />
-                </button>
-                <span className="w-8 text-center text-sm font-medium text-white">
-                  {item.quantity}
-                </span>
-                <button
-                  onClick={() => updateQuantity(item.cartKey, 1)}
-                  className="flex h-8 w-8 items-center justify-center transition-colors"
-                  style={{
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 6,
-                    color: 'var(--color-text-stat)',
-                  }}
-                >
-                  <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                  <FontAwesomeIcon icon={faTrash} className="text-sm" />
                 </button>
               </div>
-
-              <button
-                onClick={() => removeItem(item.cartKey)}
-                className="flex h-8 w-8 items-center justify-center transition-colors"
-                style={{ color: 'var(--color-text-stat)' }}
-              >
-                <FontAwesomeIcon icon={faTrash} className="text-sm" />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="mt-8 pt-6" style={{ borderTop: '1px solid var(--color-border)' }}>
@@ -207,13 +358,23 @@ export default function CartPage() {
         </div>
 
         <div className="mt-6 flex justify-end">
-          <Link
-            href="/shop/checkout"
-            className="inline-flex items-center gap-3 px-10 py-4 text-sm font-bold uppercase tracking-wider text-white transition-colors"
+          <button
+            type="button"
+            onClick={handleCheckout}
+            disabled={!canCheckout || checkoutLoading}
+            className="inline-flex items-center gap-3 px-10 py-4 text-sm font-bold uppercase tracking-wider text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: 'var(--color-accent)', borderRadius: 10 }}
           >
-            Оформить заказ <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
-          </Link>
+            {checkoutLoading ? (
+              <>
+                <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" /> Проверка…
+              </>
+            ) : (
+              <>
+                Оформить заказ <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+              </>
+            )}
+          </button>
         </div>
       </div>
 

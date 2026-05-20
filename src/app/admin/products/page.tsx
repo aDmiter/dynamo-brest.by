@@ -9,7 +9,7 @@ import DeleteButton from '@/modules/admin/components/DeleteButton';
 export default async function ProductsAdminPage() {
   const products = await prisma.product.findMany({
     orderBy: { createdAt: 'desc' },
-    include: { productcategory: true },
+    include: { productcategory: true, manufacturer: true },
     take: 50,
   });
 
@@ -33,13 +33,14 @@ export default async function ProductsAdminPage() {
               <th className="p-3 text-left text-sm text-gray-400">Артикул</th>
               <th className="p-3 text-left text-sm text-gray-400">Цена</th>
               <th className="p-3 text-left text-sm text-gray-400">Категория</th>
+              <th className="p-3 text-left text-sm text-gray-400">Производитель</th>
               <th className="p-3 text-center text-sm text-gray-400">Действия</th>
             </tr>
           </thead>
           <tbody>
             {products.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-gray-500">
+                <td colSpan={7} className="p-6 text-center text-gray-500">
                   Нет товаров
                 </td>
               </tr>
@@ -59,6 +60,7 @@ export default async function ProductsAdminPage() {
                     <td className="p-3 text-sm text-gray-400">{p.article || '—'}</td>
                     <td className="p-3 text-sm text-white">{Number(p.price).toFixed(2)} BYN</td>
                     <td className="p-3 text-sm text-gray-400">{p.productcategory?.name || '—'}</td>
+                    <td className="p-3 text-sm text-gray-500">{p.manufacturer?.name || '—'}</td>
                     <td className="p-3 text-center">
                       <div className="flex items-center justify-center gap-3">
                         <Link

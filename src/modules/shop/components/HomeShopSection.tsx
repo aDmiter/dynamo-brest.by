@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import CatalogProductCard, { type CatalogProductCardData } from './CatalogProductCard';
+import ShopRequisitesBlock from './ShopRequisitesBlock';
 
 interface Props {
   products: CatalogProductCardData[];
@@ -39,6 +40,8 @@ export default function HomeShopSection({ products }: Props) {
             ))}
           </div>
         )}
+
+        <ShopRequisitesBlock variant="home" />
       </div>
 
       <div className="shop__decor-title" aria-hidden>

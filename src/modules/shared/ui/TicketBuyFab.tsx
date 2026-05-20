@@ -1,5 +1,6 @@
 'use client';
 
+import TicketBuyLink from '@/modules/shared/ui/TicketBuyLink';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTicket } from '@fortawesome/free-solid-svg-icons';
 import type { NextTicketMatch } from '@/lib/get-next-ticket-match';
@@ -11,10 +12,8 @@ interface TicketBuyFabProps {
 export default function TicketBuyFab({ match }: TicketBuyFabProps) {
   return (
     <div className="ticket-buy-fab" aria-live="polite">
-      <a
+      <TicketBuyLink
         href={match.ticketUrl}
-        target="_blank"
-        rel="noopener noreferrer"
         className="ticket-buy-fab__link"
         aria-label="Купить билет на ближайший матч"
       >
@@ -43,7 +42,7 @@ export default function TicketBuyFab({ match }: TicketBuyFabProps) {
         <span className="ticket-buy-fab__icon" aria-hidden>
           <FontAwesomeIcon icon={faTicket} className="text-lg" />
         </span>
-      </a>
+      </TicketBuyLink>
     </div>
   );
 }

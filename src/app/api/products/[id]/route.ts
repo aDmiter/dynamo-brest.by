@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
-        productsize: { orderBy: { size: 'asc' } },
+        productsize: { orderBy: [{ sortOrder: 'asc' }, { size: 'asc' }] },
       },
     });
 
@@ -43,6 +43,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.oldPrice !== undefined)
       updateData.oldPrice = data.oldPrice ? Number(data.oldPrice) : null;
     if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
+    if (data.manufacturerId !== undefined) {
+      updateData.manufacturerId =
+        data.manufacturerId && String(data.manufacturerId).trim()
+          ? String(data.manufacturerId).trim()
+          : null;
+    }
     if (data.images !== undefined) updateData.images = JSON.stringify(data.images);
     if (data.inStock !== undefined) updateData.inStock = data.inStock;
     if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
@@ -59,9 +65,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.sizes !== undefined) {
       await prisma.productSize.deleteMany({ where: { productId: id } });
       if (Array.isArray(data.sizes) && data.sizes.length > 0) {
-        for (const sizeItem of data.sizes) {
+        for (let i = 0; i < data.sizes.length; i++) {
+          const sizeItem = data.sizes[i] as { size: string; quantity: number };
           await prisma.productSize.create({
-            data: { productId: id, size: sizeItem.size, quantity: sizeItem.quantity },
+            data: {
+              productId: id,
+              size: sizeItem.size,
+              quantity: sizeItem.quantity,
+              sortOrder: i,
+            },
           });
         }
       }

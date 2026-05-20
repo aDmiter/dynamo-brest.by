@@ -23,8 +23,8 @@ export default async function WomenCoachesPage() {
         include: { team: true },
       },
     },
-    orderBy: [{ type: 'asc' }, { lastName: 'asc' }],
+    orderBy: [{ order: 'asc' }, { type: 'asc' }, { lastName: 'asc' }],
   });
 
-  return <CoachesGrid coaches={coaches} femaleTeam />;
+  return <CoachesGrid coaches={coaches} />;
 }

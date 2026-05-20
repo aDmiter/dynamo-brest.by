@@ -123,6 +123,38 @@
   font-weight: 500;
 }
 
+.shop-requisites {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(36, 44, 65, 0.12);
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: rgba(36, 44, 65, 0.75);
+}
+
+.shop-requisites__line {
+  margin: 0 0 0.35rem;
+
+  a {
+    color: #c45f10;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover {
+      color: #ee862c;
+    }
+  }
+}
+
+.shop-requisites__merchant-logos {
+  display: block;
+  width: auto;
+  max-width: min(100%, 520px);
+  height: auto;
+  margin: 0 auto 1rem;
+}
+
 .shop__decor-title {
   position: absolute;
   left: 0;

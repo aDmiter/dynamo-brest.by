@@ -128,6 +128,7 @@ const menuItems: MenuItem[] = [
       { title: 'Обзор', href: '/admin/shop', section: 'shop' },
       { title: 'Товары', href: '/admin/products', section: 'shop' },
       { title: 'Категории', href: '/admin/categories', section: 'shop' },
+      { title: 'Производители', href: '/admin/manufacturers', section: 'shop' },
       { title: 'Заказы', href: '/admin/orders', section: 'shop' },
       { title: 'Страны', href: '/admin/countries', section: 'shop' },
       { title: 'Доп. поля', href: '/admin/shop/fields', section: 'shop' },

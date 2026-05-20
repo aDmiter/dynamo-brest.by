@@ -15,10 +15,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.firstName !== undefined) updateData.firstName = data.firstName;
     if (data.lastName !== undefined) updateData.lastName = data.lastName;
     if (data.middleName !== undefined) updateData.middleName = data.middleName;
+    if (data.shortName !== undefined) updateData.shortName = data.shortName;
     if (data.position !== undefined) updateData.position = data.position;
     if (data.birthDate !== undefined)
       updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
     if (data.nationality !== undefined) updateData.nationality = data.nationality;
+    if (data.country !== undefined) updateData.country = data.country;
+    if (data.city !== undefined) updateData.city = data.city;
+    if (data.gender !== undefined) updateData.gender = data.gender;
     if (data.photoUrl !== undefined) updateData.photoUrl = data.photoUrl;
     if (data.bio !== undefined) updateData.bio = data.bio;
     if (data.gallery !== undefined) updateData.gallery = data.gallery;

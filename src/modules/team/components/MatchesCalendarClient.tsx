@@ -10,6 +10,7 @@ import MatchStadiumButton from '@/modules/shared/ui/MatchStadiumButton';
 import MatchesPageNav from '@/modules/team/components/matches/MatchesPageNav';
 import MatchCardGlassLogos from '@/modules/team/components/matches/MatchCardGlassLogos';
 import MatchCardCalendarAside from '@/modules/team/components/matches/MatchCardCalendarAside';
+import TicketBuyLink from '@/modules/shared/ui/TicketBuyLink';
 
 interface MatchData {
   id: string;
@@ -387,15 +388,10 @@ function CalendarCard({ match, ourLogo }: { match: MatchData; ourLogo: string })
             </div>
           )}
           {match.ticketUrl && (
-            <a
-              href={match.ticketUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="calendar__card-ticket-link"
-            >
+            <TicketBuyLink href={match.ticketUrl} className="calendar__card-ticket-link">
               <FontAwesomeIcon icon={faTicket} className="calendar__card-ticket-link-icon" />
               Купить билеты
-            </a>
+            </TicketBuyLink>
           )}
         </div>
       </div>

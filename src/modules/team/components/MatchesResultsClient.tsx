@@ -18,6 +18,7 @@ import MatchCardGlassLogos from '@/modules/team/components/matches/MatchCardGlas
 import MatchCardResultPill from '@/modules/team/components/matches/MatchCardResultPill';
 import MatchCardGoalScorers from '@/modules/team/components/matches/MatchCardGoalScorers';
 import MatchProtocolModal from '@/modules/team/components/matches/MatchProtocolModal';
+import TicketBuyLink from '@/modules/shared/ui/TicketBuyLink';
 import type { GoalScorerPublic } from '@/lib/match-protocol';
 
 interface MatchData {
@@ -478,10 +479,8 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
             Протокол
           </button>
           {match.ticketUrl && (
-            <a
+            <TicketBuyLink
               href={match.ticketUrl}
-              target="_blank"
-              rel="noopener noreferrer"
               className="results__card-ticket-link"
               style={{
                 display: 'inline-flex',
@@ -504,7 +503,7 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
             >
               <FontAwesomeIcon icon={faTicket} style={{ width: 10, height: 10 }} />
               Билеты
-            </a>
+            </TicketBuyLink>
           )}
         </div>
       </div>

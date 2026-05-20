@@ -19,7 +19,18 @@ interface CoachData {
 
 interface Props {
   coaches: CoachData[];
-  femaleTeam?: boolean;
+}
+
+function isCoachFemaleGender(gender: string | null | undefined): boolean {
+  if (!gender) return false;
+  const v = gender
+    .trim()
+    .toLowerCase()
+    .replace(/[.\s;]+$/g, ''); // «жен.», «жен », с точкой с запятой
+  if (v === 'female' || v === 'f') return true;
+  if (v === 'женский' || v === 'жен') return true;
+  if (v.startsWith('жен')) return true; // женщина, женина и т.п.
+  return false;
 }
 
 function calculateAge(birthDate: Date | null): number | null {
@@ -41,7 +52,7 @@ function getAgeLabel(age: number): string {
   return 'лет';
 }
 
-export default function CoachesGrid({ coaches, femaleTeam = false }: Props) {
+export default function CoachesGrid({ coaches }: Props) {
   return (
     <div
       className="coaches"
@@ -264,7 +275,7 @@ export default function CoachesGrid({ coaches, femaleTeam = false }: Props) {
                 className="coaches__card-enter"
                 style={{ animationDelay: `${i * 0.06}s`, opacity: 0 }}
               >
-                <CoachCard coach={coach} femaleAccent={femaleTeam || coach.gender === 'female'} />
+                <CoachCard coach={coach} femaleAccent={isCoachFemaleGender(coach.gender)} />
               </div>
             ))}
           </div>

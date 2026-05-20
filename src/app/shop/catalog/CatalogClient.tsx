@@ -15,6 +15,7 @@ interface Product {
   oldPrice: string | null;
   images: string | null;
   productcategory?: { id: string; name: string } | null;
+  manufacturer?: { name: string } | null;
 }
 
 interface Category {

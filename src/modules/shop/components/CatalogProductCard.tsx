@@ -12,6 +12,7 @@ export interface CatalogProductCardData {
   oldPrice: string | null;
   images: string | null;
   productcategory?: { id: string; name: string } | null;
+  manufacturer?: { name: string } | null;
 }
 
 interface Props {
@@ -63,6 +64,9 @@ export default function CatalogProductCard({ product, animationIndex = 0 }: Prop
           {product.productcategory?.name || 'Товар'}
         </div>
         <div className="catalog-product-card__name">{product.name}</div>
+        {product.manufacturer?.name && (
+          <div className="catalog-product-card__manufacturer">{product.manufacturer.name}</div>
+        )}
         <div className="catalog-product-card__divider" />
         <div className="catalog-product-card__footer">
           <div className="catalog-product-card__prices">

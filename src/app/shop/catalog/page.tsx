@@ -8,7 +8,7 @@ export default async function CatalogPage() {
       where: { inStock: true },
       orderBy: { createdAt: 'desc' },
       take: 50,
-      include: { productcategory: true },
+      include: { productcategory: true, manufacturer: true },
     }),
     prisma.productcategory.findMany({
       orderBy: { order: 'asc' },

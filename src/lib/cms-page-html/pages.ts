@@ -12,13 +12,13 @@ import {
   gymSchedule,
 } from '@/modules/shared/data/gym-services';
 import {
+  BEPAID_PAYMENT_INFO_URL,
+  BEPAID_SITE_URL,
   ORDER_STEPS,
   SHOP_POSTAL_ADDRESS,
   SHOP_SUPPORT_EMAIL,
   SHOP_SUPPORT_PHONE,
   SHOP_SUPPORT_PHONE_HREF,
-  WEBPAY_RECEIPT_SAMPLE_URL,
-  WEBPAY_SITE_URL,
 } from '@/modules/shop/data/shop-info';
 import {
   TRANSPORT_PHONE,
@@ -162,14 +162,14 @@ ${sectionHtml(
 ${sectionHtml(
   'shop-delivery-order',
   'После оплаты',
-  `<p class="transport-services__vehicle-desc">После успешной оплаты банковской картой через WebPay заказ передаётся на комплектацию и отправку. Доставка осуществляется только после подтверждения оплаты.</p>`,
+  `<p class="transport-services__vehicle-desc">После успешной оплаты банковской картой через bePaid заказ передаётся на комплектацию и отправку. Доставка осуществляется только после подтверждения оплаты.</p>`,
 )}
 <p class="transport-services__phone transport-services__phone--footer">Почтовый адрес продавца: ${escapeHtml(SHOP_POSTAL_ADDRESS)}</p>`);
 }
 
 export function shopPaymentPageHtml(): string {
   const steps = ORDER_STEPS.map((step) => `<li>${escapeHtml(step)}</li>`).join('');
-  return wrapCmsPageContent(`<p class="transport-services__lead">Оплата товаров в интернет-магазине ФК «Динамо-Брест» производится в белорусских рублях (BYN) банковской платёжной картой через платёжную систему <a href="${WEBPAY_SITE_URL}" target="_blank" rel="noopener noreferrer">WebPay (www.webpay.by)</a>.</p>
+  return wrapCmsPageContent(`<p class="transport-services__lead">Оплата товаров в интернет-магазине ФК «Динамо-Брест» производится в белорусских рублях (BYN) банковской платёжной картой через платёжный сервис <a href="${BEPAID_SITE_URL}" target="_blank" rel="noopener noreferrer">bePaid (bepaid.by)</a>. Допустимы карты Visa, Mastercard, Белкарт, Мир, Apple Pay, Google Pay и другие способы, доступные на платёжной форме.</p>
 ${sectionHtml(
   'shop-payment-steps',
   'Порядок оформления заказа',
@@ -178,15 +178,17 @@ ${sectionHtml(
 ${sectionHtml(
   'shop-payment-security',
   'Безопасность платежей',
-  `<p class="transport-services__vehicle-desc">Безопасный сервер WEBPAY устанавливает шифрованное соединение по защищённому протоколу TLS и конфиденциально принимает от клиента данные его платёжной карты (номер карты, имя держателя, дату окончания действия и контрольный номер банковской карточки CVC/CVC2).</p>
-<p class="transport-services__vehicle-desc">После совершения оплаты с использованием банковской карты необходимо сохранять полученные карт-чеки (подтверждения об оплате) для сверки с выпиской из карт-счёта (с целью подтверждения совершённых операций в случае возникновения спорных ситуаций).</p>
-<p class="transport-services__vehicle-desc">В случае, если Вы не получили заказ (не оказана услуга), Вам необходимо обратиться в службу технической поддержки по телефону <a href="${SHOP_SUPPORT_PHONE_HREF}">${escapeHtml(SHOP_SUPPORT_PHONE)}</a> или e-mail <a href="mailto:${SHOP_SUPPORT_EMAIL}">${escapeHtml(SHOP_SUPPORT_EMAIL)}</a>. Менеджеры Вас проконсультируют.</p>
-<p class="transport-services__vehicle-desc">При оплате банковской платёжной картой возврат денежных средств осуществляется на карточку, с которой была произведена оплата.</p>`,
+  `<p class="transport-services__vehicle-desc">Оплата банковской картой в сервисе bePaid полностью конфиденциальна и безопасна. Доступ к реквизитам банковской карты покупателя осуществляется по протоколу TLS, применяется технология 3-D Secure. bePaid соответствует международному стандарту безопасности PCI DSS.</p>
+<p class="transport-services__vehicle-desc">Реквизиты карты вводятся на защищённой платёжной странице bePaid; интернет-магазин не получает и не хранит данные банковской карты.</p>
+<p class="transport-services__vehicle-desc">После совершения оплаты сохраняйте подтверждение об оплате (карт-чек, e-mail) для сверки с выпиской по карте в случае спорных ситуаций.</p>
+<p class="transport-services__vehicle-desc">Если Вы не получили заказ, обратитесь в службу поддержки продавца по телефону <a href="${SHOP_SUPPORT_PHONE_HREF}">${escapeHtml(SHOP_SUPPORT_PHONE)}</a> или e-mail <a href="mailto:${SHOP_SUPPORT_EMAIL}">${escapeHtml(SHOP_SUPPORT_EMAIL)}</a>.</p>
+<p class="transport-services__vehicle-desc">При оплате банковской платёжной картой возврат денежных средств осуществляется на карту, с которой была произведена оплата, в сроки, установленные банком-эмитентом.</p>
+<p class="transport-services__vehicle-desc">Подробнее об оплате для покупателей: <a href="${BEPAID_PAYMENT_INFO_URL}" target="_blank" rel="noopener noreferrer">${BEPAID_PAYMENT_INFO_URL}</a>.</p>`,
 )}
 ${sectionHtml(
   'shop-payment-receipt',
   'Подтверждение оплаты',
-  `<p class="transport-services__vehicle-desc">Образец документа, подтверждающего оплату, размещён на сайте WebPay: <a href="${WEBPAY_RECEIPT_SAMPLE_URL}" target="_blank" rel="noopener noreferrer">${WEBPAY_RECEIPT_SAMPLE_URL}</a>. После успешной оплаты на указанный e-mail также направляется электронное подтверждение заказа.</p>`,
+  `<p class="transport-services__vehicle-desc">После успешной оплаты на указанный при оформлении e-mail направляется электронное подтверждение заказа и операции оплаты.</p>`,
 )}
 <p class="transport-services__phone transport-services__phone--footer"><a href="/shop/catalog">Перейти в каталог</a> · <a href="/shop/cart">Корзина</a></p>`);
 }

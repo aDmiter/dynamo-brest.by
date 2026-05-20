@@ -114,12 +114,25 @@
   margin-bottom: 1rem;
 }
 
-.site-footer__payment-logos {
+.site-footer__payment-logos,
+.shop-requisites__merchant-logos {
   display: block;
   width: auto;
-  max-width: min(100%, 360px);
+  max-width: min(100%, 520px);
   height: auto;
   margin: 0 auto 0.75rem;
+}
+
+.site-footer__copyright-requisites {
+  .shop-requisites__line a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover {
+      color: var(--color-accent);
+    }
+  }
 }
 
 .site-footer__copyright-line {

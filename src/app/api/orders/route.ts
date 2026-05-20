@@ -2,10 +2,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendOrderEmails } from '@/lib/mailer';
+import {
+  InsufficientStockError,
+  reserveStock,
+  type StockLineItem,
+} from '@/lib/shop-stock';
+
+type OrderItemInput = {
+  productId: string;
+  quantity: number;
+  price: number;
+  size?: string | null;
+  customization?: Record<string, unknown> | null;
+};
+
+function toStockLines(items: OrderItemInput[]): StockLineItem[] {
+  return items.map((item) => ({
+    productId: item.productId,
+    quantity: item.quantity,
+    size: item.size ?? null,
+  }));
+}
 
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
+    const items = (data.items ?? []) as OrderItemInput[];
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'Корзина пуста' }, { status: 400 });
+    }
 
     const today = new Date();
     const datePrefix = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
@@ -17,89 +43,47 @@ export async function POST(request: NextRequest) {
     });
 
     const orderNumber = `#${datePrefix}-${String(todayOrders + 1).padStart(3, '0')}`;
+    const shouldReserveStock = !data.skipStockUpdate;
+    const stockLines = toStockLines(items);
 
-    const order = await prisma.order.create({
-      data: {
-        orderNumber,
-        customerName: data.customerName,
-        customerEmail: data.customerEmail || null,
-        customerPhone: data.customerPhone || '',
-        address: data.address || null,
-        comment: data.comment || null,
-        deliveryPrice: data.deliveryPrice || 0,
-        status: data.status || 'received',
-        total: Number(data.total),
-        orderitem: {
-          create: data.items.map(
-            (item: {
-              productId: string;
-              quantity: number;
-              price: number;
-              size?: string | null;
-              customization?: Record<string, unknown> | null;
-            }) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.price,
-              size: item.size || null,
-              customization: item.customization ? JSON.stringify(item.customization) : null,
-            })
-          ),
-        },
-      },
-      include: { orderitem: { include: { product: true } } },
-    });
-
-    // Списываем остатки и увеличиваем счётчик продаж только если не skipStockUpdate
-    if (!data.skipStockUpdate && data.items && Array.isArray(data.items)) {
-      for (const item of data.items) {
-        if (item.size) {
-          const productSize = await prisma.productSize.findFirst({
-            where: { productId: item.productId, size: item.size },
-          });
-          if (productSize) {
-            await prisma.productSize.update({
-              where: { id: productSize.id },
-              data: { quantity: { decrement: item.quantity } },
-            });
-          }
-        } else {
-          await prisma.product.update({
-            where: { id: item.productId },
-            data: { quantity: { decrement: item.quantity } },
-          });
-        }
-
-        await prisma.product.update({
-          where: { id: item.productId },
-          data: { totalSold: { increment: item.quantity } },
-        });
-      }
-    }
-
-    // Отправляем письма только если заказ не pending_payment
-    if (data.status !== 'pending_payment') {
-      const orderForEmail = {
-        id: order.id,
-        orderNumber: order.orderNumber,
-        customerName: order.customerName,
-        customerEmail: order.customerEmail,
-        customerPhone: order.customerPhone,
-        address: order.address,
-        status: order.status,
-        trackingCode: order.trackingCode,
-        total: Number(order.total),
-        deliveryPrice: order.deliveryPrice ? Number(order.deliveryPrice) : null,
-        orderitem: order.orderitem.map((item) => ({
+    const orderData = {
+      orderNumber,
+      customerName: data.customerName,
+      customerEmail: data.customerEmail || null,
+      customerPhone: data.customerPhone || '',
+      address: data.address || null,
+      comment: data.comment || null,
+      deliveryPrice: data.deliveryPrice || 0,
+      status: data.status || 'received',
+      total: Number(data.total),
+      stockReserved: shouldReserveStock,
+      orderitem: {
+        create: items.map((item) => ({
+          productId: item.productId,
           quantity: item.quantity,
-          price: Number(item.price),
-          size: item.size,
-          product: { name: item.product.name },
+          price: item.price,
+          size: item.size || null,
+          customization: item.customization ? JSON.stringify(item.customization) : null,
         })),
-      };
+      },
+    };
 
+    const order = shouldReserveStock
+      ? await prisma.$transaction(async (tx) => {
+          await reserveStock(stockLines, tx);
+          return tx.order.create({
+            data: orderData,
+            include: { orderitem: { include: { product: true } } },
+          });
+        })
+      : await prisma.order.create({
+          data: orderData,
+          include: { orderitem: { include: { product: true } } },
+        });
+
+    if (data.status !== 'pending_payment') {
       try {
-        await sendOrderEmails(orderForEmail);
+        await sendOrderEmails(order);
       } catch (err) {
         console.error('❌ Ошибка в sendOrderEmails:', err);
       }
@@ -107,6 +91,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(order, { status: 201 });
   } catch (error: unknown) {
+    if (error instanceof InsufficientStockError) {
+      return NextResponse.json(
+        { error: error.message, issues: error.issues.filter((i) => !i.ok) },
+        { status: 409 }
+      );
+    }
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
     return NextResponse.json({ error: message }, { status: 400 });
   }

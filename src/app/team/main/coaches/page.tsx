@@ -23,7 +23,7 @@ export default async function MainCoachesPage() {
         include: { team: true },
       },
     },
-    orderBy: [{ type: 'asc' }, { lastName: 'asc' }],
+    orderBy: [{ order: 'asc' }, { type: 'asc' }, { lastName: 'asc' }],
   });
 
   return <CoachesGrid coaches={coaches} />;

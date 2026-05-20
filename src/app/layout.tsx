@@ -9,7 +9,10 @@ import Footer from '@/modules/shared/ui/Footer';
 import { headers } from 'next/headers';
 import BurgerMenu from '@/modules/shared/ui/BurgerMenu';
 import TicketBuyFabLoader from '@/modules/shared/ui/TicketBuyFabLoader';
+import AfpTicketScript from '@/modules/shared/ui/AfpTicketScript';
+import { TicketSaleframeModalProvider } from '@/modules/shared/ui/TicketSaleframeModalContext';
 import ThemeInitializer from '@/modules/shared/ui/ThemeInitializer';
+import { isTicketSaleframeModalSupportedHost } from '@/lib/ticket-frame-host';
 import AnalyticsScripts from '@/modules/shared/ui/AnalyticsScripts';
 import { getAllSettings } from '@/lib/settings';
 import {
@@ -56,6 +59,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   const settings = await getAllSettings();
+  const host = headersList.get('host');
+  const saleframeModalAllowed = isTicketSaleframeModalSupportedHost(host);
 
   return (
     <html lang="ru" suppressHydrationWarning>
@@ -72,12 +77,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         suppressHydrationWarning
       >
         <ThemeInitializer settings={settings} />
-        {!isAdmin && <AnalyticsScripts />}
-        {!isAdmin && <Header />}
-        {!isAdmin && <BurgerMenu />}
-        {!isAdmin && <TicketBuyFabLoader />}
-        <main>{children}</main>
-        {!isAdmin && <Footer />}
+        <TicketSaleframeModalProvider value={saleframeModalAllowed}>
+          {!isAdmin && <AnalyticsScripts />}
+          {!isAdmin && <Header />}
+          {!isAdmin && <BurgerMenu />}
+          {!isAdmin && <TicketBuyFabLoader />}
+          <main>{children}</main>
+          {!isAdmin && <Footer />}
+          {!isAdmin && <AfpTicketScript enabled={saleframeModalAllowed} />}
+        </TicketSaleframeModalProvider>
       </body>
     </html>
   );

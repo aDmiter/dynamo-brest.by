@@ -13,13 +13,14 @@ export default async function ProductPage({ params }: Props) {
     where: { slug },
     include: {
       productcategory: true,
-      productsize: { orderBy: { size: 'asc' } },
+      manufacturer: true,
+      productsize: { orderBy: [{ sortOrder: 'asc' }, { size: 'asc' }] },
     },
   });
 
   if (!product) notFound();
 
-  const hasCustomization = Boolean((product as Record<string, unknown>).hasCustomization);
+  const hasCustomization = product.hasCustomization === true;
 
   let customizations: {
     id: string;
@@ -31,19 +32,28 @@ export default async function ProductPage({ params }: Props) {
   let players: { id: string; name: string; number: number }[] = [];
 
   if (hasCustomization) {
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-      const [custRes, playersRes] = await Promise.all([
-        fetch(`${baseUrl}/api/customizations`, { next: { revalidate: 60 } }),
-        fetch(`${baseUrl}/api/players-customization`, { next: { revalidate: 60 } }),
-      ]);
-      const custData = await custRes.json();
-      const playersData = await playersRes.json();
-      customizations = Array.isArray(custData) ? custData : [];
-      players = Array.isArray(playersData) ? playersData : [];
-    } catch {
-      /* silently fail */
-    }
+    const [custRows, playerRows] = await Promise.all([
+      prisma.customization.findMany({
+        where: { isActive: true },
+        orderBy: { order: 'asc' },
+      }),
+      prisma.playerCustomization.findMany({
+        where: { isActive: true },
+        orderBy: { number: 'asc' },
+      }),
+    ]);
+    customizations = custRows.map((c) => ({
+      id: c.id,
+      name: c.name,
+      type: c.type,
+      price: c.price.toString(),
+      imageUrl: c.imageUrl,
+    }));
+    players = playerRows.map((p) => ({
+      id: p.id,
+      name: p.name,
+      number: p.number,
+    }));
   }
 
   return (
@@ -62,6 +72,7 @@ export default async function ProductPage({ params }: Props) {
         useSizes: product.useSizes,
         hasCustomization,
         productcategory: product.productcategory ? { name: product.productcategory.name } : null,
+        manufacturer: product.manufacturer ? { name: product.manufacturer.name } : null,
         productsize: product.productsize,
       }}
       customizations={customizations}

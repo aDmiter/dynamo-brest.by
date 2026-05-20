@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         productcategory: true,
-        productsize: true,
+        manufacturer: true,
+        productsize: { orderBy: [{ sortOrder: 'asc' }, { size: 'asc' }] },
       },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,
@@ -58,6 +59,10 @@ export async function POST(request: NextRequest) {
         price: Number(data.price),
         oldPrice: data.oldPrice ? Number(data.oldPrice) : null,
         categoryId: data.categoryId,
+        manufacturerId:
+          data.manufacturerId && String(data.manufacturerId).trim()
+            ? String(data.manufacturerId).trim()
+            : null,
         images: data.images ? JSON.stringify(data.images) : '[]',
         inStock: Boolean(data.inStock),
         isFeatured: Boolean(data.isFeatured),
@@ -70,12 +75,14 @@ export async function POST(request: NextRequest) {
 
     // Создаём размеры если useSizes = true
     if (data.useSizes && data.sizes && Array.isArray(data.sizes) && data.sizes.length > 0) {
-      for (const sizeItem of data.sizes) {
+      for (let i = 0; i < data.sizes.length; i++) {
+        const sizeItem = data.sizes[i] as { size: string; quantity: number };
         await prisma.productSize.create({
           data: {
             productId: product.id,
             size: sizeItem.size,
             quantity: sizeItem.quantity,
+            sortOrder: i,
           },
         });
       }

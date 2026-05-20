@@ -6,6 +6,11 @@ import { prisma } from '@/lib/prisma';
 import { withDb } from '@/lib/with-db';
 import { getFooterItemHref, isFooterItemExternal } from '@/lib/footer-menu';
 import SponsorsSection from './SponsorsSection';
+import ShopRequisitesBlock from '@/modules/shop/components/ShopRequisitesBlock';
+import {
+  SHOP_CONTACT_PHONE,
+  SHOP_CONTACT_PHONE_HREF,
+} from '@/modules/shop/data/organization-requisites';
 
 export default async function Footer() {
   const [items, contacts] = await withDb(
@@ -107,34 +112,19 @@ export default async function Footer() {
                 {contactsData.email}
               </a>
             </p>
+            <p className="site-footer__contacts-line">
+              Телефон:{' '}
+              <a href={SHOP_CONTACT_PHONE_HREF} className="site-footer__link">
+                {SHOP_CONTACT_PHONE}
+              </a>
+            </p>
             <h4 className="site-footer__address-label">{contactsData.addressLabel}</h4>
             <p className="site-footer__address">{contactsData.address}</p>
           </div>
         </div>
 
         <div className="site-footer__copyright">
-          <div className="site-footer__copyright-requisites">
-            <img
-              src="/images/webpay_logos.png"
-              alt="Платёжные системы: Visa, MasterCard, Белкарт"
-              className="site-footer__payment-logos"
-              width={360}
-              height={48}
-            />
-            <p className="site-footer__copyright-line">
-              Учреждение физической культуры и спорта «Государственный футбольный клуб «Динамо-Брест»»
-            </p>
-            <p className="site-footer__copyright-line">УНП 290724129</p>
-            <p className="site-footer__copyright-line">
-              224020, Республика Беларусь, г. Брест, ул. Гоголя, 9
-            </p>
-            <p className="site-footer__copyright-line">
-              Режим работы интернет-магазина: круглосуточно
-            </p>
-            <p className="site-footer__copyright-line">
-              Зарегистрирован в торговом реестре РБ: №1555 от 20.05.2026
-            </p>
-          </div>
+          <ShopRequisitesBlock variant="footer" />
           <p className="site-footer__copyright-line">Official Website of FC Dynamo Brest</p>
           <p className="site-footer__copyright-line">
             <a href="https://webo.by/" className="site-footer__copyright-link">

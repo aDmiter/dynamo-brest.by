@@ -11,7 +11,6 @@ import {
   faUser,
   faPlus,
   faGripVertical,
-  faSave,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -47,7 +46,6 @@ export default function CoachesAdminPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [showSyncModal, setShowSyncModal] = useState(false);
-  const [orderChanged, setOrderChanged] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
 
   const fetchCoaches = useCallback(async () => {
@@ -157,23 +155,36 @@ export default function CoachesAdminPage() {
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
+    if (result.destination.index === result.source.index) return;
+
+    const previous = coaches;
     const items = Array.from(coaches);
     const [reordered] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reordered);
     setCoaches(items);
-    setOrderChanged(true);
-  };
 
-  const saveOrder = async () => {
-    setSavingOrder(true);
-    const items = coaches.map((c, i) => ({ id: c.id, order: i }));
-    await fetch('/api/coaches/reorder', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items }),
-    });
-    setSavingOrder(false);
-    setOrderChanged(false);
+    void (async () => {
+      setSavingOrder(true);
+      try {
+        const payload = items.map((c, i) => ({ id: c.id, order: i }));
+        const res = await fetch('/api/coaches/reorder', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: payload }),
+        });
+        if (!res.ok) {
+          setCoaches(previous);
+          setSyncResult('❌ Не удалось сохранить порядок');
+          setTimeout(() => setSyncResult(null), 5000);
+        }
+      } catch {
+        setCoaches(previous);
+        setSyncResult('❌ Ошибка соединения при сохранении порядка');
+        setTimeout(() => setSyncResult(null), 5000);
+      } finally {
+        setSavingOrder(false);
+      }
+    })();
   };
 
   const teamShortLabels: Record<string, string> = {
@@ -188,20 +199,14 @@ export default function CoachesAdminPage() {
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-heading text-2xl font-bold text-white">Тренеры</h1>
-          <p className="text-sm text-gray-400 mt-1">{coaches.length} тренеров</p>
+          <p className="text-sm text-gray-400 mt-1">
+            {coaches.length} тренеров
+            {savingOrder ? (
+              <span className="ml-2 text-[var(--color-accent)]">· сохранение порядка…</span>
+            ) : null}
+          </p>
         </div>
         <div className="flex items-center gap-3">
-          {orderChanged && (
-            <Button
-              size="sm"
-              onClick={saveOrder}
-              disabled={savingOrder}
-              style={{ background: 'var(--color-win)' }}
-            >
-              <FontAwesomeIcon icon={faSave} className="mr-2" />
-              {savingOrder ? 'Сохранение...' : 'Сохранить порядок'}
-            </Button>
-          )}
           <Button
             size="sm"
             onClick={() => setShowSyncModal(true)}
@@ -258,7 +263,12 @@ export default function CoachesAdminPage() {
                 {(provided) => (
                   <tbody ref={provided.innerRef} {...provided.droppableProps}>
                     {coaches.map((coach, index) => (
-                      <Draggable key={coach.id} draggableId={coach.id} index={index}>
+                      <Draggable
+                        key={coach.id}
+                        draggableId={coach.id}
+                        index={index}
+                        isDragDisabled={savingOrder}
+                      >
                         {(provided, snapshot) => (
                           <tr
                             ref={provided.innerRef}
@@ -268,7 +278,7 @@ export default function CoachesAdminPage() {
                             <td className="p-3">
                               <span
                                 {...provided.dragHandleProps}
-                                className="cursor-grab text-gray-500 hover:text-white"
+                                className={`text-gray-500 hover:text-white ${savingOrder ? 'cursor-wait opacity-50' : 'cursor-grab'}`}
                               >
                                 <FontAwesomeIcon icon={faGripVertical} />
                               </span>

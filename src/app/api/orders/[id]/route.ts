@@ -5,6 +5,9 @@ import { sendOrderEmails } from '@/lib/mailer';
 import { auth } from '@/lib/auth';
 import { canAccessSection } from '@/lib/admin-permissions';
 import { auditUpdateData } from '@/lib/admin-audit-route';
+import { releaseOrderStock } from '@/lib/shop-stock';
+
+const RELEASE_STOCK_STATUSES = ['cancelled', 'unpaid'];
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -47,33 +50,24 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (user && data.trackingCode !== undefined) updateData.trackingCode = data.trackingCode;
     if (user) Object.assign(updateData, await auditUpdateData());
 
+    if (
+      data.status &&
+      RELEASE_STOCK_STATUSES.includes(data.status) &&
+      oldOrder.stockReserved &&
+      oldOrder.status === 'pending_payment'
+    ) {
+      await releaseOrderStock(oldOrder.id);
+      updateData.stockReserved = false;
+    }
+
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: updateData,
       include: { orderitem: { include: { product: true } } },
     });
 
-    const orderForEmail = {
-      id: updatedOrder.id,
-      orderNumber: updatedOrder.orderNumber,
-      customerName: updatedOrder.customerName,
-      customerEmail: updatedOrder.customerEmail,
-      customerPhone: updatedOrder.customerPhone,
-      address: updatedOrder.address,
-      status: updatedOrder.status,
-      trackingCode: updatedOrder.trackingCode,
-      total: Number(updatedOrder.total),
-      deliveryPrice: updatedOrder.deliveryPrice ? Number(updatedOrder.deliveryPrice) : null,
-      orderitem: updatedOrder.orderitem.map((item) => ({
-        quantity: item.quantity,
-        price: Number(item.price),
-        size: item.size,
-        product: { name: item.product.name },
-      })),
-    };
-
     if (data.status && data.status !== oldOrder.status) {
-      await sendOrderEmails(orderForEmail, data.status);
+      await sendOrderEmails(updatedOrder, data.status);
     }
 
     return NextResponse.json(updatedOrder);

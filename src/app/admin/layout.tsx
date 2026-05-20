@@ -34,14 +34,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (isNoAccess) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0B0F1C] via-[#0D1225] to-[#0F1529] p-8">
+      <div className="admin-app flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0B0F1C] via-[#0D1225] to-[#0F1529] p-8">
         {children}
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-[#0B0F1C] via-[#0D1225] to-[#0F1529]">
+    <div className="admin-app flex min-h-screen bg-gradient-to-br from-[#0B0F1C] via-[#0D1225] to-[#0F1529]">
       <AdminSidebar permissions={permissions} showUsersLink={showUsersLink} />
       <main className="flex-1 overflow-y-auto p-8">{children}</main>
     </div>
