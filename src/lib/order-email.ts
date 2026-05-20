@@ -327,3 +327,32 @@ export function buildAdminNewOrderEmail(order: OrderEmailData): string {
   `;
   return emailShell(content, `Новый заказ ${order.orderNumber}`);
 }
+
+/** Письмо админу при смене статуса (оплата, отправка и т.д.) */
+export function buildAdminStatusEmail(
+  order: OrderEmailData,
+  statusLabel: string,
+  newStatus: string
+): string {
+  const trackingBlock =
+    newStatus === 'shipped' && order.trackingCode
+      ? `
+    <div style="margin:0 0 20px;padding:16px 18px;background:#fff8f0;border:1px solid rgba(238,134,44,0.35);border-radius:10px;">
+      <p style="margin:0 0 6px;font-size:13px;color:${BRAND.textMuted};">Код отслеживания</p>
+      <p style="margin:0;font-size:16px;font-weight:700;color:${BRAND.textPrimary};">${escapeHtml(order.trackingCode)}</p>
+    </div>`
+      : '';
+
+  const content = `
+    <h2 style="margin:0 0 12px;font-size:18px;color:${BRAND.textPrimary};">Заказ №${escapeHtml(order.orderNumber)}</h2>
+    <p style="margin:0 0 20px;font-size:15px;"><strong>Новый статус:</strong> ${escapeHtml(statusLabel)}</p>
+    ${trackingBlock}
+    <p style="margin:0 0 6px;font-size:14px;"><strong>Клиент:</strong> ${escapeHtml(order.customerName)}</p>
+    <p style="margin:0 0 6px;font-size:14px;"><strong>Телефон:</strong> ${escapeHtml(order.customerPhone)}</p>
+    <p style="margin:0 0 6px;font-size:14px;"><strong>Email:</strong> ${escapeHtml(order.customerEmail || '—')}</p>
+    <p style="margin:0 0 20px;font-size:14px;"><strong>Адрес:</strong> ${escapeHtml(order.address || '—')}</p>
+    ${renderOrderItems(order)}
+    ${renderTotals(order)}
+  `;
+  return emailShell(content, `Заказ ${order.orderNumber}: ${statusLabel}`);
+}

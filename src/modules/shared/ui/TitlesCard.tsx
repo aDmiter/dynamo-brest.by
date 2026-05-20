@@ -22,53 +22,16 @@ export default function TitlesCard({ title }: { title: TitleData }) {
             src={title.image}
             alt={title.name}
             className="titles__cup-image relative z-10 w-full drop-shadow-2xl transition-all duration-700"
-            style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))' }}
+            style={{ filter: 'drop-shadow(0 10px 20px rgba(36, 44, 65, 0.2))' }}
           />
         </div>
 
-        <div
-          className="titles__info w-full px-4 py-4 transition-all duration-500"
-          style={{
-            borderRadius: 12,
-            border: '1px solid var(--color-border)',
-            background: 'rgba(255,255,255,0.04)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.borderColor = 'var(--color-accent-30)';
-            el.style.background = 'var(--color-accent-7)';
-            el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.5)';
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLDivElement;
-            el.style.borderColor = 'var(--color-border)';
-            el.style.background = 'rgba(255,255,255,0.04)';
-            el.style.boxShadow = 'none';
-          }}
-        >
-          <h3
-            className="titles__name text-base font-bold text-white md:text-lg"
-            style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 900 }}
-          >
-            {title.name}
-          </h3>
+        <div className="titles__info">
+          <h3 className="titles__name">{title.name}</h3>
           <div className="titles__count mt-1 flex justify-center">
-            <span
-              className="text-4xl font-black md:text-5xl"
-              style={{
-                fontFamily: "'Inter Tight', sans-serif",
-                fontWeight: 900,
-                color: 'var(--color-accent)',
-              }}
-            >
-              {title.count}
-            </span>
+            <span className="titles__count-value">{title.count}</span>
           </div>
-          <p className="titles__years mt-2 text-xs" style={{ color: 'var(--color-text-stat)' }}>
-            {title.years}
-          </p>
+          {title.years ? <p className="titles__years">{title.years}</p> : null}
         </div>
       </div>
     </div>

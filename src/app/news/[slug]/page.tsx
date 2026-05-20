@@ -43,7 +43,7 @@ export default async function NewsArticlePage({ params }: Props) {
   }
 
   return (
-    <article className="news-article" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+    <article className="news-article overflow-x-hidden" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
       {/* Первый экран — картинка на всю высоту */}
       <section className="news-article__hero relative h-screen w-full overflow-hidden">
         <img
@@ -142,7 +142,7 @@ export default async function NewsArticlePage({ params }: Props) {
       </section>
 
       {/* Текст новости */}
-      <section className="news-article__content relative flex min-h-screen items-center bg-white">
+      <section className="news-article__content relative flex min-h-screen items-center overflow-x-hidden bg-white">
         <div className="container mx-auto max-w-[1200px] px-4 py-16 md:px-8 md:ml-20">
           <div
             className="news-article__body prose max-w-none prose-headings:font-heading prose-headings:text-[#242C41] prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-[var(--color-accent)] prose-img:max-w-full"
@@ -150,12 +150,11 @@ export default async function NewsArticlePage({ params }: Props) {
           />
         </div>
 
-        <div className="news-article__title-module absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none select-none">
+        <div className="news-article__title-module absolute right-0 top-1/2 max-h-full -translate-y-1/2 overflow-hidden pointer-events-none select-none">
           <span
             className="block text-[80px] font-black uppercase tracking-[0.1em] md:text-[120px] leading-none"
             style={{
               writingMode: 'vertical-lr',
-              transform: 'rotate(180deg)',
               fontFamily: "'Inter Tight', sans-serif",
               fontWeight: 900,
               color: 'var(--color-team-names)',

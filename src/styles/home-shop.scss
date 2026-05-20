@@ -7,107 +7,6 @@
   overflow: hidden;
 }
 
-.shop__inner {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 48px 32px 64px;
-  box-sizing: border-box;
-}
-
-.shop__header {
-  position: relative;
-  margin-bottom: 28px;
-  overflow: hidden;
-}
-
-.shop__header-watermark {
-  position: absolute;
-  top: 50%;
-  right: -8px;
-  transform: translateY(-50%);
-  font-family: 'Inter Tight', sans-serif;
-  font-size: clamp(44px, 7vw, 72px);
-  font-weight: 900;
-  color: var(--color-accent);
-  opacity: 0.08;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
-  user-select: none;
-  pointer-events: none;
-  line-height: 1;
-}
-
-.shop__header-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px 20px;
-  position: relative;
-  z-index: 1;
-}
-
-.shop__header-main {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-}
-
-.shop__header-accent {
-  width: 3px;
-  height: 26px;
-  border-radius: 2px;
-  flex-shrink: 0;
-  background: linear-gradient(to bottom, var(--color-accent), var(--color-accent-30));
-}
-
-.shop__title-text {
-  font-family: 'Inter Tight', sans-serif;
-  font-size: clamp(18px, 2.4vw, 24px);
-  font-weight: 900;
-  color: #242c41;
-  letter-spacing: -0.03em;
-  text-transform: uppercase;
-  line-height: 1;
-}
-
-.shop__count {
-  font-family: 'Inter Tight', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(36, 44, 65, 0.35);
-}
-
-.shop__header-line {
-  flex: 1;
-  min-width: 48px;
-  height: 1px;
-  background: linear-gradient(to right, rgba(213, 0, 0, 0.2), transparent);
-}
-
-.shop__link {
-  font-family: 'Inter Tight', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: opacity 0.2s ease;
-
-  &:hover {
-    opacity: 0.8;
-  }
-}
-
 .shop__grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -128,23 +27,6 @@
   padding-top: 2rem;
   border-top: 1px solid rgba(36, 44, 65, 0.12);
   text-align: center;
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: rgba(36, 44, 65, 0.75);
-}
-
-.shop-requisites__line {
-  margin: 0 0 0.35rem;
-
-  a {
-    color: #c45f10;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-
-    &:hover {
-      color: #ee862c;
-    }
-  }
 }
 
 .shop-requisites__merchant-logos {
@@ -152,7 +34,7 @@
   width: auto;
   max-width: min(100%, 520px);
   height: auto;
-  margin: 0 auto 1rem;
+  margin: 0 auto;
 }
 
 .shop__decor-title {
@@ -183,10 +65,6 @@
 }
 
 @media (max-width: 560px) {
-  .shop__inner {
-    padding: 40px 16px 56px;
-  }
-
   .shop__grid {
     grid-template-columns: 1fr;
   }

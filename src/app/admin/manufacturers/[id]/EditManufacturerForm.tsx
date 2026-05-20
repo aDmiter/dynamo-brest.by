@@ -31,15 +31,14 @@ export default function EditManufacturerForm({ manufacturer }: { manufacturer: M
       const res = await fetch(`/api/manufacturers/${manufacturer.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name: name.trim() }),
       });
-      if (res.ok) {
-        setSuccess('Сохранено');
-        router.refresh();
-      } else {
-        const data = await res.json();
-        setError(data.error || 'Ошибка');
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setError(data.error || 'Ошибка сохранения');
+        return;
       }
+      setSuccess('Сохранено');
     } catch {
       setError('Ошибка соединения');
     } finally {
@@ -48,13 +47,21 @@ export default function EditManufacturerForm({ manufacturer }: { manufacturer: M
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Удалить производителя «${manufacturer.name}»? У товаров поле будет сброшено.`))
-      return;
+    if (!confirm(`Удалить производителя «${name}»? У товаров поле будет сброшено.`)) return;
+    setLoading(true);
+    setError('');
     try {
-      await fetch(`/api/manufacturers/${manufacturer.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/manufacturers/${manufacturer.id}`, { method: 'DELETE' });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setError(data.error || 'Не удалось удалить');
+        return;
+      }
       router.push('/admin/manufacturers');
     } catch {
       setError('Ошибка при удалении');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,7 +81,7 @@ export default function EditManufacturerForm({ manufacturer }: { manufacturer: M
 
       <Card className="max-w-2xl border-white/10 bg-white/5 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-white">{manufacturer.name}</CardTitle>
+          <CardTitle className="text-white">{name}</CardTitle>
         </CardHeader>
         <CardContent>
           {error && (
@@ -103,7 +110,12 @@ export default function EditManufacturerForm({ manufacturer }: { manufacturer: M
               <Button type="submit" disabled={loading} className="bg-[#ee862c] hover:bg-[#f0ac74]">
                 <FontAwesomeIcon icon={faSave} className="mr-2" /> Сохранить
               </Button>
-              <Button variant="destructive" type="button" onClick={handleDelete}>
+              <Button
+                variant="destructive"
+                type="button"
+                onClick={handleDelete}
+                disabled={loading}
+              >
                 <FontAwesomeIcon icon={faTrash} className="mr-2" /> Удалить
               </Button>
             </div>

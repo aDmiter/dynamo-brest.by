@@ -11,112 +11,42 @@ interface Props {
   current: string;
   total: number;
   visible: number;
+  categoryCounts: Record<string, number>;
   onChange: (id: string) => void;
 }
 
-export default function CatalogFilters({ categories, current, total, visible, onChange }: Props) {
+export default function CatalogFilters({
+  categories,
+  current,
+  total,
+  visible,
+  categoryCounts,
+  onChange,
+}: Props) {
   const allFilters = [{ id: 'ALL', name: 'Все товары' }, ...categories];
 
   return (
-    <div
-      id="products"
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 40,
-        background: 'rgba(13,17,23,0.95)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--color-border)',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1400,
-          margin: '0 auto',
-          padding: '0 32px',
-          height: 52,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 20,
-        }}
-      >
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+    <div className="shop-catalog__filters" id="products">
+      <div className="shop-catalog__filters-inner">
+        <div className="shop-catalog__filters-list">
           {allFilters.map((cat) => {
             const active = current === cat.id;
-            const count = cat.id === 'ALL' ? total : visible;
+            const count = cat.id === 'ALL' ? total : (categoryCounts[cat.id] ?? 0);
+
             return (
               <button
                 key={cat.id}
+                type="button"
                 onClick={() => onChange(cat.id)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 7,
-                  background: active ? 'var(--color-accent-10)' : 'transparent',
-                  border: active
-                    ? '1.5px solid var(--color-accent)'
-                    : '1.5px solid var(--color-border)',
-                  borderRadius: 7,
-                  padding: '6px 14px',
-                  fontFamily: "'Inter Tight', sans-serif",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: active ? 'var(--color-accent)' : 'rgba(255,255,255,0.42)',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    const t = e.currentTarget as HTMLButtonElement;
-                    t.style.borderColor = 'var(--color-accent-30)';
-                    t.style.color = 'rgba(255,255,255,0.72)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    const t = e.currentTarget as HTMLButtonElement;
-                    t.style.borderColor = 'var(--color-border)';
-                    t.style.color = 'rgba(255,255,255,0.42)';
-                  }
-                }}
+                className={`shop-catalog__filter${active ? ' shop-catalog__filter--active' : ''}`}
               >
                 {cat.name}
-                <span
-                  style={{
-                    background: active ? 'var(--color-accent-20)' : 'rgba(255,255,255,0.07)',
-                    borderRadius: 4,
-                    padding: '1px 6px',
-                    fontSize: 9,
-                    color: active ? 'var(--color-accent)' : 'rgba(255,255,255,0.28)',
-                    fontWeight: 800,
-                  }}
-                >
-                  {count}
-                </span>
+                <span className="shop-catalog__filter-count">{count}</span>
               </button>
             );
           })}
         </div>
-        <div
-          style={{
-            fontFamily: "'Inter Tight', sans-serif",
-            fontSize: 10,
-            fontWeight: 600,
-            color: 'rgba(255,255,255,0.28)',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
-            flexShrink: 0,
-          }}
-        >
-          {visible} товаров
-        </div>
+        <div className="shop-catalog__filters-summary">{visible} товаров</div>
       </div>
     </div>
   );

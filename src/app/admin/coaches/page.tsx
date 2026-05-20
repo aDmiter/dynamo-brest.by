@@ -11,6 +11,7 @@ import {
   faUser,
   faPlus,
   faGripVertical,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -47,6 +48,8 @@ export default function CoachesAdminPage() {
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [coachToDelete, setCoachToDelete] = useState<Coach | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchCoaches = useCallback(async () => {
     const res = await fetch('/api/coaches');
@@ -153,6 +156,29 @@ export default function CoachesAdminPage() {
     setToggling(null);
   };
 
+  const handleDeleteCoach = async () => {
+    if (!coachToDelete) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/coaches/${coachToDelete.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setCoachToDelete(null);
+        await refreshCoaches();
+        setSyncResult('✅ Тренер удалён из базы');
+        setTimeout(() => setSyncResult(null), 5000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setSyncResult(`❌ ${(data as { error?: string }).error || 'Не удалось удалить'}`);
+        setTimeout(() => setSyncResult(null), 6000);
+      }
+    } catch {
+      setSyncResult('❌ Ошибка соединения при удалении');
+      setTimeout(() => setSyncResult(null), 6000);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     if (result.destination.index === result.source.index) return;
@@ -257,6 +283,7 @@ export default function CoachesAdminPage() {
                   ))}
                   <th className="p-3 text-center text-sm text-gray-400 w-20">Опубл.</th>
                   <th className="p-3 text-center text-sm text-gray-400 w-16">Ред.</th>
+                  <th className="p-3 text-center text-sm text-gray-400 w-14">Удал.</th>
                 </tr>
               </thead>
               <Droppable droppableId="coaches">
@@ -339,6 +366,17 @@ export default function CoachesAdminPage() {
                                 <FontAwesomeIcon icon={faEdit} />
                               </Link>
                             </td>
+                            <td className="p-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => setCoachToDelete(coach)}
+                                disabled={deleting || savingOrder}
+                                className="text-red-400 hover:text-red-300 disabled:opacity-40"
+                                title="Удалить из базы"
+                              >
+                                <FontAwesomeIcon icon={faTrash} />
+                              </button>
+                            </td>
                           </tr>
                         )}
                       </Draggable>
@@ -355,11 +393,25 @@ export default function CoachesAdminPage() {
       <ConfirmModal
         isOpen={showSyncModal}
         title="Синхронизация с COMET"
-        message="Будут загружены тренеры из COMET API. Это может занять некоторое время."
+        message="Обновятся ФИО, даты и привязка к COMET. Уже сохранённые в базе должность и фото не меняются — их правьте в карточке тренера. Новые записи из COMET получат должность и фото при первом появлении. Это может занять некоторое время."
         confirmLabel="Синхронизировать"
         onConfirm={handleSync}
         onCancel={() => setShowSyncModal(false)}
         loading={syncing}
+      />
+
+      <ConfirmModal
+        isOpen={!!coachToDelete}
+        title="Удалить тренера"
+        message={
+          coachToDelete
+            ? `Удалить «${coachToDelete.lastName} ${coachToDelete.firstName}» из базы? При следующей синхронизации с COMET запись может снова появиться, если человек есть в выгрузке (например, снова принят или удалили по ошибке).`
+            : ''
+        }
+        confirmLabel="Удалить"
+        onConfirm={handleDeleteCoach}
+        onCancel={() => setCoachToDelete(null)}
+        loading={deleting}
       />
     </div>
   );

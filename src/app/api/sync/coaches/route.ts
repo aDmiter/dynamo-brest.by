@@ -19,6 +19,27 @@ interface CometPerson {
   nationality: string;
 }
 
+function trimStr(v: unknown): string {
+  if (v == null) return '';
+  if (typeof v === 'string') return v.trim();
+  return String(v).trim();
+}
+
+/**
+ * Должность только для новой записи при первом импорте из COMET.
+ * Уже сохранённые в БД должность и фото при синхронизации не трогаем (редактирование в админке / ручные правки).
+ * Порядок полей как в типичном ответе COMET: тип регистрации и категория раньше служебных title*.
+ */
+function positionForNewRecordFromComet(c: CometPerson): string {
+  return (
+    trimStr(c.registrationType) ||
+    trimStr(c.registrationCategory) ||
+    trimStr(c.titleCoach) ||
+    trimStr(c.titlePlayer) ||
+    ''
+  );
+}
+
 interface SyncSource {
   key: string;
   type: 'coach' | 'staff';
@@ -109,34 +130,31 @@ export async function POST(request: NextRequest) {
           const firstName = nameParts[0] || '';
           const middleName = nameParts.slice(1).join(' ') || null;
           const birthDate = c.dateOfBirth ? new Date(c.dateOfBirth as number) : null;
-          const photoUrl = (c.photo as string) || null;
-          const position =
-            (c.registrationType as string) ||
-            (c.titleCoach as string) ||
-            (c.titlePlayer as string) ||
-            '';
-
           const existing = await prisma.coach.findFirst({ where: { cometId } });
 
-          const updateData = {
+          const syncCore = {
             firstName,
             lastName: (c.lastName as string) || '',
             middleName,
             birthDate,
             nationality: (c.nationality as string) || null,
-            position,
-            photoUrl,
             isActive: true,
             type: source.type,
           };
 
           if (existing) {
-            await prisma.coach.update({ where: { id: existing.id }, data: updateData });
+            await prisma.coach.update({
+              where: { id: existing.id },
+              data: syncCore,
+            });
             updated++;
           } else {
+            const positionRaw = positionForNewRecordFromComet(c);
             await prisma.coach.create({
               data: {
-                ...updateData,
+                ...syncCore,
+                position: positionRaw || null,
+                photoUrl: (c.photo as string) || null,
                 cometId,
                 isManuallyCreated: false,
                 isPublished: true,

@@ -2,6 +2,7 @@
 import nodemailer from 'nodemailer';
 import {
   buildAdminNewOrderEmail,
+  buildAdminStatusEmail,
   buildCustomerNewOrderEmail,
   buildCustomerStatusEmail,
   mapOrderForEmail,
@@ -31,39 +32,70 @@ export async function sendNewOrderEmail(order: OrderEmailData) {
   const { html } = buildCustomerNewOrderEmail(order);
 
   if (order.customerEmail) {
-    await transporter.sendMail({
-      from: 'Динамо-Брест <divid.joomlin@gmail.com>',
-      to: order.customerEmail,
-      subject: `Заказ №${order.orderNumber} принят`,
-      html,
-    });
-    console.log(`✅ Письмо клиенту отправлено: ${order.customerEmail}`);
+    try {
+      await transporter.sendMail({
+        from: 'Динамо-Брест <divid.joomlin@gmail.com>',
+        to: order.customerEmail,
+        subject: `Заказ №${order.orderNumber} принят`,
+        html,
+      });
+      console.log(`✅ Письмо клиенту отправлено: ${order.customerEmail}`);
+    } catch (e) {
+      console.error('❌ Ошибка отправки письма клиенту:', e);
+    }
   }
 
   if (process.env.ADMIN_EMAIL) {
-    await transporter.sendMail({
-      from: 'Динамо-Брест <divid.joomlin@gmail.com>',
-      to: process.env.ADMIN_EMAIL,
-      subject: `Новый заказ №${order.orderNumber} — ${order.customerName}`,
-      html: buildAdminNewOrderEmail(order),
-    });
-    console.log(`✅ Письмо админу отправлено: ${process.env.ADMIN_EMAIL}`);
+    try {
+      await transporter.sendMail({
+        from: 'Динамо-Брест <divid.joomlin@gmail.com>',
+        to: process.env.ADMIN_EMAIL,
+        subject: `Новый заказ №${order.orderNumber} — ${order.customerName}`,
+        html: buildAdminNewOrderEmail(order),
+      });
+      console.log(`✅ Письмо админу отправлено: ${process.env.ADMIN_EMAIL}`);
+    } catch (e) {
+      console.error('❌ Ошибка отправки письма админу:', e);
+    }
   }
 }
 
 export async function sendStatusUpdateEmail(order: OrderEmailData, newStatus: string) {
-  if (!order.customerEmail) return;
-
   const statusLabel = statusLabels[newStatus] || newStatus;
-  const { html } = buildCustomerStatusEmail(order, statusLabel, newStatus);
+  let customerHtml: string | null = null;
+  try {
+    customerHtml = buildCustomerStatusEmail(order, statusLabel, newStatus).html;
+  } catch (e) {
+    console.error('❌ Шаблон письма клиенту (статус):', e);
+  }
 
-  await transporter.sendMail({
-    from: 'Динамо-Брест <divid.joomlin@gmail.com>',
-    to: order.customerEmail,
-    subject: `Заказ №${order.orderNumber} — ${statusLabel}`,
-    html,
-  });
-  console.log(`✅ Письмо о смене статуса отправлено: ${order.customerEmail}`);
+  if (order.customerEmail && customerHtml) {
+    try {
+      await transporter.sendMail({
+        from: 'Динамо-Брест <divid.joomlin@gmail.com>',
+        to: order.customerEmail,
+        subject: `Заказ №${order.orderNumber} — ${statusLabel}`,
+        html: customerHtml,
+      });
+      console.log(`✅ Письмо о смене статуса отправлено: ${order.customerEmail}`);
+    } catch (e) {
+      console.error('❌ Ошибка письма клиенту (статус):', e);
+    }
+  }
+
+  if (process.env.ADMIN_EMAIL) {
+    try {
+      await transporter.sendMail({
+        from: 'Динамо-Брест <divid.joomlin@gmail.com>',
+        to: process.env.ADMIN_EMAIL,
+        subject: `Заказ №${order.orderNumber} — ${statusLabel}`,
+        html: buildAdminStatusEmail(order, statusLabel, newStatus),
+      });
+      console.log(`✅ Письмо админу (статус): ${process.env.ADMIN_EMAIL}`);
+    } catch (e) {
+      console.error('❌ Ошибка письма админу (статус):', e);
+    }
+  }
 }
 
 export async function sendOrderEmails(

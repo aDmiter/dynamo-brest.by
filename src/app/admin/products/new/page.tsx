@@ -32,6 +32,7 @@ export default function NewProductPage() {
     images: [] as string[],
     inStock: true,
     isFeatured: false,
+    isHit: false,
     useSizes: false,
     quantity: 0,
   });
@@ -285,6 +286,15 @@ export default function NewProductPage() {
                   onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
                 />{' '}
                 На главную
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-400">
+                <input
+                  type="checkbox"
+                  checked={form.isHit}
+                  onChange={(e) => setForm({ ...form, isHit: e.target.checked })}
+                  className="h-4 w-4 accent-[#ee862c]"
+                />{' '}
+                Хит
               </label>
             </div>
 

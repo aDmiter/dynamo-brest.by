@@ -1,12 +1,10 @@
-// src/app/api/players-customization/route.ts - API игроков для нанесения
+// src/app/api/players-customization/route.ts - API игроков для нанесения (основной состав)
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getMainSquadPlayersForCustomization } from '@/lib/shop-customization-players';
 
 export async function GET() {
-  const players = await prisma.playerCustomization.findMany({
-    where: { isActive: true },
-    orderBy: { number: 'asc' },
-  });
+  const players = await getMainSquadPlayersForCustomization();
   return NextResponse.json(players);
 }
 

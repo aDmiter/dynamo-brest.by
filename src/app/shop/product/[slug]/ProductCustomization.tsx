@@ -76,8 +76,13 @@ export default function ProductCustomization({
   );
   const isNumberValid = !numberItem || inputNumber.trim().length > 0;
   const isNameValid = !nameItem || inputName.trim().length > 0;
+  const isFullValid =
+    customNumber.trim().length > 0 && customName.trim().length > 0;
+  const isCustomValid = isNumberValid && isNameValid;
+  const canApply = type === 'full' ? isFullValid : isCustomValid;
 
   const applyCustomization = () => {
+    if (!canApply) return;
     const data = {
       type,
       fullSetPrice: type === 'full' ? fullSetPrice : 0,
@@ -253,6 +258,11 @@ export default function ProductCustomization({
                         }}
                         placeholder="10"
                       />
+                      {!isFullValid && !customNumber.trim() && (
+                        <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-loss)' }}>
+                          Введите номер
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label
@@ -276,6 +286,11 @@ export default function ProductCustomization({
                         }}
                         placeholder="Иванов"
                       />
+                      {!isFullValid && !customName.trim() && (
+                        <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-loss)' }}>
+                          Введите фамилию
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -400,15 +415,23 @@ export default function ProductCustomization({
                 </span>
               </div>
 
-              {(!isNumberValid || !isNameValid) && (
+              {type === 'full' && !isFullValid && (
+                <p className="text-xs" style={{ color: 'var(--color-loss)' }}>
+                  Заполните номер и фамилию
+                </p>
+              )}
+
+              {type === 'custom' && !isCustomValid && (
                 <p className="text-xs" style={{ color: 'var(--color-loss)' }}>
                   Заполните номер и/или фамилию
                 </p>
               )}
 
               <button
+                type="button"
                 onClick={applyCustomization}
-                className="w-full inline-flex items-center justify-center gap-3 px-8 py-4 text-sm font-bold uppercase tracking-wider text-white transition-colors"
+                disabled={!canApply}
+                className="w-full inline-flex items-center justify-center gap-3 px-8 py-4 text-sm font-bold uppercase tracking-wider text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ background: 'var(--color-accent)', borderRadius: 10 }}
               >
                 Применить <FontAwesomeIcon icon={faArrowRight} className="text-xs" />

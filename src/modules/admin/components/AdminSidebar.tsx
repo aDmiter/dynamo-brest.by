@@ -146,6 +146,7 @@ const menuItems: MenuItem[] = [
     children: [
       { title: 'Меню сайта', href: '/admin/settings/menu', section: 'settings' },
       { title: 'SEO / Meta', href: '/admin/settings/seo', section: 'settings' },
+      { title: 'Закрытый доступ', href: '/admin/settings/preview-access', section: 'settings' },
       { title: 'Аналитика', href: '/admin/settings/analytics', section: 'settings' },
       { title: 'Ключи API', href: '/admin/settings/keys', section: 'settings' },
       { title: 'Настройки сайта', href: '/admin/settings', section: 'settings' },

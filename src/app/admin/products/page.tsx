@@ -8,7 +8,7 @@ import DeleteButton from '@/modules/admin/components/DeleteButton';
 
 export default async function ProductsAdminPage() {
   const products = await prisma.product.findMany({
-    orderBy: { createdAt: 'desc' },
+    orderBy: [{ isHit: 'desc' }, { createdAt: 'desc' }],
     include: { productcategory: true, manufacturer: true },
     take: 50,
   });
@@ -32,6 +32,7 @@ export default async function ProductsAdminPage() {
               <th className="p-3 text-left text-sm text-gray-400">Название</th>
               <th className="p-3 text-left text-sm text-gray-400">Артикул</th>
               <th className="p-3 text-left text-sm text-gray-400">Цена</th>
+              <th className="p-3 text-left text-sm text-gray-400">Метки</th>
               <th className="p-3 text-left text-sm text-gray-400">Категория</th>
               <th className="p-3 text-left text-sm text-gray-400">Производитель</th>
               <th className="p-3 text-center text-sm text-gray-400">Действия</th>
@@ -40,7 +41,7 @@ export default async function ProductsAdminPage() {
           <tbody>
             {products.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-6 text-center text-gray-500">
+                <td colSpan={8} className="p-6 text-center text-gray-500">
                   Нет товаров
                 </td>
               </tr>
@@ -59,6 +60,17 @@ export default async function ProductsAdminPage() {
                     <td className="p-3 text-white">{p.name}</td>
                     <td className="p-3 text-sm text-gray-400">{p.article || '—'}</td>
                     <td className="p-3 text-sm text-white">{Number(p.price).toFixed(2)} BYN</td>
+                    <td className="p-3 text-sm">
+                      {p.isHit && (
+                        <span className="mr-2 rounded border border-[#ee862c]/40 bg-[#ee862c]/10 px-2 py-0.5 text-[10px] font-bold uppercase text-[#ee862c]">
+                          Хит
+                        </span>
+                      )}
+                      {p.isFeatured && (
+                        <span className="text-[10px] uppercase text-gray-500">главная</span>
+                      )}
+                      {!p.isHit && !p.isFeatured && <span className="text-gray-600">—</span>}
+                    </td>
                     <td className="p-3 text-sm text-gray-400">{p.productcategory?.name || '—'}</td>
                     <td className="p-3 text-sm text-gray-500">{p.manufacturer?.name || '—'}</td>
                     <td className="p-3 text-center">

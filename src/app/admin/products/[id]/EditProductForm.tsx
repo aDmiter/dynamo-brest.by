@@ -30,6 +30,7 @@ interface Product {
   images: string | null;
   inStock: boolean;
   isFeatured: boolean;
+  isHit: boolean;
   hasCustomization?: boolean;
   useSizes?: boolean;
   quantity?: number;
@@ -70,6 +71,7 @@ export default function EditProductForm({
     images: (product.images ? JSON.parse(product.images) : []) as string[],
     inStock: product.inStock,
     isFeatured: product.isFeatured,
+    isHit: product.isHit ?? false,
     useSizes: product.useSizes || false,
     quantity: product.quantity || 0,
   });
@@ -387,6 +389,15 @@ export default function EditProductForm({
                   onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
                 />{' '}
                 На главную
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-400">
+                <input
+                  type="checkbox"
+                  checked={form.isHit}
+                  onChange={(e) => setForm({ ...form, isHit: e.target.checked })}
+                  className="h-4 w-4 accent-[#ee862c]"
+                />{' '}
+                Хит
               </label>
             </div>
 

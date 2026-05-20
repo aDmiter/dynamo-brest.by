@@ -26,6 +26,9 @@ const PUBLIC_API: Array<{ methods: string[]; pattern: RegExp }> = [
   { methods: ['GET', 'POST'], pattern: /^\/api\/webpay\// },
   { methods: ['GET', 'POST'], pattern: /^\/api\/bepaid\// },
   { methods: ['GET', 'POST'], pattern: /^\/api\/auth\// },
+  { methods: ['GET'], pattern: /^\/api\/site-preview\/status$/ },
+  { methods: ['POST'], pattern: /^\/api\/site-preview\/login$/ },
+  { methods: ['POST'], pattern: /^\/api\/site-preview\/logout$/ },
   { methods: ['GET'], pattern: /^\/api\/cron\// },
   { methods: ['GET', 'POST'], pattern: /^\/api\/test-/ },
 ];
@@ -35,6 +38,7 @@ const MUTATION_PUBLIC_GET: Array<{ prefix: string; section: AdminSectionId }> = 
   { prefix: '/api/news', section: 'news' },
   { prefix: '/api/products', section: 'shop' },
   { prefix: '/api/categories', section: 'shop' },
+  { prefix: '/api/manufacturers', section: 'shop' },
   { prefix: '/api/banners', section: 'banners' },
   { prefix: '/api/players', section: 'players' },
 ];
@@ -54,6 +58,7 @@ const PROTECTED_PREFIX: Array<{ prefix: string; section: AdminSectionId }> = [
   { prefix: '/api/players-customization', section: 'shop' },
   { prefix: '/api/countries', section: 'shop' },
   { prefix: '/api/admin/site-pages', section: 'settings' },
+  { prefix: '/api/admin/site-preview', section: 'settings' },
   { prefix: '/api/settings', section: 'settings' },
   { prefix: '/api/sync', section: 'settings' },
   { prefix: '/api/upload', section: 'settings' },

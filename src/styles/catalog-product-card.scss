@@ -89,11 +89,31 @@
   backdrop-filter: blur(6px);
 }
 
-.catalog-product-card__sale {
+.catalog-product-card__badges {
   position: absolute;
   top: 12px;
   right: 12px;
   z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.catalog-product-card__hit {
+  background: var(--color-accent-10);
+  border: 1px solid var(--color-accent);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--color-accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+}
+
+.catalog-product-card__sale {
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.5);
   border-radius: 5px;
@@ -130,15 +150,6 @@
   line-height: 1.05;
   text-transform: uppercase;
   margin-bottom: 4px;
-}
-
-.catalog-product-card__manufacturer {
-  font-size: 10px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.04em;
-  line-height: 1.2;
-  margin-bottom: 8px;
 }
 
 .catalog-product-card__divider {

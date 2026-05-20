@@ -1,5 +1,6 @@
 // src/app/shop/product/[slug]/page.tsx - Карточка товара
 import { prisma } from '@/lib/prisma';
+import { getMainSquadPlayersForCustomization } from '@/lib/shop-customization-players';
 import { notFound } from 'next/navigation';
 import ProductPageClient from './ProductPageClient';
 
@@ -32,15 +33,12 @@ export default async function ProductPage({ params }: Props) {
   let players: { id: string; name: string; number: number }[] = [];
 
   if (hasCustomization) {
-    const [custRows, playerRows] = await Promise.all([
+    const [custRows, squadPlayers] = await Promise.all([
       prisma.customization.findMany({
         where: { isActive: true },
         orderBy: { order: 'asc' },
       }),
-      prisma.playerCustomization.findMany({
-        where: { isActive: true },
-        orderBy: { number: 'asc' },
-      }),
+      getMainSquadPlayersForCustomization(),
     ]);
     customizations = custRows.map((c) => ({
       id: c.id,
@@ -49,11 +47,7 @@ export default async function ProductPage({ params }: Props) {
       price: c.price.toString(),
       imageUrl: c.imageUrl,
     }));
-    players = playerRows.map((p) => ({
-      id: p.id,
-      name: p.name,
-      number: p.number,
-    }));
+    players = squadPlayers;
   }
 
   return (

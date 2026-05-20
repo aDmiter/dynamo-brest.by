@@ -22,7 +22,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       where: { id },
       data: updateData,
     });
-    return NextResponse.json(manufacturer);
+    return NextResponse.json({
+      id: manufacturer.id,
+      name: manufacturer.name,
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
     return NextResponse.json({ error: message }, { status: 400 });

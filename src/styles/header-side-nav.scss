@@ -38,14 +38,14 @@ $ui-radius: 7px;
 .side-nav__item:hover .side-nav__icon-wrap,
 .side-nav__item:focus-visible .side-nav__icon-wrap {
   color: #fff;
-  border-color: var(--color-accent, #d50000);
+  border-color: var(--color-accent, #3b93f1);
   background: rgba(213, 0, 0, 0.12);
   box-shadow: 0 0 20px rgba(213, 0, 0, 0.15);
 }
 
 .side-nav__item--active .side-nav__icon-wrap {
-  color: var(--color-accent, #d50000);
-  border-color: color-mix(in srgb, var(--color-accent, #d50000) 55%, transparent);
+  color: var(--color-accent, #3b93f1);
+  border-color: color-mix(in srgb, var(--color-accent, #3b93f1) 55%, transparent);
   background: rgba(213, 0, 0, 0.1);
 }
 
@@ -121,7 +121,7 @@ $ui-radius: 7px;
   font-size: 0.5625rem;
   font-weight: 700;
   color: #fff;
-  background: var(--color-accent, #d50000);
+  background: var(--color-accent, #3b93f1);
   border-radius: $ui-radius;
 }
 
@@ -142,7 +142,7 @@ $ui-radius: 7px;
 
 .side-nav-mobile__link:hover,
 .side-nav-mobile__link--active {
-  color: var(--color-accent, #d50000);
+  color: var(--color-accent, #3b93f1);
 }
 
 .side-nav-mobile__icon {
@@ -165,7 +165,7 @@ $ui-radius: 7px;
 
 .side-nav-mobile__link:hover .side-nav-mobile__icon,
 .side-nav-mobile__link--active .side-nav-mobile__icon {
-  color: var(--color-accent, #d50000);
-  border-color: color-mix(in srgb, var(--color-accent, #d50000) 50%, transparent);
+  color: var(--color-accent, #3b93f1);
+  border-color: color-mix(in srgb, var(--color-accent, #3b93f1) 50%, transparent);
   background: rgba(213, 0, 0, 0.1);
 }

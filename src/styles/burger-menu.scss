@@ -23,12 +23,12 @@ $ui-radius: 7px;
 
   &:hover,
   &:focus-visible {
-    border-color: var(--color-accent, #d50000);
+    border-color: var(--color-accent, #3b93f1);
     background: rgba(36, 44, 65, 0.78);
     box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.35),
       0 0 0 1px rgba(213, 0, 0, 0.15);
-    color: var(--color-accent, #d50000);
+    color: var(--color-accent, #3b93f1);
   }
 }
 
@@ -82,7 +82,7 @@ $ui-radius: 7px;
 
   &:hover,
   &:focus-visible {
-    color: var(--color-accent, #d50000);
+    color: var(--color-accent, #3b93f1);
   }
 
   @media (min-width: 1024px) {
@@ -108,7 +108,7 @@ $ui-radius: 7px;
   font-size: 0.5625rem;
   font-weight: 700;
   color: #fff;
-  background: var(--color-accent, #d50000);
+  background: var(--color-accent, #3b93f1);
   border-radius: $ui-radius;
   pointer-events: none;
 }

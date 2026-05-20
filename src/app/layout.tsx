@@ -12,6 +12,7 @@ import TicketBuyFabLoader from '@/modules/shared/ui/TicketBuyFabLoader';
 import AfpTicketScript from '@/modules/shared/ui/AfpTicketScript';
 import { TicketSaleframeModalProvider } from '@/modules/shared/ui/TicketSaleframeModalContext';
 import ThemeInitializer from '@/modules/shared/ui/ThemeInitializer';
+import { buildRootThemeCss } from '@/lib/site-theme';
 import { isTicketSaleframeModalSupportedHost } from '@/lib/ticket-frame-host';
 import AnalyticsScripts from '@/modules/shared/ui/AnalyticsScripts';
 import { getAllSettings } from '@/lib/settings';
@@ -49,9 +50,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const headersList = await headers();
   const pathname = headersList.get('x-pathname') || '';
   const isAdmin = pathname.startsWith('/admin');
+  const isPreviewLogin = pathname === '/preview-login';
+  const isPublicShell = !isAdmin && !isPreviewLogin;
   const isPartialNav = isPartialNavigationRequest(headersList);
 
-  if (!isAdmin && pathname && !isPartialNav) {
+  if (isPublicShell && pathname && !isPartialNav) {
     const redirectTo = await getSitePageRedirect(pathname);
     if (redirectTo) redirect(redirectTo);
 
@@ -59,12 +62,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   const settings = await getAllSettings();
+  const themeCss = buildRootThemeCss(settings);
   const host = headersList.get('host');
   const saleframeModalAllowed = isTicketSaleframeModalSupportedHost(host);
 
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
+        <style id="site-theme-vars" dangerouslySetInnerHTML={{ __html: themeCss }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -78,13 +83,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       >
         <ThemeInitializer settings={settings} />
         <TicketSaleframeModalProvider value={saleframeModalAllowed}>
-          {!isAdmin && <AnalyticsScripts />}
-          {!isAdmin && <Header />}
-          {!isAdmin && <BurgerMenu />}
-          {!isAdmin && <TicketBuyFabLoader />}
+          {isPublicShell && <AnalyticsScripts />}
+          {isPublicShell && <Header />}
+          {isPublicShell && <BurgerMenu />}
+          {isPublicShell && <TicketBuyFabLoader />}
           <main>{children}</main>
-          {!isAdmin && <Footer />}
-          {!isAdmin && <AfpTicketScript enabled={saleframeModalAllowed} />}
+          {isPublicShell && <Footer />}
+          {isPublicShell && <AfpTicketScript enabled={saleframeModalAllowed} />}
         </TicketSaleframeModalProvider>
       </body>
     </html>

@@ -6,81 +6,43 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
-    : null;
-}
-
-function generateAccentVariants(hex: string): Record<string, string> {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return {};
-  const { r, g, b } = rgb;
-  return {
-    accent_color: hex,
-    accent_hover: hex, // можно осветлить, но пока так
-    accent_7: `rgba(${r}, ${g}, ${b}, 0.07)`,
-    accent_10: `rgba(${r}, ${g}, ${b}, 0.10)`,
-    accent_12: `rgba(${r}, ${g}, ${b}, 0.12)`,
-    accent_15: `rgba(${r}, ${g}, ${b}, 0.15)`,
-    accent_20: `rgba(${r}, ${g}, ${b}, 0.20)`,
-    accent_30: `rgba(${r}, ${g}, ${b}, 0.30)`,
-  };
-}
+import {
+  applySiteThemeToDocument,
+  DEFAULT_ACCENT_COLOR,
+  generateAccentVariants,
+  SITE_THEME_DEFAULTS,
+  SITE_THEME_SETTING_KEYS,
+} from '@/lib/site-theme';
 
 const COLOR_FIELDS = [
-  { key: 'accent_color', label: 'Акцентный цвет', default: '#ee862c', cssVar: '--color-accent' },
-  { key: 'bg_main', label: 'Основной фон', default: '#0d1117', cssVar: '--color-bg-main' },
-  { key: 'bg_card', label: 'Фон карточек', default: '#111820', cssVar: '--color-bg-card' },
+  { key: 'accent_color', label: 'Акцентный цвет', default: SITE_THEME_DEFAULTS.accent_color, cssVar: '--color-accent' },
+  { key: 'bg_main', label: 'Основной фон', default: SITE_THEME_DEFAULTS.bg_main, cssVar: '--color-bg-main' },
+  { key: 'bg_card', label: 'Фон карточек', default: SITE_THEME_DEFAULTS.bg_card, cssVar: '--color-bg-card' },
   {
     key: 'bg_photo_placeholder',
     label: 'Фон placeholder фото',
-    default: '#1a1f2e',
+    default: SITE_THEME_DEFAULTS.bg_photo_placeholder,
     cssVar: '--color-bg-photo-placeholder',
   },
-  { key: 'bg_admin', label: 'Фон админки', default: '#242C41', cssVar: '--color-bg-admin' },
-  { key: 'team_names', label: 'Названия команд', default: '#a5b3d5', cssVar: '--color-team-names' },
-  { key: 'bio_text', label: 'Текст биографии', default: '#4a5568', cssVar: '--color-bio-text' },
+  { key: 'bg_admin', label: 'Фон админки', default: SITE_THEME_DEFAULTS.bg_admin, cssVar: '--color-bg-admin' },
+  { key: 'team_names', label: 'Названия команд', default: SITE_THEME_DEFAULTS.team_names, cssVar: '--color-team-names' },
+  { key: 'bio_text', label: 'Текст биографии', default: SITE_THEME_DEFAULTS.bio_text, cssVar: '--color-bio-text' },
   {
     key: 'bio_watermark',
     label: 'Водяной знак биографии',
-    default: '#7ba4c2',
+    default: SITE_THEME_DEFAULTS.bio_watermark,
     cssVar: '--color-bio-watermark',
   },
-  { key: 'win', label: 'Победа', default: '#22c55e', cssVar: '--color-win' },
-  { key: 'loss', label: 'Поражение', default: '#ef4444', cssVar: '--color-loss' },
+  { key: 'win', label: 'Победа', default: SITE_THEME_DEFAULTS.win, cssVar: '--color-win' },
+  { key: 'loss', label: 'Поражение', default: SITE_THEME_DEFAULTS.loss, cssVar: '--color-loss' },
   {
     key: 'yellow_card',
     label: 'Жёлтая карточка',
-    default: '#f5c518',
+    default: SITE_THEME_DEFAULTS.yellow_card,
     cssVar: '--color-yellow-card',
   },
-  { key: 'red_card', label: 'Красная карточка', default: '#e53e3e', cssVar: '--color-red-card' },
+  { key: 'red_card', label: 'Красная карточка', default: SITE_THEME_DEFAULTS.red_card, cssVar: '--color-red-card' },
 ];
-
-const ALL_CSS_VARS: Record<string, string> = {
-  accent_color: '--color-accent',
-  accent_hover: '--color-accent-hover',
-  accent_7: '--color-accent-7',
-  accent_10: '--color-accent-10',
-  accent_12: '--color-accent-12',
-  accent_15: '--color-accent-15',
-  accent_20: '--color-accent-20',
-  accent_30: '--color-accent-30',
-  bg_main: '--color-bg-main',
-  bg_card: '--color-bg-card',
-  bg_photo_placeholder: '--color-bg-photo-placeholder',
-  bg_admin: '--color-bg-admin',
-  team_names: '--color-team-names',
-  bio_text: '--color-bio-text',
-  bio_watermark: '--color-bio-watermark',
-  win: '--color-win',
-  loss: '--color-loss',
-  yellow_card: '--color-yellow-card',
-  red_card: '--color-red-card',
-};
 
 export default function SettingsForm({ initialValues }: { initialValues: Record<string, string> }) {
   const [values, setValues] = useState<Record<string, string>>(() => {
@@ -98,7 +60,7 @@ export default function SettingsForm({ initialValues }: { initialValues: Record<
     setSaved(false);
     try {
       // Генерируем варианты акцентного цвета
-      const accentVariants = generateAccentVariants(values.accent_color || '#ee862c');
+      const accentVariants = generateAccentVariants(values.accent_color || DEFAULT_ACCENT_COLOR);
       const allSettings = { ...values, ...accentVariants };
 
       await fetch('/api/settings', {
@@ -107,13 +69,7 @@ export default function SettingsForm({ initialValues }: { initialValues: Record<
         body: JSON.stringify(allSettings),
       });
 
-      // Применяем все CSS-переменные
-      for (const [key, cssVar] of Object.entries(ALL_CSS_VARS)) {
-        const value = allSettings[key];
-        if (value) {
-          document.documentElement.style.setProperty(cssVar, value);
-        }
-      }
+      applySiteThemeToDocument(allSettings);
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -132,21 +88,17 @@ export default function SettingsForm({ initialValues }: { initialValues: Record<
     if (key === 'accent_color') {
       const variants = generateAccentVariants(value);
       for (const [k, v] of Object.entries(variants)) {
-        const cssVar = ALL_CSS_VARS[k];
-        if (cssVar) {
-          document.documentElement.style.setProperty(cssVar, v);
-        }
+        const cssVar = SITE_THEME_SETTING_KEYS[k as keyof typeof SITE_THEME_SETTING_KEYS];
+        if (cssVar && v) document.documentElement.style.setProperty(cssVar, v);
       }
     } else {
-      const cssVar = ALL_CSS_VARS[key];
-      if (cssVar) {
-        document.documentElement.style.setProperty(cssVar, value);
-      }
+      const cssVar = SITE_THEME_SETTING_KEYS[key as keyof typeof SITE_THEME_SETTING_KEYS];
+      if (cssVar) document.documentElement.style.setProperty(cssVar, value);
     }
   };
 
   // Генерируем варианты для превью
-  const accentVariants = generateAccentVariants(values.accent_color || '#ee862c');
+  const accentVariants = generateAccentVariants(values.accent_color || DEFAULT_ACCENT_COLOR);
 
   return (
     <div className="max-w-3xl space-y-6">

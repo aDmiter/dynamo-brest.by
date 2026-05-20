@@ -39,16 +39,6 @@
   font-weight: 600;
 }
 
-.results--v1 .results__card-goals-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 8px;
-  width: min(100%, 280px);
-  margin-left: auto;
-  margin-right: auto;
-}
-
 // ——— Модальное окно протокола ———
 
 .match-protocol {
@@ -123,7 +113,7 @@
     border: 2px solid rgba(18, 22, 32, 0.98);
 
     &:hover {
-      background: var(--color-accent, #d50000);
+      background: var(--color-accent, #3b93f1);
     }
   }
 }

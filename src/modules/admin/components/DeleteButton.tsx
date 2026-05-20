@@ -21,11 +21,17 @@ export default function DeleteButton({ id, apiUrl, name, onDeleted }: DeleteButt
     if (!confirm(`Удалить "${name}"?`)) return;
     setLoading(true);
     try {
-      await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        alert(data.error || `Не удалось удалить (код ${res.status})`);
+        return;
+      }
       if (onDeleted) onDeleted();
       else router.refresh();
     } catch (error) {
       console.error('Ошибка удаления:', error);
+      alert('Ошибка соединения при удалении');
     } finally {
       setLoading(false);
     }

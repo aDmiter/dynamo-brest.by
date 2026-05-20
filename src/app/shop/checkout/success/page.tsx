@@ -1,7 +1,7 @@
 // src/app/shop/checkout/success/page.tsx
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faEnvelope, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
@@ -28,6 +28,14 @@ export default function SuccessPage() {
   const [attemptCount, setAttemptCount] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const clearPaidSession = useCallback(() => {
+    sessionStorage.removeItem('pending_order_id');
+    sessionStorage.removeItem('bepaid_payment_token');
+    localStorage.removeItem('cart');
+    window.dispatchEvent(new Event('cartUpdated'));
+    setStatus('paid');
+  }, []);
+
   const finalizePaid = async () => {
     if (USE_WEBPAY) {
       const pendingOrderId = sessionStorage.getItem('pending_order_id');
@@ -39,11 +47,7 @@ export default function SuccessPage() {
         });
       }
     }
-    sessionStorage.removeItem('pending_order_id');
-    sessionStorage.removeItem('bepaid_payment_token');
-    localStorage.removeItem('cart');
-    window.dispatchEvent(new Event('cartUpdated'));
-    setStatus('paid');
+    clearPaidSession();
   };
 
   useEffect(() => {
@@ -57,10 +61,26 @@ export default function SuccessPage() {
 
   useEffect(() => {
     if (!orderId || USE_WEBPAY) return;
-    if (bepaidStatus === 'successful') {
-      void finalizePaid();
-    }
-  }, [orderId, bepaidStatus]);
+    if (bepaidStatus !== 'successful') return;
+
+    let cancelled = false;
+    void (async () => {
+      const token = sessionStorage.getItem('bepaid_payment_token');
+      try {
+        const url = `/api/bepaid/status?orderNum=${encodeURIComponent(orderId)}${
+          token ? `&token=${encodeURIComponent(token)}` : ''
+        }`;
+        await fetch(url);
+      } catch (e) {
+        console.error('bePaid: подтверждение оплаты со страницы успеха', e);
+      }
+      if (!cancelled) clearPaidSession();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, bepaidStatus, clearPaidSession]);
 
   useEffect(() => {
     if (!orderId || (USE_WEBPAY && !wsbTid) || (!USE_WEBPAY && bepaidStatus === 'successful')) {

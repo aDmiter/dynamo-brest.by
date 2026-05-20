@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { useClientMounted } from '@/lib/use-client-mounted';
+import HomeSectionHeader from '@/modules/shared/ui/HomeSectionHeader';
 
 interface NewsItem {
   id: string;
@@ -104,10 +105,18 @@ export default function NewsCarousel({ news }: NewsCarouselProps) {
 
   return (
     <section
-      className="news-carousel relative flex min-h-screen items-center bg-white"
+      className="news-carousel relative flex min-h-screen flex-col bg-white"
       style={{ fontFamily: "'Inter Tight', sans-serif" }}
+      aria-labelledby="home-news-title"
     >
-      <div className="news-carousel__slider w-full" style={{ paddingLeft: '20%' }}>
+      <div className="news-carousel__inner home-section-inner">
+        <HomeSectionHeader
+          title="Новости"
+          linkHref="/news"
+          linkLabel="Все новости"
+          titleId="home-news-title"
+        />
+        <div className="news-carousel__slider w-full" style={{ paddingLeft: '20%' }}>
         {mounted ? (
           <Swiper
             spaceBetween={24}
@@ -133,6 +142,7 @@ export default function NewsCarousel({ news }: NewsCarouselProps) {
         ) : (
           <NewsCarouselCard item={news[0]} />
         )}
+        </div>
       </div>
 
       <div className="news-carousel__title absolute left-0 bottom-0 pointer-events-none select-none">

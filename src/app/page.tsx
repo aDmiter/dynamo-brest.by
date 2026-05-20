@@ -31,8 +31,8 @@ export default async function Home() {
           orderBy: { createdAt: 'desc' },
         }),
         prisma.product.findMany({
-          where: { inStock: true },
-          orderBy: { createdAt: 'desc' },
+          where: { inStock: true, isFeatured: true },
+          orderBy: [{ isHit: 'desc' }, { createdAt: 'desc' }],
           take: 4,
           include: { productcategory: { select: { id: true, name: true } }, manufacturer: { select: { name: true } } },
         }),
@@ -50,6 +50,7 @@ export default async function Home() {
     price: p.price.toString(),
     oldPrice: p.oldPrice?.toString() ?? null,
     images: p.images,
+    isHit: p.isHit,
     productcategory: p.productcategory,
     manufacturer: p.manufacturer,
   }));

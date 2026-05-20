@@ -16,7 +16,6 @@ import MatchStadiumButton from '@/modules/shared/ui/MatchStadiumButton';
 import MatchesPageNav from '@/modules/team/components/matches/MatchesPageNav';
 import MatchCardGlassLogos from '@/modules/team/components/matches/MatchCardGlassLogos';
 import MatchCardResultPill from '@/modules/team/components/matches/MatchCardResultPill';
-import MatchCardGoalScorers from '@/modules/team/components/matches/MatchCardGoalScorers';
 import MatchProtocolModal from '@/modules/team/components/matches/MatchProtocolModal';
 import TicketBuyLink from '@/modules/shared/ui/TicketBuyLink';
 import type { GoalScorerPublic } from '@/lib/match-protocol';
@@ -342,12 +341,6 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
             >
               FT
             </div>
-            {(match.goalsHome.length > 0 || match.goalsAway.length > 0) && (
-              <div className="results__card-goals-row">
-                <MatchCardGoalScorers scorers={match.goalsHome} align="left" />
-                <MatchCardGoalScorers scorers={match.goalsAway} align="right" />
-              </div>
-            )}
           </div>
 
           <div

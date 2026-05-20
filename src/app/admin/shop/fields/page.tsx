@@ -1,16 +1,16 @@
 // src/app/admin/shop/fields/page.tsx - Доп. поля (нанесения)
 import { prisma } from '@/lib/prisma';
+import { getMainSquadPlayersForCustomization } from '@/lib/shop-customization-players';
 import CustomizationsManager from './CustomizationsManager';
 import PlayersManager from './PlayersManager';
 
 export default async function FieldsAdminPage() {
-  const customizations = await prisma.customization.findMany({
-    orderBy: { order: 'asc' },
-  });
-
-  const players = await prisma.playerCustomization.findMany({
-    orderBy: { number: 'asc' },
-  });
+  const [customizations, players] = await Promise.all([
+    prisma.customization.findMany({
+      orderBy: { order: 'asc' },
+    }),
+    getMainSquadPlayersForCustomization(),
+  ]);
 
   return (
     <div className="space-y-12">

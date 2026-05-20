@@ -17,7 +17,12 @@ export default async function EditManufacturerPage({ params }: Props) {
       <div className="mb-6">
         <h1 className="font-heading text-2xl font-bold text-white">Редактирование производителя</h1>
       </div>
-      <EditManufacturerForm manufacturer={manufacturer} />
+      <EditManufacturerForm
+        manufacturer={{
+          id: manufacturer.id,
+          name: manufacturer.name,
+        }}
+      />
     </div>
   );
 }

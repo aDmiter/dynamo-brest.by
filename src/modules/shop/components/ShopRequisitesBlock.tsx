@@ -1,6 +1,6 @@
+import Link from 'next/link';
 import {
-  BEPAID_MERCHANT_LOGOS,
-  ORG_FULL_NAME,
+  BEPAID_MERCHANT_LOGOS,  ORG_FULL_NAME,
   ORG_LEGAL_ADDRESS,
   ORG_STATE_REGISTRATION,
   ORG_STATE_REGISTRATION_DATE,
@@ -11,6 +11,7 @@ import {
   SHOP_CONTACT_PHONE_HREF,
   SHOP_WORKING_HOURS,
 } from '@/modules/shop/data/organization-requisites';
+import { SHOP_MAIN_MENU_LINKS } from '@/modules/shop/data/shop-nav-links';
 
 type Variant = 'footer' | 'home';
 
@@ -32,6 +33,20 @@ export default function ShopRequisitesBlock({ variant = 'footer' }: ShopRequisit
 
   return (
     <div className={rootClass}>
+      {variant === 'footer' ? (
+        <nav className="site-footer__shop-nav" aria-label="Интернет-магазин">
+          <ul className="site-footer__shop-nav-list">
+            {SHOP_MAIN_MENU_LINKS.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} className="site-footer__shop-nav-link">
+                  {item.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
+
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={BEPAID_MERCHANT_LOGOS}
@@ -41,19 +56,23 @@ export default function ShopRequisitesBlock({ variant = 'footer' }: ShopRequisit
         height={56}
       />
 
-      <p className={lineClass}>{ORG_FULL_NAME}</p>
-      <p className={lineClass}>{stateRegLine}</p>
-      {ORG_TRADE_REGISTRY ? (
-        <p className={lineClass}>Зарегистрирован в торговом реестре РБ: {ORG_TRADE_REGISTRY}</p>
+      {variant === 'footer' ? (
+        <>
+          <p className={lineClass}>{ORG_FULL_NAME}</p>
+          <p className={lineClass}>{stateRegLine}</p>
+          {ORG_TRADE_REGISTRY ? (
+            <p className={lineClass}>Зарегистрирован в торговом реестре РБ: {ORG_TRADE_REGISTRY}</p>
+          ) : null}
+          <p className={lineClass}>{ORG_LEGAL_ADDRESS}</p>
+          <p className={lineClass}>Режим работы интернет-магазина: {SHOP_WORKING_HOURS}</p>
+          <p className={lineClass}>
+            E-mail:{' '}
+            <a href={`mailto:${SHOP_CONTACT_EMAIL}`}>{SHOP_CONTACT_EMAIL}</a>
+            {' · '}
+            Телефон: <a href={SHOP_CONTACT_PHONE_HREF}>{SHOP_CONTACT_PHONE}</a>
+          </p>
+        </>
       ) : null}
-      <p className={lineClass}>{ORG_LEGAL_ADDRESS}</p>
-      <p className={lineClass}>Режим работы интернет-магазина: {SHOP_WORKING_HOURS}</p>
-      <p className={lineClass}>
-        E-mail:{' '}
-        <a href={`mailto:${SHOP_CONTACT_EMAIL}`}>{SHOP_CONTACT_EMAIL}</a>
-        {' · '}
-        Телефон: <a href={SHOP_CONTACT_PHONE_HREF}>{SHOP_CONTACT_PHONE}</a>
-      </p>
     </div>
   );
 }

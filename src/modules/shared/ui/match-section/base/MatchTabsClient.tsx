@@ -7,6 +7,7 @@ import { faArrowRight, faCalendarAlt, faUsers } from '@fortawesome/free-solid-sv
 import CountdownTimer from '../v1/CountdownTimer';
 import MatchStadiumButton from '../../MatchStadiumButton';
 import TicketBuyLink from '@/modules/shared/ui/TicketBuyLink';
+import HomeSectionHeader from '@/modules/shared/ui/HomeSectionHeader';
 import {
   MATCH_TABS,
   type MatchData,
@@ -50,7 +51,15 @@ export default function MatchTabsClient({ matches, standings = {} }: MatchTabsCl
           />
           <div className="match__background-overlay absolute inset-0 bg-[#0B0F1C]/85" />
         </div>
-        <div className="match__container relative z-10 flex flex-col items-center px-4 pt-24">
+        <div className="match__container relative z-10 flex flex-1 flex-col w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-12 pb-16">
+          <HomeSectionHeader
+            title="Матчи"
+            linkHref="/team/main/calendar"
+            linkLabel="Все матчи"
+            titleId="home-matches-title"
+            variant="dark"
+          />
+          <div className="match__body flex flex-1 flex-col items-center justify-center">
           <div className="match__tabs flex items-center gap-2 mb-12">
             {MATCH_TABS.map((tab) => (
               <button
@@ -68,6 +77,7 @@ export default function MatchTabsClient({ matches, standings = {} }: MatchTabsCl
           </div>
           <div className="match__card match__card--empty relative flex w-full max-w-[560px] flex-col border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl p-10 md:p-14 items-center justify-center">
             <p className="text-gray-500 text-lg">Нет данных о матчах</p>
+          </div>
           </div>
         </div>
         <div className="match__title absolute left-0 bottom-0 pointer-events-none select-none">
@@ -106,7 +116,15 @@ export default function MatchTabsClient({ matches, standings = {} }: MatchTabsCl
         />
         <div className="match__background-overlay absolute inset-0 bg-[#0B0F1C]/85" />
       </div>
-      <div className="match__container relative z-10 flex flex-col items-center justify-center px-4 py-16 flex-1">
+      <div className="match__container relative z-10 flex flex-1 flex-col w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-12 pb-16">
+        <HomeSectionHeader
+          title="Матчи"
+          linkHref="/team/main/calendar"
+          linkLabel="Все матчи"
+          titleId="home-matches-title"
+          variant="dark"
+        />
+        <div className="match__body flex flex-1 flex-col items-center justify-center">
         <div className="match__tabs flex items-center gap-2 mb-8">
           {MATCH_TABS.map((tab) => (
             <button
@@ -161,6 +179,7 @@ export default function MatchTabsClient({ matches, standings = {} }: MatchTabsCl
               <EmptyCard message="Нет сыгранных матчей" />
             )}
           </div>
+        </div>
         </div>
       </div>
 

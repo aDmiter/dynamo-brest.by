@@ -299,6 +299,7 @@ model product {
   oldPrice          Decimal?          @db.Decimal(10, 2)
   inStock           Boolean           @default(true)
   isFeatured        Boolean           @default(false)
+  isHit             Boolean           @default(false)
   images            String?           @db.Text
   sizes             String?           @db.Text
   createdAt         DateTime          @default(now())
@@ -473,6 +474,17 @@ model Setting {
   id        String   @id @default(cuid())
   key       String   @unique
   value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Доступ к закрытой публичной версии сайта (проверка банком и т.п.)
+model sitePreviewUser {
+  id        String   @id @default(cuid())
+  login     String   @unique
+  password  String
+  label     String?
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

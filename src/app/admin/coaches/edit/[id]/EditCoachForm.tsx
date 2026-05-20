@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave, faArrowLeft, faTrash, faUser, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
@@ -46,11 +46,8 @@ interface Props {
 
 export default function EditCoachForm({ coach, allTeams }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const fromTeam = searchParams.get('from');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const [form, setForm] = useState({
     firstName: coach.firstName || '',
@@ -80,7 +77,6 @@ export default function EditCoachForm({ coach, allTeams }: Props) {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setSuccess('');
 
     try {
       const res = await fetch(`/api/coaches/${coach.id}`, {
@@ -107,13 +103,7 @@ export default function EditCoachForm({ coach, allTeams }: Props) {
       });
 
       if (res.ok) {
-        setSuccess('Тренер обновлён');
-        router.refresh();
-        if (fromTeam) {
-          setTimeout(() => {
-            router.push(`/admin/coaches`);
-          }, 500);
-        }
+        router.push('/admin/coaches');
       } else {
         const data = await res.json();
         setError(data.error || 'Ошибка при обновлении');
@@ -178,11 +168,6 @@ export default function EditCoachForm({ coach, allTeams }: Props) {
           {error && (
             <div className="mb-4 border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
               {error}
-            </div>
-          )}
-          {success && (
-            <div className="mb-4 border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-400">
-              {success}
             </div>
           )}
 

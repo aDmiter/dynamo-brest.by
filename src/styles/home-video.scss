@@ -1,0 +1,33 @@
+.video-section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.video-section__content {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.video-section__empty {
+  padding: 80px 16px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.video-section__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 32px;
+}
+
+@media (max-width: 640px) {
+  .video-section__grid {
+    grid-template-columns: 1fr;
+  }
+}

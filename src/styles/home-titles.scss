@@ -1,0 +1,112 @@
+.titles {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #fff;
+  overflow: hidden;
+}
+
+.titles__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.titles__bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.titles__content {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.titles__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 24px 40px;
+}
+
+.titles__stripe {
+  width: 128px;
+  height: 1px;
+  margin: 64px auto 0;
+  background: linear-gradient(to right, transparent, var(--color-accent-30), transparent);
+}
+
+.titles__decor-title {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  pointer-events: none;
+  user-select: none;
+
+  span {
+    display: block;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: clamp(60px, 10vw, 100px);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: rgba(165, 179, 213, 0.2);
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+  }
+}
+
+.titles__info {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(36, 44, 65, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.titles__item:hover .titles__info {
+  border-color: var(--color-accent-30);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 12px 32px rgba(36, 44, 65, 0.1);
+}
+
+.titles__name {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: clamp(15px, 1.6vw, 18px);
+  font-weight: 900;
+  color: #242c41;
+}
+
+.titles__count-value {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 900;
+  color: var(--color-accent);
+}
+
+.titles__years {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(36, 44, 65, 0.55);
+}
+
+@media (max-width: 768px) {
+  .titles__grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}

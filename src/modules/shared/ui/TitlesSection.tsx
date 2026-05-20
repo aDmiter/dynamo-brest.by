@@ -2,6 +2,7 @@
 import { prisma } from '@/lib/prisma';
 import { withDb } from '@/lib/with-db';
 import TitlesCard from './TitlesCard';
+import HomeSectionHeader from './HomeSectionHeader';
 
 const titleConfig = [
   { type: 'championship', name: 'Чемпионат', image: '/images/cup3.png' },
@@ -23,39 +24,32 @@ export default async function TitlesSection() {
   });
 
   return (
-    <section
-      className="titles relative flex min-h-screen items-center overflow-hidden"
-      style={{ background: 'var(--color-bg-main)', fontFamily: "'Inter Tight', sans-serif" }}
-    >
-      <div className="titles__container relative z-10 mx-auto w-full max-w-[900px] px-4 py-16 md:px-8">
-        <div className="titles__grid grid grid-cols-3 items-end gap-6 md:gap-10">
-          {titleData.map((title) => (
-            <TitlesCard key={title.type} title={title} />
-          ))}
-        </div>
-        <div
-          className="titles__stripe mx-auto mt-16 h-[1px] w-32"
-          style={{
-            background:
-              'linear-gradient(to right, transparent, var(--color-accent-30), transparent)',
-          }}
-        />
+    <section className="titles" aria-labelledby="home-titles-title">
+      <div className="titles__bg" aria-hidden>
+        <img src="/images/titles_bg.jpg" alt="" />
+        <div className="titles__bg-overlay" />
       </div>
 
-      <div className="titles__title-module absolute left-0 bottom-0 pointer-events-none select-none">
-        <span
-          className="block text-[60px] font-black uppercase tracking-[0.1em] md:text-[100px] leading-none"
-          style={{
-            writingMode: 'vertical-lr',
-            transform: 'rotate(180deg)',
-            fontFamily: "'Inter Tight', sans-serif",
-            fontWeight: 900,
-            color: 'var(--color-team-names)',
-            opacity: 0.07,
-          }}
-        >
-          ТИТУЛЫ
-        </span>
+      <div className="home-section-inner">
+        <HomeSectionHeader
+          title="Титулы"
+          linkHref="/club/history"
+          linkLabel="История"
+          titleId="home-titles-title"
+        />
+
+        <div className="titles__content">
+          <div className="titles__grid">
+            {titleData.map((title) => (
+              <TitlesCard key={title.type} title={title} />
+            ))}
+          </div>
+          <div className="titles__stripe" aria-hidden />
+        </div>
+      </div>
+
+      <div className="titles__decor-title" aria-hidden>
+        <span>ТИТУЛЫ</span>
       </div>
     </section>
   );

@@ -39,6 +39,7 @@ export const ADMIN_SECTIONS: AdminSectionDef[] = [
       '/admin/shop',
       '/admin/products',
       '/admin/categories',
+      '/admin/manufacturers',
       '/admin/orders',
       '/admin/countries',
     ],

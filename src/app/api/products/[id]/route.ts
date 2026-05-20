@@ -52,6 +52,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.images !== undefined) updateData.images = JSON.stringify(data.images);
     if (data.inStock !== undefined) updateData.inStock = data.inStock;
     if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
+    if (data.isHit !== undefined) updateData.isHit = data.isHit;
     if (data.hasCustomization !== undefined) updateData.hasCustomization = data.hasCustomization;
     if (data.useSizes !== undefined) updateData.useSizes = data.useSizes;
     if (data.quantity !== undefined) updateData.quantity = data.quantity;
@@ -89,7 +90,30 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
-    await prisma.product.delete({ where: { id } });
+
+    const product = await prisma.product.findUnique({
+      where: { id },
+      select: { id: true, name: true },
+    });
+    if (!product) {
+      return NextResponse.json({ error: 'Товар не найден' }, { status: 404 });
+    }
+
+    const orderItems = await prisma.orderitem.count({ where: { productId: id } });
+    if (orderItems > 0) {
+      return NextResponse.json(
+        {
+          error: `Нельзя удалить «${product.name}»: товар есть в ${orderItems} позициях заказов. Снимите с продажи (нет в наличии) или оставьте в каталоге для истории.`,
+        },
+        { status: 409 }
+      );
+    }
+
+    await prisma.$transaction([
+      prisma.productSize.deleteMany({ where: { productId: id } }),
+      prisma.product.delete({ where: { id } }),
+    ]);
+
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';

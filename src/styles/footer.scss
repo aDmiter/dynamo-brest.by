@@ -114,6 +114,33 @@
   margin-bottom: 1rem;
 }
 
+.site-footer__shop-nav {
+  margin-bottom: 1rem;
+}
+
+.site-footer__shop-nav-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 1.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.site-footer__shop-nav-link {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-stat);
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--color-accent);
+  }
+}
+
 .site-footer__payment-logos,
 .shop-requisites__merchant-logos {
   display: block;

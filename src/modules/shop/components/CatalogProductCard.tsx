@@ -11,6 +11,7 @@ export interface CatalogProductCardData {
   price: string;
   oldPrice: string | null;
   images: string | null;
+  isHit?: boolean;
   productcategory?: { id: string; name: string } | null;
   manufacturer?: { name: string } | null;
 }
@@ -56,7 +57,12 @@ export default function CatalogProductCard({ product, animationIndex = 0 }: Prop
         {product.productcategory && (
           <div className="catalog-product-card__category">{product.productcategory.name}</div>
         )}
-        {hasDiscount && <div className="catalog-product-card__sale">SALE</div>}
+        {(product.isHit || hasDiscount) && (
+          <div className="catalog-product-card__badges">
+            {product.isHit && <div className="catalog-product-card__hit">Хит</div>}
+            {hasDiscount && <div className="catalog-product-card__sale">SALE</div>}
+          </div>
+        )}
       </div>
 
       <div className="catalog-product-card__body">
@@ -64,9 +70,6 @@ export default function CatalogProductCard({ product, animationIndex = 0 }: Prop
           {product.productcategory?.name || 'Товар'}
         </div>
         <div className="catalog-product-card__name">{product.name}</div>
-        {product.manufacturer?.name && (
-          <div className="catalog-product-card__manufacturer">{product.manufacturer.name}</div>
-        )}
         <div className="catalog-product-card__divider" />
         <div className="catalog-product-card__footer">
           <div className="catalog-product-card__prices">
