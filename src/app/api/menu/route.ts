@@ -1,9 +1,42 @@
 // src/app/api/menu/route.ts - API для управления меню
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSiteLangFromRequest } from '@/lib/content-translations-server';
+import {
+  loadBeTranslationsMap,
+  localizeCmsPageRecord,
+  saveBeContentTranslations,
+} from '@/lib/content-translations';
+
+type MenuNode = {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  pageContent: string | null;
+  children: MenuNode[];
+};
+
+function localizeMenuTree(
+  items: MenuNode[],
+  lang: ReturnType<typeof getSiteLangFromRequest>,
+  translations: Map<string, Record<string, string>>,
+): MenuNode[] {
+  return items.map((item) => {
+    const localized = localizeCmsPageRecord(item, lang, translations);
+    return {
+      ...localized,
+      children: item.children?.length
+        ? localizeMenuTree(item.children, lang, translations)
+        : [],
+    };
+  });
+}
 
 // GET — получить дерево меню
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const forPublic = request.nextUrl.searchParams.get('public') === '1';
+  const lang = forPublic ? getSiteLangFromRequest(request) : 'ru';
+
   const menu = await prisma.menuitem.findMany({
     where: { parentId: null },
     include: {
@@ -14,7 +47,17 @@ export async function GET() {
     orderBy: { order: 'asc' },
   });
 
-  return NextResponse.json(menu);
+  if (lang !== 'be') {
+    return NextResponse.json(menu);
+  }
+
+  const ids: string[] = [];
+  for (const section of menu) {
+    ids.push(section.id);
+    for (const child of section.children) ids.push(child.id);
+  }
+  const tr = await loadBeTranslationsMap('menuitem', ids);
+  return NextResponse.json(localizeMenuTree(menu as MenuNode[], lang, tr));
 }
 
 // POST — создать новый пункт меню
@@ -39,6 +82,10 @@ export async function POST(request: NextRequest) {
         icon: data.icon || null,
       },
     });
+
+    if (data.be && typeof data.be === 'object') {
+      await saveBeContentTranslations('menuitem', item.id, data.be);
+    }
 
     return NextResponse.json(item, { status: 201 });
   } catch (error: unknown) {

@@ -28,6 +28,12 @@ import FooterMenuPanel, {
   collectFooterTextPages,
   type FooterMenuItem,
 } from '@/modules/admin/components/FooterMenuAdmin';
+import ContentBeFields, {
+  contentBeFromRecord,
+  contentBeToPayload,
+  emptyContentBeForm,
+  type ContentBeFormState,
+} from '@/modules/admin/components/ContentBeFields';
 
 export interface MenuItem {
   id: string;
@@ -116,6 +122,22 @@ function getItemUrlPreview(item: Pick<MenuItem, 'type' | 'slug' | 'linkUrl'>): s
   return item.linkUrl || '—';
 }
 
+function menuBeFieldKeys(type: string, heroHeader: boolean) {
+  const keys: Array<keyof ContentBeFormState> = ['title'];
+  if (heroHeader) keys.push('subtitle');
+  if (type === 'page') keys.push('pageContent');
+  return keys;
+}
+
+async function fetchMenuBeFields(resourceId: string): Promise<ContentBeFormState> {
+  const res = await fetch(
+    `/api/admin/content-translations?resourceType=menuitem&resourceId=${resourceId}`,
+  );
+  if (!res.ok) return emptyContentBeForm();
+  const data = (await res.json()) as { fields?: Record<string, string> };
+  return contentBeFromRecord(data.fields ?? {});
+}
+
 export default function MainMenuAdmin() {
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [footerItems, setFooterItems] = useState<FooterMenuItem[]>([]);
@@ -123,6 +145,7 @@ export default function MainMenuAdmin() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
+  const [beForm, setBeForm] = useState<ContentBeFormState>(emptyContentBeForm);
   const [editContext, setEditContext] = useState<'section' | 'child'>('section');
 
   const loadMenu = useCallback(async () => {
@@ -152,6 +175,8 @@ export default function MainMenuAdmin() {
       isActive: item.isActive,
       isExternal: item.isExternal,
     });
+    setBeForm(emptyContentBeForm());
+    void fetchMenuBeFields(item.id).then(setBeForm);
   };
 
   const startEditChild = (item: MenuItem) => {
@@ -170,6 +195,8 @@ export default function MainMenuAdmin() {
       isActive: item.isActive,
       isExternal: item.isExternal,
     });
+    setBeForm(emptyContentBeForm());
+    void fetchMenuBeFields(item.id).then(setBeForm);
   };
 
   const openTextPageEdit = (id: string) => {
@@ -196,12 +223,14 @@ export default function MainMenuAdmin() {
     setEditingId('new');
     setEditContext('section');
     setEditForm({ ...emptyForm, parentId: '' });
+    setBeForm(emptyContentBeForm());
   };
 
   const startNewChild = (sectionId: string) => {
     setEditingId('new');
     setEditContext('child');
     setEditForm({ ...emptyForm, parentId: sectionId, type: 'link' });
+    setBeForm(emptyContentBeForm());
   };
 
   const saveEdit = async () => {
@@ -209,6 +238,7 @@ export default function MainMenuAdmin() {
       ...editForm,
       slug: editForm.slug || slugify(editForm.title),
       parentId: editContext === 'section' ? null : editForm.parentId || null,
+      be: contentBeToPayload(beForm, menuBeFieldKeys(editForm.type, editForm.heroHeader)),
     };
 
     const url = editingId === 'new' ? '/api/menu' : `/api/menu/${editingId}`;
@@ -713,6 +743,12 @@ export default function MainMenuAdmin() {
                   />
                 </div>
               )}
+
+              <ContentBeFields
+                value={beForm}
+                onChange={setBeForm}
+                fields={menuBeFieldKeys(editForm.type, editForm.heroHeader)}
+              />
 
               <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-400">
                 <input

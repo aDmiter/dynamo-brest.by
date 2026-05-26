@@ -29,6 +29,7 @@ const PUBLIC_API: Array<{ methods: string[]; pattern: RegExp }> = [
   { methods: ['GET'], pattern: /^\/api\/site-preview\/status$/ },
   { methods: ['POST'], pattern: /^\/api\/site-preview\/login$/ },
   { methods: ['POST'], pattern: /^\/api\/site-preview\/logout$/ },
+  { methods: ['POST'], pattern: /^\/api\/site-locale$/ },
   { methods: ['GET'], pattern: /^\/api\/cron\// },
   { methods: ['GET', 'POST'], pattern: /^\/api\/test-/ },
 ];
@@ -66,6 +67,8 @@ const PROTECTED_PREFIX: Array<{ prefix: string; section: AdminSectionId }> = [
   { prefix: '/api/menu', section: 'settings' },
   { prefix: '/api/footer-menu', section: 'settings' },
   { prefix: '/api/footer-contacts', section: 'settings' },
+  { prefix: '/api/admin/translations', section: 'translations' },
+  { prefix: '/api/admin/content-translations', section: 'translations' },
 ];
 
 const MUTATION_PREFIX: Array<{ prefix: string; section: AdminSectionId }> = [

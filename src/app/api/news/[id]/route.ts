@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auditUpdateData } from '@/lib/admin-audit-route';
+import { saveBeContentTranslations } from '@/lib/content-translations';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -32,6 +33,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data: { ...updateData, ...(await auditUpdateData()) },
     });
 
+    if (data.be && typeof data.be === 'object') {
+      await saveBeContentTranslations('news', id, data.be);
+    }
+
     return NextResponse.json(news);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
@@ -43,7 +48,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
-    await prisma.news.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.contentTranslation.deleteMany({ where: { resourceType: 'news', resourceId: id } }),
+      prisma.news.delete({ where: { id } }),
+    ]);
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';

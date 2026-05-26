@@ -3,6 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { transliterate } from '@/lib/utils';
 import { auditCreateData } from '@/lib/admin-audit-route';
+import { getSiteLangFromRequest } from '@/lib/content-translations-server';
+import {
+  loadBeTranslationsMap,
+  localizeNewsRecord,
+  saveBeContentTranslations,
+} from '@/lib/content-translations';
 
 // GET — список новостей с пагинацией
 export async function GET(request: NextRequest) {
@@ -10,6 +16,8 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '12');
   const skip = (page - 1) * limit;
+  const forAdmin = searchParams.get('admin') === '1';
+  const lang = forAdmin ? 'ru' : getSiteLangFromRequest(request);
 
   const [news, total] = await Promise.all([
     prisma.news.findMany({
@@ -21,8 +29,17 @@ export async function GET(request: NextRequest) {
     prisma.news.count({ where: { isPublished: true } }),
   ]);
 
+  let localized = news;
+  if (lang === 'be' && news.length > 0) {
+    const tr = await loadBeTranslationsMap(
+      'news',
+      news.map((n) => n.id),
+    );
+    localized = news.map((n) => localizeNewsRecord(n, lang, tr));
+  }
+
   return NextResponse.json({
-    news,
+    news: localized,
     total,
     page,
     totalPages: Math.ceil(total / limit),
@@ -51,6 +68,10 @@ export async function POST(request: NextRequest) {
         ...(await auditCreateData()),
       },
     });
+
+    if (data.be && typeof data.be === 'object') {
+      await saveBeContentTranslations('news', news.id, data.be);
+    }
 
     return NextResponse.json(news, { status: 201 });
   } catch (error: unknown) {

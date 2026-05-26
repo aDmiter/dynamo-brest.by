@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { transliterate } from '@/lib/utils';
 import { auditCreateData } from '@/lib/admin-audit-route';
+import { getSiteLangFromRequest } from '@/lib/content-translations-server';
+import { localizeProducts, saveBeContentTranslations } from '@/lib/content-translations';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -10,12 +12,14 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '12');
   const category = searchParams.get('category');
   const featured = searchParams.get('featured');
+  const forAdmin = searchParams.get('admin') === '1';
+  const lang = forAdmin ? 'ru' : getSiteLangFromRequest(request);
 
   const where: Record<string, unknown> = { inStock: true };
   if (category) where.categoryId = category;
   if (featured === 'true') where.isFeatured = true;
 
-  const [products, total] = await Promise.all([
+  const [productsRaw, total] = await Promise.all([
     prisma.product.findMany({
       where,
       include: {
@@ -29,6 +33,8 @@ export async function GET(request: NextRequest) {
     }),
     prisma.product.count({ where }),
   ]);
+
+  const products = await localizeProducts(productsRaw, lang);
 
   return NextResponse.json({
     products,
@@ -87,6 +93,10 @@ export async function POST(request: NextRequest) {
           },
         });
       }
+    }
+
+    if (data.be && typeof data.be === 'object') {
+      await saveBeContentTranslations('product', product.id, data.be);
     }
 
     return NextResponse.json(product, { status: 201 });

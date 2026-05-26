@@ -11,13 +11,25 @@ import type { Swiper as SwiperType } from 'swiper';
 interface ProductImagesProps {
   images: string[];
   productName: string;
+  layout?: 'desktop' | 'mobile';
 }
 
-export default function ProductImages({ images, productName }: ProductImagesProps) {
+export default function ProductImages({
+  images,
+  productName,
+  layout = 'desktop',
+}: ProductImagesProps) {
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
+  const isMobile = layout === 'mobile';
 
   return (
-    <div className="product-images relative h-full">
+    <div
+      className={
+        isMobile
+          ? 'product-images product-images--mobile relative aspect-[4/5] w-full max-h-[70vh]'
+          : 'product-images relative h-full'
+      }
+    >
       <Swiper
         spaceBetween={0}
         slidesPerView={1}
@@ -37,12 +49,14 @@ export default function ProductImages({ images, productName }: ProductImagesProp
       </Swiper>
 
       {images.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 flex gap-2">
+        <div
+          className={`absolute left-1/2 z-10 flex -translate-x-1/2 gap-2 ${isMobile ? 'bottom-3' : 'bottom-6'}`}
+        >
           {images.map((img, i) => (
             <button
               key={i}
               onClick={() => thumbsSwiper?.slideTo(i)}
-              className="w-14 h-14 overflow-hidden border-2 transition-all"
+              className={`overflow-hidden border-2 transition-all ${isMobile ? 'h-11 w-11' : 'h-14 w-14'}`}
               style={{
                 borderRadius: 8,
                 borderColor:

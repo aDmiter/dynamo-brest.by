@@ -9,8 +9,16 @@ import VideoSection from '@/modules/shared/ui/VideoSection';
 import TitlesSection from '@/modules/shared/ui/TitlesSection';
 import HomeShopSection from '@/modules/shop/components/HomeShopSection';
 import type { CatalogProductCardData } from '@/modules/shop/components/CatalogProductCard';
+import { getSiteLangFromCookies } from '@/lib/content-translations-server';
+import {
+  loadBeTranslationsMap,
+  localizeNewsRecord,
+  localizeProducts,
+} from '@/lib/content-translations';
 
 export default async function Home() {
+  const lang = await getSiteLangFromCookies();
+
   const { featuredNews, latestNews, banner, featuredProducts } = await withDb(
     async () => {
       const [featuredNews, latestNews, banner, featuredProducts] = await Promise.all([
@@ -43,7 +51,19 @@ export default async function Home() {
     'home',
   );
 
-  const shopProducts: CatalogProductCardData[] = featuredProducts.map((p) => ({
+  let localizedFeatured = featuredNews;
+  let localizedLatest = latestNews;
+  if (lang === 'be') {
+    const ids = [...new Set([...featuredNews, ...latestNews].map((n) => n.id))];
+    const tr = await loadBeTranslationsMap('news', ids);
+    localizedFeatured = featuredNews.map((n) => localizeNewsRecord(n, lang, tr));
+    localizedLatest = latestNews.map((n) => localizeNewsRecord(n, lang, tr));
+  }
+
+  const localizedFeaturedProducts =
+    lang === 'be' ? await localizeProducts(featuredProducts, lang) : featuredProducts;
+
+  const shopProducts: CatalogProductCardData[] = localizedFeaturedProducts.map((p) => ({
     id: p.id,
     name: p.name,
     slug: p.slug,
@@ -57,8 +77,8 @@ export default async function Home() {
 
   return (
     <>
-      <HeroSlider featuredNews={featuredNews} />
-      <NewsCarousel news={latestNews} />
+      <HeroSlider featuredNews={localizedFeatured} />
+      <NewsCarousel news={localizedLatest} />
       <MatchSection />
 
       {banner ? (

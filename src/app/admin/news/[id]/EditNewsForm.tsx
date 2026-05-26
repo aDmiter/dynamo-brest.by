@@ -14,6 +14,11 @@ import TipTapEditor from '@/modules/admin/components/TipTapEditor';
 import AdminAuditMeta from '@/modules/admin/components/AdminAuditMeta';
 import AdminSelect from '@/modules/admin/components/Select';
 import { formatLocalDateTime, toUTCString } from '@/lib/date-utils';
+import ContentBeFields, {
+  contentBeToPayload,
+  emptyContentBeForm,
+  type ContentBeFormState,
+} from '@/modules/admin/components/ContentBeFields';
 
 const categories = [
   { value: 'general', label: 'Общее' },
@@ -49,11 +54,15 @@ interface NewsItem {
   updatedByName?: string | null;
 }
 
+const NEWS_BE_FIELDS = ['title', 'excerpt', 'content'] as const;
+
 export default function EditNewsForm({
   news,
+  initialBe,
   showAudit = false,
 }: {
   news: NewsItem;
+  initialBe?: Record<string, string>;
   showAudit?: boolean;
 }) {
   const router = useRouter();
@@ -71,6 +80,12 @@ export default function EditNewsForm({
     isPublished: news.isPublished,
     publishedAt: formatLocalDateTime(news.publishedAt),
   });
+  const [beForm, setBeForm] = useState<ContentBeFormState>(() => ({
+    ...emptyContentBeForm(),
+    title: initialBe?.title ?? '',
+    excerpt: initialBe?.excerpt ?? '',
+    content: initialBe?.content ?? '',
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +100,7 @@ export default function EditNewsForm({
         body: JSON.stringify({
           ...form,
           publishedAt: toUTCString(form.publishedAt),
+          be: contentBeToPayload(beForm, [...NEWS_BE_FIELDS]),
         }),
       });
 
@@ -175,10 +191,16 @@ export default function EditNewsForm({
             <div>
               <label className="mb-1 block text-sm text-gray-400">Текст</label>
               <TipTapEditor
-                content={news.content}
+                content={form.content}
                 onChange={(html) => setForm({ ...form, content: html })}
               />
             </div>
+
+            <ContentBeFields
+              value={beForm}
+              onChange={setBeForm}
+              fields={[...NEWS_BE_FIELDS]}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div>

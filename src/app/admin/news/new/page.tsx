@@ -13,6 +13,11 @@ import ImageUpload from '@/modules/admin/components/ImageUpload';
 import TipTapEditor from '@/modules/admin/components/TipTapEditor';
 import AdminSelect from '@/modules/admin/components/Select';
 import { formatLocalDateTime, toUTCString } from '@/lib/date-utils';
+import ContentBeFields, {
+  contentBeToPayload,
+  emptyContentBeForm,
+  type ContentBeFormState,
+} from '@/modules/admin/components/ContentBeFields';
 
 const categories = [
   { value: 'general', label: 'Общее' },
@@ -46,6 +51,7 @@ export default function NewNewsPage() {
     isPublished: true,
     publishedAt: formatLocalDateTime(new Date()),
   });
+  const [beForm, setBeForm] = useState<ContentBeFormState>(emptyContentBeForm);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +65,7 @@ export default function NewNewsPage() {
         body: JSON.stringify({
           ...form,
           publishedAt: toUTCString(form.publishedAt),
+          be: contentBeToPayload(beForm, ['title', 'excerpt', 'content']),
         }),
       });
 
@@ -137,6 +144,12 @@ export default function NewNewsPage() {
                 onChange={(html) => setForm({ ...form, content: html })}
               />
             </div>
+
+            <ContentBeFields
+              value={beForm}
+              onChange={setBeForm}
+              fields={['title', 'excerpt', 'content']}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div>

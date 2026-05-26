@@ -12,6 +12,13 @@ import Link from 'next/link';
 import ImageUpload from '@/modules/admin/components/ImageUpload';
 import { transliterate } from '@/lib/utils';
 import ProductSizesEditor from '@/modules/admin/components/ProductSizesEditor';
+import ContentBeFields, {
+  contentBeToPayload,
+  emptyContentBeForm,
+  type ContentBeFormState,
+} from '@/modules/admin/components/ContentBeFields';
+
+const PRODUCT_BE_FIELDS = ['name', 'description', 'composition'] as const;
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -39,6 +46,7 @@ export default function NewProductPage() {
 
   const [sizes, setSizes] = useState<{ size: string; quantity: number }[]>([]);
   const [hasCustomization, setHasCustomization] = useState(false);
+  const [beForm, setBeForm] = useState<ContentBeFormState>(() => emptyContentBeForm());
 
   useEffect(() => {
     fetch('/api/categories')
@@ -79,6 +87,7 @@ export default function NewProductPage() {
           sizes: form.useSizes ? sizes : [],
           hasCustomization,
           quantity: form.useSizes ? 0 : form.quantity,
+          be: contentBeToPayload(beForm, [...PRODUCT_BE_FIELDS]),
         }),
       });
       if (res.ok) {
@@ -227,6 +236,12 @@ export default function NewProductPage() {
                 rows={3}
               />
             </div>
+
+            <ContentBeFields
+              value={beForm}
+              onChange={setBeForm}
+              fields={['name', 'description', 'composition']}
+            />
 
             {/* Чекбокс "Добавить размеры" */}
             <div className="border-t border-white/10 pt-4">

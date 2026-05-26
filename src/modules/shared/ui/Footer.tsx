@@ -11,8 +11,12 @@ import {
   SHOP_CONTACT_PHONE,
   SHOP_CONTACT_PHONE_HREF,
 } from '@/modules/shop/data/organization-requisites';
+import { getPublicUiTranslator } from '@/lib/ui-translations-server';
+import { getSiteLangFromCookies } from '@/lib/content-translations-server';
+import { loadBeTranslationsMap, localizeCmsPageRecord } from '@/lib/content-translations';
 
 export default async function Footer() {
+  const { t } = await getPublicUiTranslator();
   const [items, contacts] = await withDb(
     () =>
       Promise.all([
@@ -36,7 +40,7 @@ export default async function Footer() {
     address: 'г. Брест, ул. Гоголя, 9',
   };
 
-  const renderLinks = (blockItems: typeof items) => (
+  const renderLinks = (blockItems: typeof menuItems) => (
     <ul className="site-footer__links">
       {blockItems.map((item) => {
         const href = getFooterItemHref(item);
@@ -107,13 +111,13 @@ export default async function Footer() {
           <div className="site-footer__col site-footer__contacts">
             <h3 className="site-footer__contacts-title">{contactsData.title}</h3>
             <p className="site-footer__contacts-line">
-              Почта:{' '}
+              {t('ui.footer.mail')}{' '}
               <a href={`mailto:${contactsData.email}`} className="site-footer__link">
                 {contactsData.email}
               </a>
             </p>
             <p className="site-footer__contacts-line">
-              Телефон:{' '}
+              {t('ui.footer.phone')}{' '}
               <a href={SHOP_CONTACT_PHONE_HREF} className="site-footer__link">
                 {SHOP_CONTACT_PHONE}
               </a>
@@ -125,10 +129,10 @@ export default async function Footer() {
 
         <div className="site-footer__copyright">
           <ShopRequisitesBlock variant="footer" />
-          <p className="site-footer__copyright-line">Official Website of FC Dynamo Brest</p>
+          <p className="site-footer__copyright-line">{t('ui.footer.official')}</p>
           <p className="site-footer__copyright-line">
             <a href="https://webo.by/" className="site-footer__copyright-link">
-              Создание сайта: WEBO.by
+              {t('ui.footer.created_by')}
             </a>
           </p>
         </div>

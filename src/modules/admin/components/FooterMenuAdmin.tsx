@@ -19,6 +19,12 @@ import ImageUpload from '@/modules/admin/components/ImageUpload';
 import TextPagesOverview from '@/modules/admin/components/TextPagesOverview';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { resolveFooterMenuTextPageUrl } from '@/lib/cms-text-page-paths';
+import ContentBeFields, {
+  contentBeFromRecord,
+  contentBeToPayload,
+  emptyContentBeForm,
+  type ContentBeFormState,
+} from '@/modules/admin/components/ContentBeFields';
 
 export interface FooterMenuItem {
   id: string;
@@ -89,6 +95,19 @@ function slugify(text: string): string {
     .replace(/[^a-z0-9а-яё-]/gi, '');
 }
 
+function footerBeFieldKeys(type: string): Array<keyof ContentBeFormState> {
+  return type === 'page' ? ['title', 'subtitle', 'pageContent'] : ['title'];
+}
+
+async function fetchFooterBeFields(resourceId: string): Promise<ContentBeFormState> {
+  const res = await fetch(
+    `/api/admin/content-translations?resourceType=footermenuitem&resourceId=${resourceId}`,
+  );
+  if (!res.ok) return emptyContentBeForm();
+  const data = (await res.json()) as { fields?: Record<string, string> };
+  return contentBeFromRecord(data.fields ?? {});
+}
+
 export function FooterMenuPanel({
   embedded = false,
   editRequestId,
@@ -106,6 +125,7 @@ export function FooterMenuPanel({
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
+  const [beForm, setBeForm] = useState<ContentBeFormState>(emptyContentBeForm);
   const [savingContacts, setSavingContacts] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -146,11 +166,14 @@ export function FooterMenuPanel({
       isActive: item.isActive,
       isExternal: item.isExternal,
     });
+    setBeForm(emptyContentBeForm());
+    void fetchFooterBeFields(item.id).then(setBeForm);
   };
 
   const startNew = (block: number) => {
     setEditingId('new');
     setEditForm({ ...emptyForm, block });
+    setBeForm(emptyContentBeForm());
   };
 
   useEffect(() => {
@@ -166,6 +189,7 @@ export function FooterMenuPanel({
     const payload = {
       ...editForm,
       slug: editForm.slug || slugify(editForm.title),
+      be: contentBeToPayload(beForm, footerBeFieldKeys(editForm.type)),
     };
 
     if (editingId === 'new') {
@@ -560,6 +584,12 @@ export function FooterMenuPanel({
                   </div>
                 </>
               )}
+
+              <ContentBeFields
+                value={beForm}
+                onChange={setBeForm}
+                fields={footerBeFieldKeys(editForm.type)}
+              />
 
               <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-400">
                 <input

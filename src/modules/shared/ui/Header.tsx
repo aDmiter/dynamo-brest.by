@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -15,13 +15,16 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { useCartCount } from '@/modules/shared/hooks/useCartCount';
+import { useSiteLocale } from '@/modules/shared/ui/SiteLocaleProvider';
+import LanguageSwitcher from '@/modules/shared/ui/LanguageSwitcher';
+import type { UiTranslationKey } from '@/config/ui-translations';
 
-const menuItems: { title: string; href: string; icon: IconDefinition }[] = [
-  { title: 'Команда', href: '/team/main/players', icon: faUserGroup },
-  { title: 'Календарь', href: '/team/main/calendar', icon: faCalendarDays },
-  { title: 'Таблица', href: '/team/main/table', icon: faTableList },
-  { title: 'Новости', href: '/news', icon: faNewspaper },
-  { title: 'Магазин', href: '/shop/catalog', icon: faBagShopping },
+const NAV_ITEMS: { titleKey: UiTranslationKey; href: string; icon: IconDefinition }[] = [
+  { titleKey: 'ui.nav.team', href: '/team/main/players', icon: faUserGroup },
+  { titleKey: 'ui.nav.calendar', href: '/team/main/calendar', icon: faCalendarDays },
+  { titleKey: 'ui.nav.table', href: '/team/main/table', icon: faTableList },
+  { titleKey: 'ui.nav.news', href: '/news', icon: faNewspaper },
+  { titleKey: 'ui.nav.shop', href: '/shop/catalog', icon: faBagShopping },
 ];
 
 function isNavItemActive(href: string, pathname: string): boolean {
@@ -48,9 +51,15 @@ function isNavItemActive(href: string, pathname: string): boolean {
 
 export default function Header() {
   const pathname = usePathname();
+  const { t } = useSiteLocale();
   const [sideMenuVisible, setSideMenuVisible] = useState(true);
   const cartCount = useCartCount();
   const lastScrollY = useRef(0);
+
+  const menuItems = useMemo(
+    () => NAV_ITEMS.map((item) => ({ ...item, title: t(item.titleKey) })),
+    [t],
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,7 +89,7 @@ export default function Header() {
           const active = isNavItemActive(item.href, pathname);
           return (
             <Link
-              key={item.title}
+              key={item.titleKey}
               href={item.href}
               className={`side-nav__item group ${active ? 'side-nav__item--active' : ''}`}
               aria-current={active ? 'page' : undefined}
@@ -105,22 +114,10 @@ export default function Header() {
             <span className="side-nav__cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>
           )}
           <span className="side-nav__flyout">
-            <span className="side-nav__flyout-label">Корзина</span>
+            <span className="side-nav__flyout-label">{t('ui.cart')}</span>
           </span>
         </Link>
-        <button
-          type="button"
-          className="text-xs font-medium tracking-widest transition-colors"
-          style={{ color: 'rgba(255,255,255,0.45)' }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-accent)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.45)';
-          }}
-        >
-          RU
-        </button>
+        <LanguageSwitcher />
       </div>
     </header>
   );

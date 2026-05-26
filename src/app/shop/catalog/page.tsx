@@ -1,9 +1,13 @@
 // src/app/shop/catalog/page.tsx
 import { prisma } from '@/lib/prisma';
+import { getSiteLangFromCookies } from '@/lib/content-translations-server';
+import { localizeProducts } from '@/lib/content-translations';
 import CatalogClient from './CatalogClient';
 
 export default async function CatalogPage() {
-  const [products, categories] = await Promise.all([
+  const lang = await getSiteLangFromCookies();
+
+  const [productsRaw, categories] = await Promise.all([
     prisma.product.findMany({
       where: { inStock: true },
       orderBy: [{ isHit: 'desc' }, { createdAt: 'desc' }],
@@ -14,6 +18,8 @@ export default async function CatalogPage() {
       orderBy: { order: 'asc' },
     }),
   ]);
+
+  const products = await localizeProducts(productsRaw, lang);
 
   const serialized = products.map((p) => ({
     ...p,

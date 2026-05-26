@@ -1,6 +1,7 @@
 // src/app/api/footer-menu/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { saveBeContentTranslations } from '@/lib/content-translations';
 
 export async function GET() {
   const [items, contacts] = await Promise.all([
@@ -49,6 +50,10 @@ export async function POST(request: NextRequest) {
         isExternal: data.isExternal ?? false,
       },
     });
+
+    if (data.be && typeof data.be === 'object') {
+      await saveBeContentTranslations('footermenuitem', item.id, data.be);
+    }
 
     return NextResponse.json(item, { status: 201 });
   } catch (error: unknown) {

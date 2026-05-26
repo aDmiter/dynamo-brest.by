@@ -1,6 +1,7 @@
 // src/app/api/menu/[id]/route.ts - API для конкретного пункта меню
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { saveBeContentTranslations } from '@/lib/content-translations';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -32,6 +33,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data: updateData,
     });
 
+    if (data.be && typeof data.be === 'object') {
+      await saveBeContentTranslations('menuitem', id, data.be);
+    }
+
     return NextResponse.json(item);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
@@ -44,6 +49,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
 
+    const childIds = (
+      await prisma.menuitem.findMany({ where: { parentId: id }, select: { id: true } })
+    ).map((c) => c.id);
+    const ids = [id, ...childIds];
+    await prisma.contentTranslation.deleteMany({
+      where: { resourceType: 'menuitem', resourceId: { in: ids } },
+    });
     await prisma.menuitem.deleteMany({ where: { parentId: id } });
     await prisma.menuitem.delete({ where: { id } });
 

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { getAdminPageFlags } from '@/lib/admin-page';
 import EditNewsForm from './EditNewsForm';
+import { loadBeFieldsForResource } from '@/lib/content-translations';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -14,6 +15,7 @@ export default async function EditNewsPage({ params }: Props) {
 
   if (!news) notFound();
 
+  const initialBe = await loadBeFieldsForResource('news', id);
   const { showAudit } = await getAdminPageFlags();
 
   return (
@@ -26,6 +28,7 @@ export default async function EditNewsPage({ params }: Props) {
           ...news,
           publishedAt: news.publishedAt,
         }}
+        initialBe={initialBe}
         showAudit={showAudit}
       />
     </div>

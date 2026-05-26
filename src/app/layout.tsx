@@ -23,6 +23,9 @@ import {
   recordSitePageVisit,
   resolveSiteMetadata,
 } from '@/lib/site-page-meta';
+import { getPublicLocaleBundle } from '@/lib/ui-translations-server';
+import { siteLangHtmlLang } from '@/lib/site-locale';
+import { SiteLocaleProvider } from '@/modules/shared/ui/SiteLocaleProvider';
 
 function isPartialNavigationRequest(headersList: Headers): boolean {
   return (
@@ -67,8 +70,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const host = headersList.get('host');
   const saleframeModalAllowed = isTicketSaleframeModalSupportedHost(host);
 
+  const localeBundle = isPublicShell
+    ? await getPublicLocaleBundle()
+    : { lang: 'ru' as const, beOverrides: {} };
+  const htmlLang = isPublicShell ? siteLangHtmlLang(localeBundle.lang) : 'ru';
+
   return (
-    <html lang="ru" suppressHydrationWarning>
+    <html lang={htmlLang} suppressHydrationWarning>
       <head>
         <style id="site-theme-vars" dangerouslySetInnerHTML={{ __html: themeCss }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -85,13 +93,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       >
         <ThemeInitializer settings={settings} />
         <TicketSaleframeModalProvider value={saleframeModalAllowed}>
-          {isPublicShell && <AnalyticsScripts />}
-          {isPublicShell && <Header />}
-          {isPublicShell && <BurgerMenu />}
-          {isPublicShell && <TicketBuyFabLoader />}
-          <main>{children}</main>
-          {isPublicShell && <Footer />}
-          {isPublicShell && <AfpTicketScript enabled={saleframeModalAllowed} />}
+          {isPublicShell ? (
+            <SiteLocaleProvider lang={localeBundle.lang} beOverrides={localeBundle.beOverrides}>
+              <AnalyticsScripts />
+              <Header />
+              <BurgerMenu />
+              <TicketBuyFabLoader />
+              <main>{children}</main>
+              <Footer />
+              <AfpTicketScript enabled={saleframeModalAllowed} />
+            </SiteLocaleProvider>
+          ) : (
+            <main>{children}</main>
+          )}
         </TicketSaleframeModalProvider>
       </body>
     </html>

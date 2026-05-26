@@ -8,6 +8,7 @@ import {
   SITE_PREVIEW_COOKIE,
 } from '@/lib/site-preview';
 import { verifySitePreviewToken } from '@/lib/site-preview-auth';
+import { SITE_LANG_COOKIE, parseSiteLang } from '@/lib/site-locale';
 
 let previewEnabledCache = { value: false, at: 0 };
 
@@ -30,6 +31,7 @@ export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-pathname', pathname);
+  requestHeaders.set('x-site-lang', parseSiteLang(req.cookies.get(SITE_LANG_COOKIE)?.value));
 
   const token = await getToken({ req, secret: process.env.AUTH_SECRET });
   const adminUser: AdminSessionUser | null =

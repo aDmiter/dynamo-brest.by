@@ -158,6 +158,16 @@
   text-transform: uppercase;
 }
 
+.team-matches-v1__date-weekday--short,
+.team-matches-v1__date-main--short,
+.team-matches-v1__info-date--short {
+  display: none;
+}
+
+.team-matches-v1__info-date--full {
+  display: inline;
+}
+
 .calendar--v1 .calendar__card-ticket-link {
   margin-left: auto;
   display: inline-flex;
@@ -260,6 +270,138 @@
   color: #ef4444;
 }
 
+@media (max-width: 767px) {
+  .calendar--v1 .calendar__content,
+  .results--v1 .results__content {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .team-matches-v1__glass {
+    display: none;
+  }
+
+  .calendar--v1 .calendar__card,
+  .results--v1 .results__card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .team-matches-v1__card-aside {
+    position: static;
+    align-items: flex-start;
+    max-width: 100%;
+    width: 100%;
+    padding: 14px 18px 0;
+    box-sizing: border-box;
+  }
+
+  .team-matches-v1__date {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .team-matches-v1__date-weekday--full,
+  .team-matches-v1__date-main--full,
+  .team-matches-v1__info-date--full {
+    display: none;
+  }
+
+  .team-matches-v1__date-weekday--short,
+  .team-matches-v1__date-main--short,
+  .team-matches-v1__info-date--short {
+    display: inline;
+  }
+
+  .team-matches-v1__date-weekday--short {
+    font-size: 10px;
+  }
+
+  .team-matches-v1__date-main--short {
+    font-size: 18px;
+  }
+
+  .results--v1 .results__card-result-aside {
+    position: static;
+    align-self: flex-end;
+    padding: 8px 18px 0;
+  }
+
+  .calendar--v1 .calendar__card-meta,
+  .results--v1 .results__card-meta {
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    gap: 4px 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .calendar--v1 .calendar__card-tournament,
+  .results--v1 .results__card-tournament {
+    flex: 1 1 100%;
+    max-width: 100%;
+    font-size: 9px !important;
+    line-height: 1.35 !important;
+    letter-spacing: 0.06em !important;
+    word-break: break-word;
+  }
+
+  .calendar--v1 .calendar__card-teams,
+  .results--v1 .results__card-teams {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .calendar--v1 .calendar__card-team,
+  .results--v1 .results__card-team {
+    gap: 8px !important;
+  }
+
+  .calendar--v1 .calendar__card-team-name,
+  .results--v1 .results__card-team-name {
+    font-size: 11px !important;
+    line-height: 1.15 !important;
+    word-break: break-word;
+  }
+
+  .calendar--v1 .calendar__club-badge,
+  .results--v1 .results__club-badge {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .calendar--v1 .calendar__card-time-value {
+    font-size: 20px !important;
+  }
+
+  .results--v1 .results__card-score-value {
+    font-size: 22px !important;
+  }
+
+  .calendar--v1 .calendar__card-info,
+  .results--v1 .results__card-info {
+    gap: 10px !important;
+    margin-top: 12px !important;
+    padding-top: 10px !important;
+  }
+
+  .calendar--v1 .calendar__card-ticket-link {
+    width: 100%;
+    justify-content: center;
+    font-size: 11px;
+    padding: 8px 14px;
+  }
+
+  .calendar--v1 .calendar__card-body,
+  .results--v1 .results__card-body {
+    padding: 10px 18px 16px !important;
+  }
+
+  .results--v1 .results__card-protocol-link {
+    margin-left: 0 !important;
+  }
+}
+
 @media (max-width: 640px) {
   .team-matches-v1__nav {
     margin-bottom: 24px;
@@ -269,32 +411,5 @@
 
   .team-matches-v1__nav-link {
     width: 100%;
-  }
-
-  .team-matches-v1__glass-logo {
-    width: 352px;
-    height: 320px;
-    opacity: 0.09;
-  }
-
-  .team-matches-v1__card-aside {
-    top: 14px;
-    right: 16px;
-    max-width: 58%;
-  }
-
-  .results--v1 .results__card-result-aside {
-    top: 14px;
-    right: 16px;
-  }
-
-  .calendar--v1 .calendar__card-ticket-link {
-    font-size: 11px;
-    padding: 8px 14px;
-  }
-
-  .calendar--v1 .calendar__card-body,
-  .results--v1 .results__card-body {
-    padding: 16px 18px !important;
   }
 }

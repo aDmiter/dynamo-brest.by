@@ -48,7 +48,7 @@ export default function NewsAdminClient({ initialNews, initialTotal, showAudit =
     setLoading(true);
     try {
       const skip = (page - 1) * PAGE_SIZE;
-      const res = await fetch(`/api/news?page=${page}&limit=${PAGE_SIZE}`);
+      const res = await fetch(`/api/news?page=${page}&limit=${PAGE_SIZE}&admin=1`);
       const data = await res.json();
       setNews(
         data.news.map((item: NewsItem) => ({

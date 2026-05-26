@@ -17,6 +17,13 @@ import Link from 'next/link';
 import ImageUpload from '@/modules/admin/components/ImageUpload';
 import AdminAuditMeta from '@/modules/admin/components/AdminAuditMeta';
 import ProductSizesEditor from '@/modules/admin/components/ProductSizesEditor';
+import ContentBeFields, {
+  contentBeToPayload,
+  emptyContentBeForm,
+  type ContentBeFormState,
+} from '@/modules/admin/components/ContentBeFields';
+
+const PRODUCT_BE_FIELDS = ['name', 'description', 'composition'] as const;
 
 interface Product {
   id: string;
@@ -47,9 +54,11 @@ interface Product {
 
 export default function EditProductForm({
   product,
+  initialBe,
   showAudit = false,
 }: {
   product: Product;
+  initialBe?: Record<string, string>;
   showAudit?: boolean;
 }) {
   const router = useRouter();
@@ -87,6 +96,12 @@ export default function EditProductForm({
   const [hasCustomization, setHasCustomization] = useState(product.hasCustomization || false);
   const [totalSold, setTotalSold] = useState(product.totalSold || 0);
   const [resettingSold, setResettingSold] = useState(false);
+  const [beForm, setBeForm] = useState<ContentBeFormState>(() => ({
+    ...emptyContentBeForm(),
+    name: initialBe?.name ?? '',
+    description: initialBe?.description ?? '',
+    composition: initialBe?.composition ?? '',
+  }));
 
   useEffect(() => {
     fetch('/api/categories')
@@ -121,6 +136,7 @@ export default function EditProductForm({
           sizes: form.useSizes ? sizes : [],
           hasCustomization,
           quantity: form.useSizes ? 0 : form.quantity,
+          be: contentBeToPayload(beForm, [...PRODUCT_BE_FIELDS]),
         }),
       });
 
@@ -332,6 +348,12 @@ export default function EditProductForm({
                 rows={3}
               />
             </div>
+
+            <ContentBeFields
+              value={beForm}
+              onChange={setBeForm}
+              fields={['name', 'description', 'composition']}
+            />
 
             {/* Чекбокс размеров / общее количество */}
             <div className="border-t border-white/10 pt-4">

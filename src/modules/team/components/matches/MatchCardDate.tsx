@@ -1,3 +1,9 @@
+import {
+  formatMatchDateLong,
+  formatMatchDateShort,
+  formatWeekdayShort,
+} from '@/modules/team/lib/match-date-format';
+
 const WEEKDAYS = [
   'воскресенье',
   'понедельник',
@@ -6,21 +12,6 @@ const WEEKDAYS = [
   'четверг',
   'пятница',
   'суббота',
-];
-
-const MONTHS = [
-  'января',
-  'февраля',
-  'марта',
-  'апреля',
-  'мая',
-  'июня',
-  'июля',
-  'августа',
-  'сентября',
-  'октября',
-  'ноября',
-  'декабря',
 ];
 
 interface Props {
@@ -44,9 +35,17 @@ export default function MatchCardDate({ matchDate, tbd = false }: Props) {
 
   return (
     <div className="team-matches-v1__date">
-      <span className="team-matches-v1__date-weekday">{WEEKDAYS[d.getDay()]}</span>
-      <span className="team-matches-v1__date-main">
-        {d.getDate()} {MONTHS[d.getMonth()]} {d.getFullYear()}
+      <span className="team-matches-v1__date-weekday team-matches-v1__date-weekday--full">
+        {WEEKDAYS[d.getDay()]}
+      </span>
+      <span className="team-matches-v1__date-weekday team-matches-v1__date-weekday--short">
+        {formatWeekdayShort(matchDate)}
+      </span>
+      <span className="team-matches-v1__date-main team-matches-v1__date-main--full">
+        {formatMatchDateLong(matchDate)}
+      </span>
+      <span className="team-matches-v1__date-main team-matches-v1__date-main--short">
+        {formatMatchDateShort(matchDate)}
       </span>
     </div>
   );

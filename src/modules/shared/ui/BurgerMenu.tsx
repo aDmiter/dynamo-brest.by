@@ -8,6 +8,8 @@ import { faBars, faTimes, faChevronRight, faCartShopping } from '@fortawesome/fr
 import Link from 'next/link';
 import { useCartCount } from '@/modules/shared/hooks/useCartCount';
 import { resolveMainMenuTextPageUrl } from '@/lib/cms-text-page-paths';
+import { useSiteLocale } from '@/modules/shared/ui/SiteLocaleProvider';
+import LanguageSwitcher from '@/modules/shared/ui/LanguageSwitcher';
 
 function isMenuLinkActive(href: string, pathname: string): boolean {
   if (!href || href === '#' || href.startsWith('http')) return false;
@@ -30,13 +32,14 @@ interface MenuItem {
 
 export default function BurgerMenu() {
   const pathname = usePathname();
+  const { t } = useSiteLocale();
   const cartCount = useCartCount();
   const [isOpen, setIsOpen] = useState(false);
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/menu')
+    fetch('/api/menu?public=1', { credentials: 'same-origin' })
       .then((r) => r.json())
       .then((data) => setMenu(data.filter((item: MenuItem) => item.isActive)));
   }, []);
@@ -65,29 +68,35 @@ export default function BurgerMenu() {
 
   return (
     <>
-      <Link href="/" className="burger-menu__mobile-logo" aria-label="На главную">
-        <img
-          src="/images/logos/logo-white.png"
-          alt="Динамо-Брест"
-          className="burger-menu__mobile-logo-img"
-        />
-      </Link>
+      <div className="burger-menu__mobile-bar">
+        <Link href="/" className="burger-menu__mobile-logo" aria-label={t('ui.burger.home')}>
+          <img
+            src="/images/logos/logo-white.png"
+            alt="Динамо-Брест"
+            className="burger-menu__mobile-logo-img"
+          />
+        </Link>
 
-      <div className="burger-menu__actions">
-        {cartCount > 0 && (
-          <Link href="/shop/cart" className="burger-menu__btn burger-menu__btn--cart" aria-label="Корзина">
-            <FontAwesomeIcon icon={faCartShopping} className="burger-menu__btn-icon" />
-            <span className="burger-menu__cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>
-          </Link>
-        )}
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="burger-menu__btn burger-menu__btn--menu"
-          aria-label="Меню"
-        >
-          <FontAwesomeIcon icon={faBars} className="burger-menu__btn-icon" />
-        </button>
+        <div className="burger-menu__actions">
+          {cartCount > 0 && (
+            <Link
+              href="/shop/cart"
+              className="burger-menu__btn burger-menu__btn--cart"
+              aria-label={t('ui.cart')}
+            >
+              <FontAwesomeIcon icon={faCartShopping} className="burger-menu__btn-icon" />
+              <span className="burger-menu__cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="burger-menu__btn burger-menu__btn--menu"
+            aria-label={t('ui.burger.menu')}
+          >
+            <FontAwesomeIcon icon={faBars} className="burger-menu__btn-icon" />
+          </button>
+        </div>
       </div>
 
       {/* Меню */}
@@ -117,10 +126,14 @@ export default function BurgerMenu() {
                 type="button"
                 onClick={handleClose}
                 className="burger-menu__btn burger-menu__btn--close burger-menu__header-close"
-                aria-label="Закрыть меню"
+                aria-label={t('ui.burger.close')}
               >
                 <FontAwesomeIcon icon={faTimes} className="burger-menu__btn-icon" />
               </button>
+            </div>
+
+            <div className="burger-menu__lang lg:hidden">
+              <LanguageSwitcher />
             </div>
 
             {/* Список меню */}
@@ -203,7 +216,7 @@ export default function BurgerMenu() {
               style={{ borderTop: '1px solid var(--color-border)' }}
             >
               <p className="text-sm" style={{ color: 'var(--color-text-label)' }}>
-                © {new Date().getFullYear()} ФК «Динамо-Брест»
+                © {new Date().getFullYear()} {t('ui.footer.copyright')}
               </p>
             </div>
           </div>

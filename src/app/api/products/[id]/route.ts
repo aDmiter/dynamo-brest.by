@@ -2,6 +2,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auditUpdateData } from '@/lib/admin-audit-route';
+import { getSiteLangFromRequest } from '@/lib/content-translations-server';
+import {
+  loadBeTranslationsMap,
+  localizeProductRecord,
+  saveBeContentTranslations,
+} from '@/lib/content-translations';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -19,6 +25,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (!product) {
       return NextResponse.json({ error: 'Товар не найден' }, { status: 404 });
+    }
+
+    const forAdmin = request.nextUrl.searchParams.get('admin') === '1';
+    const lang = forAdmin ? 'ru' : getSiteLangFromRequest(request);
+    if (lang === 'be') {
+      const tr = await loadBeTranslationsMap('product', [product.id]);
+      return NextResponse.json(localizeProductRecord(product, lang, tr));
     }
 
     return NextResponse.json(product);
@@ -80,6 +93,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     }
 
+    if (data.be && typeof data.be === 'object') {
+      await saveBeContentTranslations('product', id, data.be);
+    }
+
     return NextResponse.json(product);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
@@ -110,6 +127,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     await prisma.$transaction([
+      prisma.contentTranslation.deleteMany({ where: { resourceType: 'product', resourceId: id } }),
       prisma.productSize.deleteMany({ where: { productId: id } }),
       prisma.product.delete({ where: { id } }),
     ]);

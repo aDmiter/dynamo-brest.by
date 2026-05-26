@@ -17,6 +17,7 @@ import MatchCardGlassLogos from '@/modules/team/components/matches/MatchCardGlas
 import MatchCardResultPill from '@/modules/team/components/matches/MatchCardResultPill';
 import MatchProtocolModal from '@/modules/team/components/matches/MatchProtocolModal';
 import type { GoalScorerPublic } from '@/lib/match-protocol';
+import { formatMatchDateLong, formatMatchDateShort } from '@/modules/team/lib/match-date-format';
 
 interface MatchData {
   id: string;
@@ -77,11 +78,6 @@ const MONTHS_NOM = [
   'НОЯБРЬ',
   'ДЕКАБРЬ',
 ];
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-}
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -380,7 +376,7 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
             style={{ display: 'flex', alignItems: 'center', gap: 5 }}
           >
             <span
-              className="results__card-info-text"
+              className="results__card-info-text team-matches-v1__info-date"
               style={{
                 fontFamily: "'Inter Tight', sans-serif",
                 fontSize: 10,
@@ -389,7 +385,12 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
                 letterSpacing: '0.04em',
               }}
             >
-              {formatDate(match.matchDate)}
+              <span className="team-matches-v1__info-date--full">
+                {formatMatchDateLong(match.matchDate)}
+              </span>
+              <span className="team-matches-v1__info-date--short">
+                {formatMatchDateShort(match.matchDate)}
+              </span>
             </span>
           </div>
           <div

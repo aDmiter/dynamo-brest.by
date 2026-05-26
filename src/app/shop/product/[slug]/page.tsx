@@ -2,6 +2,8 @@
 import { prisma } from '@/lib/prisma';
 import { getMainSquadPlayersForCustomization } from '@/lib/shop-customization-players';
 import { notFound } from 'next/navigation';
+import { getSiteLangFromCookies } from '@/lib/content-translations-server';
+import { loadBeTranslationsMap, localizeProductRecord } from '@/lib/content-translations';
 import ProductPageClient from './ProductPageClient';
 
 interface Props {
@@ -10,7 +12,8 @@ interface Props {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({
+  const lang = await getSiteLangFromCookies();
+  const productRaw = await prisma.product.findUnique({
     where: { slug },
     include: {
       productcategory: true,
@@ -19,7 +22,13 @@ export default async function ProductPage({ params }: Props) {
     },
   });
 
-  if (!product) notFound();
+  if (!productRaw) notFound();
+
+  let product = productRaw;
+  if (lang === 'be') {
+    const tr = await loadBeTranslationsMap('product', [productRaw.id]);
+    product = localizeProductRecord(productRaw, lang, tr);
+  }
 
   const hasCustomization = product.hasCustomization === true;
 

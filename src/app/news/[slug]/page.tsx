@@ -1,6 +1,8 @@
 // src/app/news/[slug]/page.tsx - Страница отдельной новости
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import { getSiteLangFromCookies } from '@/lib/content-translations-server';
+import { loadBeTranslationsMap, localizeNewsRecord } from '@/lib/content-translations';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -38,10 +40,14 @@ interface Props {
 
 export default async function NewsArticlePage({ params }: Props) {
   const { slug } = await params;
-  const article = await prisma.news.findUnique({ where: { slug } });
+  const raw = await prisma.news.findUnique({ where: { slug } });
+  if (!raw || !raw.isPublished) notFound();
 
-  if (!article || !article.isPublished) {
-    notFound();
+  const lang = await getSiteLangFromCookies();
+  let article = raw;
+  if (lang === 'be') {
+    const tr = await loadBeTranslationsMap('news', [raw.id]);
+    article = localizeNewsRecord(raw, lang, tr);
   }
 
   return (

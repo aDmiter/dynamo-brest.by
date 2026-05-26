@@ -65,6 +65,26 @@ export default function ProductPageClient({ product, customizations, players }: 
       : 0
     : product.quantity;
 
+  const productGallery = (layout: 'desktop' | 'mobile') =>
+    images.length > 0 ? (
+      <ProductImages images={images} productName={product.name} layout={layout} />
+    ) : (
+      <div
+        className={
+          layout === 'mobile'
+            ? 'flex aspect-[4/5] w-full max-h-[70vh] items-center justify-center overflow-hidden rounded-xl'
+            : 'flex h-full items-center justify-center'
+        }
+        style={{ background: 'var(--color-bg-photo-placeholder)' }}
+      >
+        <img
+          src="/images/placeholder.jpg"
+          alt={product.name}
+          className="max-h-full max-w-full object-contain opacity-50"
+        />
+      </div>
+    );
+
   return (
     <div
       className="product-page flex min-h-screen"
@@ -264,6 +284,10 @@ export default function ProductPageClient({ product, customizations, players }: 
           </>
         )}
 
+        <div className="product-page__gallery-mobile mt-10 block overflow-hidden rounded-xl md:hidden">
+          {productGallery('mobile')}
+        </div>
+
         {/* Description */}
         {product.description && (
           <div className="mt-12 pt-8" style={{ borderTop: '1px solid var(--color-border)' }}>
@@ -292,22 +316,9 @@ export default function ProductPageClient({ product, customizations, players }: 
         )}
       </div>
 
-      {/* RIGHT: GALLERY */}
+      {/* RIGHT: GALLERY (desktop) */}
       <div className="product-page__gallery relative hidden h-screen w-[50vw] md:block">
-        {images.length > 0 ? (
-          <ProductImages images={images} productName={product.name} />
-        ) : (
-          <div
-            className="flex h-full items-center justify-center"
-            style={{ background: 'var(--color-bg-photo-placeholder)' }}
-          >
-            <img
-              src="/images/placeholder.jpg"
-              alt={product.name}
-              className="max-h-full max-w-full object-contain opacity-50"
-            />
-          </div>
-        )}
+        {productGallery('desktop')}
       </div>
     </div>
   );

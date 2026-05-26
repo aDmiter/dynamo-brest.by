@@ -1,10 +1,10 @@
 // src/app/page/[slug]/page.tsx — текстовая страница из главного меню (паттерн CMSTextPage)
 import type { Metadata } from 'next';
-import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import CmsTextPage from '@/modules/shared/ui/CmsTextPage';
 import { resolveMainMenuTextPageUrl } from '@/lib/cms-text-page-paths';
 import { resolveSiteMetadata } from '@/lib/site-page-meta';
+import { getLocalizedMainMenuPage } from '@/lib/cms-page-localized';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -20,13 +20,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function MenuPage({ params }: Props) {
   const { slug } = await params;
 
-  const page = await prisma.menuitem.findUnique({
-    where: { slug },
-  });
-
-  if (!page || !page.isActive || page.type !== 'page') {
-    notFound();
-  }
+  const page = await getLocalizedMainMenuPage(slug);
+  if (!page) notFound();
 
   return (
     <CmsTextPage

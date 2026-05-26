@@ -1,6 +1,7 @@
 // src/app/api/footer-menu/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { saveBeContentTranslations } from '@/lib/content-translations';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -30,6 +31,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data: updateData,
     });
 
+    if (data.be && typeof data.be === 'object') {
+      await saveBeContentTranslations('footermenuitem', id, data.be);
+    }
+
     return NextResponse.json(item);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
@@ -40,6 +45,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
+    await prisma.contentTranslation.deleteMany({
+      where: { resourceType: 'footermenuitem', resourceId: id },
+    });
     await prisma.footermenuitem.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
