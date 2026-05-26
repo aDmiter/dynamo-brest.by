@@ -10,10 +10,8 @@ import {
   faNewspaper,
   faUsers,
   faUserTie,
-  faTableList,
   faAd,
   faTrophy,
-  faLanguage,
   faSignOutAlt,
   faHandshake,
   faStore,
@@ -24,7 +22,7 @@ import {
   faClockRotateLeft,
   IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AdminSectionId } from '@/config/admin-sections';
 
 interface MenuChild {
@@ -44,12 +42,26 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { title: 'Дашборд', href: '/admin/dashboard', icon: faHome, section: 'dashboard' },
+  {
+    title: 'Интернет-магазин',
+    icon: faStore,
+    section: 'shop',
+    children: [
+      { title: 'Обзор', href: '/admin/shop', section: 'shop' },
+      { title: 'Товары', href: '/admin/products', section: 'shop' },
+      { title: 'Категории', href: '/admin/categories', section: 'shop' },
+      { title: 'Производители', href: '/admin/manufacturers', section: 'shop' },
+      { title: 'Заказы', href: '/admin/orders', section: 'shop' },
+      { title: 'Страны', href: '/admin/countries', section: 'shop' },
+      { title: 'Доп. поля', href: '/admin/shop/fields', section: 'shop' },
+    ],
+  },
   { title: 'Новости', href: '/admin/news', icon: faNewspaper, section: 'news' },
   {
-    title: 'История',
-    href: '/admin/club-history',
-    icon: faClockRotateLeft,
-    section: 'club_history',
+    title: 'Клубы',
+    href: '/admin/opponent-teams',
+    icon: faShieldHalved,
+    section: 'opponent_teams',
   },
   {
     title: 'Игроки',
@@ -67,12 +79,6 @@ const menuItems: MenuItem[] = [
     ],
   },
   { title: 'Тренеры', href: '/admin/coaches', icon: faUserTie, section: 'coaches' },
-  {
-    title: 'Клубы',
-    href: '/admin/opponent-teams',
-    icon: faShieldHalved,
-    section: 'opponent_teams',
-  },
   {
     title: 'Матчи',
     icon: faFutbol,
@@ -121,24 +127,20 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    title: 'Интернет-магазин',
-    icon: faStore,
-    section: 'shop',
-    children: [
-      { title: 'Обзор', href: '/admin/shop', section: 'shop' },
-      { title: 'Товары', href: '/admin/products', section: 'shop' },
-      { title: 'Категории', href: '/admin/categories', section: 'shop' },
-      { title: 'Производители', href: '/admin/manufacturers', section: 'shop' },
-      { title: 'Заказы', href: '/admin/orders', section: 'shop' },
-      { title: 'Страны', href: '/admin/countries', section: 'shop' },
-      { title: 'Доп. поля', href: '/admin/shop/fields', section: 'shop' },
-    ],
+    title: 'Партнёры',
+    href: '/admin/club-partners',
+    icon: faHandshake,
+    section: 'club_partners',
   },
-  { title: 'Таблицы', href: '/admin/standings', icon: faTableList, section: 'standings' },
-  { title: 'Баннеры', href: '/admin/banners', icon: faAd, section: 'banners' },
   { title: 'Спонсоры', href: '/admin/sponsors', icon: faHandshake, section: 'sponsors' },
+  { title: 'Баннеры', href: '/admin/banners', icon: faAd, section: 'banners' },
+  {
+    title: 'История',
+    href: '/admin/club-history',
+    icon: faClockRotateLeft,
+    section: 'club_history',
+  },
   { title: 'Титулы', href: '/admin/titles', icon: faTrophy, section: 'titles' },
-  { title: 'Переводы', href: '/admin/translations', icon: faLanguage, section: 'translations' },
   {
     title: 'Настройки',
     icon: faCog,
@@ -150,6 +152,7 @@ const menuItems: MenuItem[] = [
       { title: 'Аналитика', href: '/admin/settings/analytics', section: 'settings' },
       { title: 'Ключи API', href: '/admin/settings/keys', section: 'settings' },
       { title: 'Настройки сайта', href: '/admin/settings', section: 'settings' },
+      { title: 'Переводы', href: '/admin/translations', section: 'translations' },
     ],
   },
 ];
@@ -215,6 +218,12 @@ export default function AdminSidebar({
   const visibleMenu = buildVisibleMenu(menuItems, permissions, showUsersLink);
   const pathname = usePathname();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (pathname.startsWith('/admin/translations')) {
+      setOpenMenus((prev) => ({ ...prev, settings: true }));
+    }
+  }, [pathname]);
 
   const toggleMenu = (key: string) => {
     setOpenMenus((prev) => ({ ...prev, [key]: !prev[key] }));

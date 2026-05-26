@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { CODED_CMS_PAGES } from '@/config/coded-cms-pages';
+import { SITE_ICONS } from '@/lib/site-icons';
 import { resolveSitePageTemplatePath } from '@/config/site-page-templates';
 import { prisma } from '@/lib/prisma';
 
@@ -34,6 +35,7 @@ function sitePageMetaClient(): SitePageMetaDelegate | null {
 const DEFAULT_METADATA: Metadata = {
   title: 'Официальный сайт футбольного клуба «Динамо-Брест»',
   description: 'Официальный сайт футбольного клуба «Динамо-Брест»',
+  icons: SITE_ICONS,
 };
 
 export function normalizeSitePath(pathname: string): string {

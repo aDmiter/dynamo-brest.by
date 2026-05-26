@@ -24,6 +24,7 @@ export default function ImageUpload({
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
 
     setUploading(true);
     try {
@@ -35,14 +36,18 @@ export default function ImageUpload({
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
+        credentials: 'same-origin',
       });
 
-      const data = await res.json();
-      if (data.url) {
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (res.ok && data.url) {
         onChange(data.url);
+      } else {
+        alert(data.error || `Не удалось загрузить файл (${res.status})`);
       }
     } catch (error) {
       console.error('Ошибка загрузки:', error);
+      alert('Ошибка соединения при загрузке');
     } finally {
       setUploading(false);
     }

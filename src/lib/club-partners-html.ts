@@ -1,16 +1,16 @@
 import {
   CLUB_GENERAL_PARTNERS,
   CLUB_PARTNERS,
-  CLUB_PARTNERS_CONTACT,
   CLUB_TITLE_SPONSORS,
-  type ClubPartnerLogo,
 } from '@/config/club-partners';
+import type { ClubPartnerLogo, ClubPartnersPageData, ClubPartnerSectionId } from '@/lib/club-partners';
+import { CLUB_PARTNER_SECTIONS, DEFAULT_CLUB_PARTNERS_CTA_HTML } from '@/lib/club-partners';
 import { escapeHtml } from '@/lib/html';
 
 function partnerItemHtml(logo: ClubPartnerLogo): string {
   const img = `<img src="${escapeHtml(logo.src)}" alt="${escapeHtml(logo.alt)}" loading="lazy" />`;
-  if (logo.href) {
-    return `<a class="club-partners-content__item" href="${escapeHtml(logo.href)}" target="_blank" rel="noopener noreferrer">${img}</a>`;
+  if (logo.href?.trim()) {
+    return `<a class="club-partners-content__item" href="${escapeHtml(logo.href.trim())}" target="_blank" rel="noopener noreferrer">${img}</a>`;
   }
   return `<div class="club-partners-content__item">${img}</div>`;
 }
@@ -28,20 +28,34 @@ ${partnersGridHtml(logos)}
 </section>`;
 }
 
-export function clubPartnersPageHtml(): string {
-  const { phone, phoneHref, email } = CLUB_PARTNERS_CONTACT;
+const SECTION_HTML_IDS: Record<ClubPartnerSectionId, string> = {
+  title: 'club-partners-title',
+  general: 'club-partners-general',
+  partners: 'club-partners-list',
+};
+
+export function buildClubPartnersPageHtml(data: ClubPartnersPageData): string {
+  const sections = CLUB_PARTNER_SECTIONS.map(({ id, label }) =>
+    sectionHtml(label, SECTION_HTML_IDS[id], data[id]),
+  ).join('');
+
+  const cta = (data.ctaHtml?.trim() || DEFAULT_CLUB_PARTNERS_CTA_HTML).trim();
 
   return `<div class="club-partners-content">
-${sectionHtml('Титульные спонсоры', 'club-partners-title', CLUB_TITLE_SPONSORS)}
-${sectionHtml('Генеральный партнер', 'club-partners-general', CLUB_GENERAL_PARTNERS)}
-${sectionHtml('Партнеры', 'club-partners-list', CLUB_PARTNERS)}
+${sections}
 <section class="club-partners-content__section club-partners-content__section--cta" aria-labelledby="club-partners-cta-title">
 <h2 id="club-partners-cta-title" class="club-partners-content__section-title">Стать партнером</h2>
-<p class="club-partners-content__text">По вопросам партнёрства и размещения рекламы свяжитесь с клубом:</p>
-<div class="club-partners-content__contacts">
-<p class="club-partners-content__contact-line">Телефон: <a href="${phoneHref}" class="club-partners-content__link">${escapeHtml(phone)}</a></p>
-<p class="club-partners-content__contact-line">Почта: <a href="mailto:${escapeHtml(email)}" class="club-partners-content__link">${escapeHtml(email)}</a></p>
-</div>
+${cta}
 </section>
 </div>`;
+}
+
+/** Статический HTML из config (сид / fix-coded-cms-pages) */
+export function clubPartnersPageHtml(): string {
+  return buildClubPartnersPageHtml({
+    ctaHtml: DEFAULT_CLUB_PARTNERS_CTA_HTML,
+    title: CLUB_TITLE_SPONSORS,
+    general: CLUB_GENERAL_PARTNERS,
+    partners: CLUB_PARTNERS,
+  });
 }

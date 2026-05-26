@@ -4,8 +4,10 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import AdminSidebar from '@/modules/admin/components/AdminSidebar';
+import AdminCometSyncButton from '@/modules/admin/components/AdminCometSyncButton';
 import {
   canAccessAdminPath,
+  canAccessSection,
   getFirstAllowedAdminPath,
   getSessionPermissions,
   isSuperAdmin,
@@ -32,6 +34,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const permissions = getSessionPermissions(session.user);
   const showUsersLink = isSuperAdmin(session.user.role);
+  const canSyncComet = canAccessSection(session.user, 'settings');
 
   if (isNoAccess) {
     return (
@@ -45,7 +48,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="admin-app flex min-h-screen bg-gradient-to-br from-[#0B0F1C] via-[#0D1225] to-[#0F1529]">
       <AdminSidebar permissions={permissions} showUsersLink={showUsersLink} />
       <main className="relative flex-1 overflow-y-auto">
-        <div className="sticky top-0 z-20 flex justify-end px-8 pt-6 pb-2">
+        <div className="sticky top-0 z-20 flex justify-end gap-3 px-8 pt-6 pb-2">
+          {canSyncComet ? <AdminCometSyncButton /> : null}
           <Link
             href="/"
             target="_blank"

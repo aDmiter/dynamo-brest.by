@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import ImageUpload from '@/modules/admin/components/ImageUpload';
 import TipTapEditor from '@/modules/admin/components/TipTapEditor';
+import AdminSelect from '@/modules/admin/components/Select';
+import { formatLocalDateTime, toUTCString } from '@/lib/date-utils';
 
 const categories = [
   { value: 'general', label: 'Общее' },
@@ -42,7 +44,7 @@ export default function NewNewsPage() {
     category: 'general',
     isFeatured: false,
     isPublished: true,
-    publishedAt: new Date().toISOString().slice(0, 16),
+    publishedAt: formatLocalDateTime(new Date()),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,7 +58,7 @@ export default function NewNewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
-          publishedAt: new Date(form.publishedAt).toISOString(),
+          publishedAt: toUTCString(form.publishedAt),
         }),
       });
 
@@ -139,17 +141,16 @@ export default function NewNewsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-sm text-gray-400">Категория</label>
-                <select
+                <AdminSelect
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full border border-white/10 bg-white/5 p-2 text-sm text-white"
                 >
                   {categories.map((cat) => (
                     <option key={cat.value} value={cat.value}>
                       {cat.label}
                     </option>
                   ))}
-                </select>
+                </AdminSelect>
               </div>
               <div>
                 <label className="mb-1 block text-sm text-gray-400">Дата публикации</label>

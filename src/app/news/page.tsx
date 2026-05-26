@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt, faArrowRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { formatSiteDate } from '@/lib/date-utils';
 import { socialLinks } from '@/modules/config/social';
 
 const categoryLabels: Record<string, string> = {
@@ -145,11 +146,7 @@ export default function NewsPage() {
               </h1>
               <p className="news-page__hero-date mt-6 flex items-center gap-2 text-sm text-white/50">
                 <FontAwesomeIcon icon={faCalendarAlt} style={{ color: 'var(--color-accent)' }} />
-                {new Date(firstNews.publishedAt).toLocaleDateString('ru-RU', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                {formatSiteDate(firstNews.publishedAt)}
               </p>
               <Link
                 href={`/news/${firstNews.slug}`}
@@ -273,7 +270,7 @@ export default function NewsPage() {
                     </h3>
                     <p className="mt-2 flex items-center gap-2 text-xs text-white/40">
                       <FontAwesomeIcon icon={faCalendarAlt} />
-                      {new Date(item.publishedAt).toLocaleDateString('ru-RU')}
+                      {formatSiteDate(item.publishedAt)}
                     </p>
                   </div>
                 </Link>

@@ -330,15 +330,14 @@ select option {
   color: var(--color-accent) !important;
 }
 
-/* Админка: нативный <select> — в Windows/Chrome список option часто светлый;
-   тёмный текст на светлом фоне совпадает с системным выпадающим списком. */
+/* Админка: select — дубль правил из globals.scss (если подключат этот файл) */
 .admin-app select {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
-  color-scheme: light;
+  background-color: var(--color-bg-photo-placeholder, #1a1f2e) !important;
+  color: #ffffff !important;
+  color-scheme: dark;
 }
 
 .admin-app select option {
-  background-color: #ffffff;
-  color: #0f172a;
+  background-color: #1a1f2e !important;
+  color: #ffffff !important;
 }

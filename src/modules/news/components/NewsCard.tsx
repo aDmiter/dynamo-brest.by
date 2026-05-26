@@ -1,4 +1,5 @@
 // src/modules/news/components/NewsCard.tsx - Карточка новости
+import { formatSiteDateShort } from '@/lib/date-utils';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt, faArrowRight } from '@fortawesome/free-solid-svg-icons';
@@ -100,7 +101,7 @@ export default function NewsCard({
             icon={faCalendarAlt}
             className="text-[10px] text-[var(--color-accent)]"
           />
-          <span>{new Date(publishedAt).toLocaleDateString('ru-RU')}</span>
+          <span>{formatSiteDateShort(publishedAt)}</span>
         </div>
 
         <h3

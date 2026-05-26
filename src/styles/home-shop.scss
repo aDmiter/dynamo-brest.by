@@ -37,6 +37,30 @@
   margin: 0 auto;
 }
 
+.shop-requisites__text {
+  margin-top: 1.5rem;
+  text-align: left;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.shop-requisites__line {
+  margin: 0 0 0.5rem;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(36, 44, 65, 0.72);
+
+  a {
+    color: var(--color-accent, #ee862c);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
 .shop__decor-title {
   position: absolute;
   left: 0;

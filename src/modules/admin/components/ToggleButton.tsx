@@ -16,6 +16,8 @@ interface ToggleButtonProps {
   labelOn?: string;
   labelOff?: string;
   className?: string;
+  /** Если задан — вызывается вместо router.refresh() */
+  onChanged?: (newValue: boolean) => void;
 }
 
 export default function ToggleButton({
@@ -28,6 +30,7 @@ export default function ToggleButton({
   labelOn = '',
   labelOff = '',
   className = '',
+  onChanged,
 }: ToggleButtonProps) {
   const [loading, setLoading] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
@@ -44,7 +47,8 @@ export default function ToggleButton({
       });
       if (res.ok) {
         setCurrentValue(newValue);
-        router.refresh();
+        if (onChanged) onChanged(newValue);
+        else router.refresh();
       }
     } catch (error) {
       console.error('Ошибка переключения:', error);

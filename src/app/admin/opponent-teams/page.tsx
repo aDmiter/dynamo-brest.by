@@ -6,7 +6,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus,
   faEdit,
-  faSync,
   faSearch,
   faTimes,
   faChevronLeft,
@@ -23,8 +22,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import ImageUpload from '@/modules/admin/components/ImageUpload';
-import ConfirmModal from '@/modules/admin/components/ConfirmModal';
-
 interface OpponentTeam {
   id: string;
   cometId: number | null;
@@ -47,9 +44,6 @@ export default function OpponentTeamsPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
-  const [showCometSyncModal, setShowCometSyncModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
@@ -150,51 +144,6 @@ export default function OpponentTeamsPage() {
     };
   }, [search, page, fetchTeams, sortTeamsWithPinned]);
 
-  const handleCometSync = async () => {
-    setShowCometSyncModal(false);
-    setSyncing(true);
-    setSyncResult(null);
-
-    const lines: string[] = [];
-    let matchesOk = false;
-
-    try {
-      const matchesRes = await fetch('/api/sync/matches', { method: 'POST' });
-      const matchesData = await matchesRes.json();
-      if (matchesData.success) {
-        matchesOk = true;
-        lines.push('✅ Матчи и клубы синхронизированы.');
-      } else {
-        lines.push(`❌ Матчи: ${matchesData.error || 'Неизвестная ошибка'}`);
-      }
-    } catch {
-      lines.push('❌ Матчи: ошибка соединения');
-    }
-
-    try {
-      const protocolRes = await fetch('/api/sync/match-protocol', { method: 'POST' });
-      const protocolData = await protocolRes.json();
-      if (protocolData.success) {
-        const tail = Array.isArray(protocolData.logs)
-          ? protocolData.logs.slice(-4).join(' · ')
-          : '';
-        lines.push(tail ? `✅ Протоколы синхронизированы. ${tail}` : '✅ Протоколы синхронизированы.');
-      } else {
-        lines.push(`❌ Протоколы: ${protocolData.error || 'Неизвестная ошибка'}`);
-      }
-    } catch {
-      lines.push('❌ Протоколы: ошибка соединения');
-    }
-
-    if (matchesOk) {
-      await refreshData();
-    }
-
-    setSyncResult(lines.join('\n'));
-    setSyncing(false);
-    setTimeout(() => setSyncResult(null), 12000);
-  };
-
   const startEdit = (team: OpponentTeam) => {
     setEditingId(team.id);
     setEditForm({
@@ -283,16 +232,6 @@ export default function OpponentTeamsPage() {
         <div className="flex items-center gap-3">
           <Button
             size="sm"
-            onClick={() => setShowCometSyncModal(true)}
-            disabled={syncing}
-            variant="outline"
-            className="border-[#ee862c]/30 text-[#ee862c] hover:bg-[#ee862c]/10 hover:border-[#ee862c]"
-          >
-            <FontAwesomeIcon icon={faSync} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
-            Синхронизация Comet
-          </Button>
-          <Button
-            size="sm"
             onClick={() => setShowAddModal(true)}
             className="bg-[#ee862c] hover:bg-[#f0ac74]"
           >
@@ -301,14 +240,6 @@ export default function OpponentTeamsPage() {
           </Button>
         </div>
       </div>
-
-      {syncResult && (
-        <div
-          className={`mb-4 border p-3 text-sm whitespace-pre-wrap ${syncResult.includes('❌') ? 'border-red-500/20 bg-red-500/10 text-red-400' : 'border-green-500/20 bg-green-500/10 text-green-400'}`}
-        >
-          {syncResult}
-        </div>
-      )}
 
       <div className="mb-4 relative">
         <FontAwesomeIcon
@@ -553,16 +484,6 @@ export default function OpponentTeamsPage() {
           <span className="text-xs text-gray-500 ml-2">{total} клубов</span>
         </div>
       )}
-
-      <ConfirmModal
-        isOpen={showCometSyncModal}
-        title="Синхронизация Comet"
-        message="Будут загружены матчи и клубы соперников, затем составы, голы, карточки и замены по сыгранным матчам. Нужны ключи API COMET (матчи, статистика игроков, события матчей). Может занять несколько минут."
-        confirmLabel="Синхронизировать"
-        onConfirm={handleCometSync}
-        onCancel={() => setShowCometSyncModal(false)}
-        loading={syncing}
-      />
 
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

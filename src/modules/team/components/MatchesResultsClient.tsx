@@ -6,7 +6,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClock,
   faUsers,
-  faTicket,
   faFileAlt,
   faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
@@ -17,7 +16,6 @@ import MatchesPageNav from '@/modules/team/components/matches/MatchesPageNav';
 import MatchCardGlassLogos from '@/modules/team/components/matches/MatchCardGlassLogos';
 import MatchCardResultPill from '@/modules/team/components/matches/MatchCardResultPill';
 import MatchProtocolModal from '@/modules/team/components/matches/MatchProtocolModal';
-import TicketBuyLink from '@/modules/shared/ui/TicketBuyLink';
 import type { GoalScorerPublic } from '@/lib/match-protocol';
 
 interface MatchData {
@@ -471,33 +469,6 @@ function MatchCard({ match, ourLogo }: { match: MatchData; ourLogo: string }) {
             <FontAwesomeIcon icon={faFileAlt} style={{ width: 10, height: 10 }} />
             Протокол
           </button>
-          {match.ticketUrl && (
-            <TicketBuyLink
-              href={match.ticketUrl}
-              className="results__card-ticket-link"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                background: 'var(--color-accent-10)',
-                border: '1.5px solid var(--color-accent-30)',
-                borderRadius: 7,
-                padding: '5px 11px',
-                fontFamily: "'Inter Tight', sans-serif",
-                fontSize: 9,
-                fontWeight: 700,
-                color: 'var(--color-accent)',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                textDecoration: 'none',
-                flexShrink: 0,
-                transition: 'all 0.2s',
-              }}
-            >
-              <FontAwesomeIcon icon={faTicket} style={{ width: 10, height: 10 }} />
-              Билеты
-            </TicketBuyLink>
-          )}
         </div>
       </div>
       <MatchProtocolModal

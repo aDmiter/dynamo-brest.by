@@ -3,9 +3,17 @@ import { prisma } from '@/lib/prisma';
 import CountriesManager from './CountriesManager';
 
 export default async function CountriesAdminPage() {
-  const countries = await prisma.country.findMany({
+  const rows = await prisma.country.findMany({
     orderBy: [{ order: 'asc' }, { name: 'asc' }],
   });
+
+  const countries = rows.map(({ id, name, code, price, isActive }) => ({
+    id,
+    name,
+    code,
+    price: price?.toString() ?? null,
+    isActive,
+  }));
 
   return (
     <div>

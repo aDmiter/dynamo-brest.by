@@ -7,6 +7,10 @@ import {
   parseCmsGalleryAttribute,
   type CmsGalleryImage,
 } from '@/lib/cms-gallery';
+import {
+  buildYoutubeIframeHtml,
+  resolveCmsYoutubeVideoId,
+} from '@/lib/youtube-embed';
 import TransportPhotoGallery from '@/modules/shared/ui/TransportPhotoGallery';
 
 interface CmsHtmlContentProps {
@@ -39,6 +43,19 @@ function hydrateGalleries(container: HTMLElement): Root[] {
   return roots;
 }
 
+function hydrateYoutubeEmbeds(container: HTMLElement): void {
+  container.querySelectorAll('.cms-youtube-embed').forEach((el) => {
+    const videoId = resolveCmsYoutubeVideoId(el);
+    if (!videoId) return;
+
+    const iframeHtml = buildYoutubeIframeHtml(videoId);
+    if (!iframeHtml) return;
+
+    el.setAttribute('data-cms-youtube', videoId);
+    el.innerHTML = iframeHtml;
+  });
+}
+
 export default function CmsHtmlContent({ html, className }: CmsHtmlContentProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -47,6 +64,7 @@ export default function CmsHtmlContent({ html, className }: CmsHtmlContentProps)
     if (!container) return;
 
     container.innerHTML = html;
+    hydrateYoutubeEmbeds(container);
     const roots = hydrateGalleries(container);
 
     return () => {

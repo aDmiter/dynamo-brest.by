@@ -70,11 +70,16 @@ export async function verifySitePreviewToken(token: string): Promise<string | nu
   }
 }
 
+function useSecureCookies(): boolean {
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? process.env.AUTH_URL ?? '').trim();
+  return siteUrl.startsWith('https://');
+}
+
 export function previewSessionCookieOptions(maxAgeSec = TOKEN_TTL_SEC) {
   return {
     name: SITE_PREVIEW_COOKIE,
     httpOnly: true as const,
-    secure: process.env.NODE_ENV === 'production',
+    secure: useSecureCookies(),
     sameSite: 'lax' as const,
     path: '/',
     maxAge: maxAgeSec,

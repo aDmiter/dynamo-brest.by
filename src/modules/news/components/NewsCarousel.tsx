@@ -20,12 +20,14 @@ interface NewsCarouselProps {
   news: NewsItem[];
 }
 
+const SLIDE_HEIGHT = '50vh';
+
 function NewsCarouselCard({ item }: { item: NewsItem }) {
   return (
     <Link
       href={`/news/${item.slug}`}
       className="group relative flex h-full w-full overflow-hidden"
-      style={{ borderRadius: 16, height: '70vh' }}
+      style={{ borderRadius: 16, height: SLIDE_HEIGHT }}
     >
       <img
         src={item.imageUrl || '/images/placeholder.jpg'}
@@ -41,7 +43,7 @@ function NewsCarouselCard({ item }: { item: NewsItem }) {
           zIndex: 2,
         }}
       />
-      <div className="absolute inset-x-0 bottom-0 p-6 md:p-8" style={{ zIndex: 3 }}>
+      <div className="absolute inset-x-0 bottom-0 p-5 md:p-6" style={{ zIndex: 3 }}>
         <div
           style={{
             border: '1px solid var(--color-border)',
@@ -49,7 +51,7 @@ function NewsCarouselCard({ item }: { item: NewsItem }) {
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
             borderRadius: 12,
-            padding: '20px',
+            padding: '16px',
             transition: 'all 0.3s ease',
           }}
           className="group-hover:border-[var(--color-accent-30)] group-hover:bg-white/[0.07]"
@@ -125,16 +127,16 @@ export default function NewsCarousel({ news }: NewsCarouselProps) {
             loop={news.length > 1}
             speed={800}
             breakpoints={{
-              640: { slidesPerView: 1.8, spaceBetween: 24 },
-              768: { slidesPerView: 2.2, spaceBetween: 32 },
-              1024: { slidesPerView: 2.5, spaceBetween: 32 },
-              1280: { slidesPerView: 3, spaceBetween: 40 },
-              1536: { slidesPerView: 3.5, spaceBetween: 40 },
+              640: { slidesPerView: 1.4, spaceBetween: 24 },
+              768: { slidesPerView: 1.7, spaceBetween: 28 },
+              1024: { slidesPerView: 2, spaceBetween: 32 },
+              1280: { slidesPerView: 2.3, spaceBetween: 36 },
+              1536: { slidesPerView: 2.5, spaceBetween: 40 },
             }}
             style={{ overflow: 'hidden' }}
           >
             {news.map((item) => (
-              <SwiperSlide key={item.id} style={{ height: '70vh' }}>
+              <SwiperSlide key={item.id} style={{ height: SLIDE_HEIGHT }}>
                 <NewsCarouselCard item={item} />
               </SwiperSlide>
             ))}

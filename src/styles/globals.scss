@@ -77,3 +77,17 @@ h6 {
 @import 'team-matches-v1';
 @import 'standings-table';
 @import 'match-protocol-modal';
+@import 'cms-youtube-embed';
+
+// Админка: select в стиле тёмной темы (color-scheme: dark — читаемый список option в Chrome/Windows)
+.admin-app select {
+  background-color: var(--color-bg-photo-placeholder, #1a1f2e) !important;
+  color: #ffffff !important;
+  color-scheme: dark;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.admin-app select option {
+  background-color: #1a1f2e !important;
+  color: #ffffff !important;
+}

@@ -20,6 +20,7 @@ import {
   SHOP_SUPPORT_PHONE,
   SHOP_SUPPORT_PHONE_HREF,
 } from '@/modules/shop/data/shop-info';
+import { shopRequisitesCmsHtml } from '@/modules/shop/data/shop-requisites-html';
 import {
   TRANSPORT_PHONE,
   TRANSPORT_PHONE_HREF,
@@ -164,6 +165,7 @@ ${sectionHtml(
   'После оплаты',
   `<p class="transport-services__vehicle-desc">После успешной оплаты банковской картой через bePaid заказ передаётся на комплектацию и отправку. Доставка осуществляется только после подтверждения оплаты.</p>`,
 )}
+${shopRequisitesCmsHtml()}
 <p class="transport-services__phone transport-services__phone--footer">Почтовый адрес продавца: ${escapeHtml(SHOP_POSTAL_ADDRESS)}</p>`);
 }
 
@@ -190,6 +192,7 @@ ${sectionHtml(
   'Подтверждение оплаты',
   `<p class="transport-services__vehicle-desc">После успешной оплаты на указанный при оформлении e-mail направляется электронное подтверждение заказа и операции оплаты.</p>`,
 )}
+${shopRequisitesCmsHtml()}
 <p class="transport-services__phone transport-services__phone--footer"><a href="/shop/catalog">Перейти в каталог</a> · <a href="/shop/cart">Корзина</a></p>`);
 }
 
@@ -213,6 +216,7 @@ ${sectionHtml(
   `<p class="transport-services__vehicle-desc">При обнаружении недостатков товара покупатель вправе предъявить продавцу требования, предусмотренные законодательством: замена товара, соразмерное уменьшение цены, безвозмездное устранение недостатков, возврат уплаченной суммы.</p>
 <p class="transport-services__vehicle-desc">Для оформления возврата или обмена обратитесь по телефону <a href="${SHOP_SUPPORT_PHONE_HREF}">${escapeHtml(SHOP_SUPPORT_PHONE)}</a> или на <a href="mailto:${SHOP_SUPPORT_EMAIL}">${escapeHtml(SHOP_SUPPORT_EMAIL)}</a>. Сохраняйте подтверждение оплаты (карт-чек) и документы, подтверждающие покупку.</p>`,
 )}
+${shopRequisitesCmsHtml()}
 <p class="transport-services__phone transport-services__phone--footer">Телефон: <a href="${SHOP_SUPPORT_PHONE_HREF}">${escapeHtml(SHOP_SUPPORT_PHONE)}</a> · E-mail: <a href="mailto:${SHOP_SUPPORT_EMAIL}">${escapeHtml(SHOP_SUPPORT_EMAIL)}</a></p>`);
 }
 

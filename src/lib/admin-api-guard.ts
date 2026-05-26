@@ -1,5 +1,6 @@
 import {
   isSuperAdminOnlyApi,
+  matchesPublicApi,
   resolveAdminApiSection,
   type AdminApiAccess,
 } from '@/config/admin-api-routes';
@@ -16,6 +17,10 @@ export function checkAdminApiRequest(
 
   if (pathname === '/api/upload' && method.toUpperCase() === 'POST') {
     return user?.id ? 'ok' : 'unauthorized';
+  }
+
+  if (matchesPublicApi(pathname, method)) {
+    return 'public';
   }
 
   const section = resolveAdminApiSection(pathname, method);

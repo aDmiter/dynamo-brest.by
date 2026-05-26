@@ -73,7 +73,7 @@ async function ensureOurTeams() {
   }
 }
 
-async function syncAll(matchesKey: string, facilitiesKey: string) {
+export async function syncAll(matchesKey: string, facilitiesKey: string) {
   const logs: string[] = [];
 
   logs.push('🏠 Проверка наших клубов...');

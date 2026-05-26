@@ -605,6 +605,26 @@ model clubContactStaff {
   @@index([sectionId, sortOrder])
 }
 
+model clubPartnersPage {
+  id        String   @id @default("main")
+  ctaHtml   String   @db.LongText
+  updatedAt DateTime @updatedAt
+}
+
+model clubPartnerLogo {
+  id        String   @id @default(cuid())
+  section   String
+  src       String
+  alt       String
+  href      String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([section, sortOrder])
+}
+
 model sitePageMeta {
   id                 String   @id @default(cuid())
   path               String   @unique

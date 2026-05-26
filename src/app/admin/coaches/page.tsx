@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEdit,
-  faSync,
   faToggleOn,
   faToggleOff,
   faUser,
@@ -44,9 +43,7 @@ export default function CoachesAdminPage() {
   const [allTeams, setAllTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
-  const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
-  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
   const [coachToDelete, setCoachToDelete] = useState<Coach | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -108,27 +105,6 @@ export default function CoachesAdminPage() {
     );
   }, []);
 
-  const handleSync = async () => {
-    setShowSyncModal(false);
-    setSyncing(true);
-    setSyncResult(null);
-    try {
-      const res = await fetch('/api/sync/coaches', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        setSyncResult(`✅ Готово! Создано: ${data.created}, обновлено: ${data.updated}`);
-        await refreshCoaches();
-      } else {
-        setSyncResult(`❌ Ошибка: ${data.error || 'Неизвестная'}`);
-      }
-    } catch {
-      setSyncResult('❌ Ошибка соединения');
-    } finally {
-      setSyncing(false);
-      setTimeout(() => setSyncResult(null), 5000);
-    }
-  };
-
   const toggleTeam = async (coachId: string, teamId: string) => {
     setToggling(`${coachId}_${teamId}`);
     const coach = coaches.find((c) => c.id === coachId);
@@ -164,16 +140,16 @@ export default function CoachesAdminPage() {
       if (res.ok) {
         setCoachToDelete(null);
         await refreshCoaches();
-        setSyncResult('✅ Тренер удалён из базы');
-        setTimeout(() => setSyncResult(null), 5000);
+        setActionMessage('✅ Тренер удалён из базы');
+        setTimeout(() => setActionMessage(null), 5000);
       } else {
         const data = await res.json().catch(() => ({}));
-        setSyncResult(`❌ ${(data as { error?: string }).error || 'Не удалось удалить'}`);
-        setTimeout(() => setSyncResult(null), 6000);
+        setActionMessage(`❌ ${(data as { error?: string }).error || 'Не удалось удалить'}`);
+        setTimeout(() => setActionMessage(null), 6000);
       }
     } catch {
-      setSyncResult('❌ Ошибка соединения при удалении');
-      setTimeout(() => setSyncResult(null), 6000);
+      setActionMessage('❌ Ошибка соединения при удалении');
+      setTimeout(() => setActionMessage(null), 6000);
     } finally {
       setDeleting(false);
     }
@@ -200,13 +176,13 @@ export default function CoachesAdminPage() {
         });
         if (!res.ok) {
           setCoaches(previous);
-          setSyncResult('❌ Не удалось сохранить порядок');
-          setTimeout(() => setSyncResult(null), 5000);
+          setActionMessage('❌ Не удалось сохранить порядок');
+          setTimeout(() => setActionMessage(null), 5000);
         }
       } catch {
         setCoaches(previous);
-        setSyncResult('❌ Ошибка соединения при сохранении порядка');
-        setTimeout(() => setSyncResult(null), 5000);
+        setActionMessage('❌ Ошибка соединения при сохранении порядка');
+        setTimeout(() => setActionMessage(null), 5000);
       } finally {
         setSavingOrder(false);
       }
@@ -233,16 +209,6 @@ export default function CoachesAdminPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button
-            size="sm"
-            onClick={() => setShowSyncModal(true)}
-            disabled={syncing}
-            variant="outline"
-            style={{ borderColor: 'var(--color-accent-30)', color: 'var(--color-accent)' }}
-          >
-            <FontAwesomeIcon icon={faSync} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
-            Синхронизировать из COMET
-          </Button>
           <Link href="/admin/coaches/new">
             <Button size="sm" style={{ background: 'var(--color-accent)' }}>
               <FontAwesomeIcon icon={faPlus} className="mr-2" />
@@ -252,11 +218,11 @@ export default function CoachesAdminPage() {
         </div>
       </div>
 
-      {syncResult && (
+      {actionMessage && (
         <div
-          className={`mb-4 border p-3 text-sm ${syncResult.startsWith('✅') ? 'border-green-500/20 bg-green-500/10 text-green-400' : 'border-red-500/20 bg-red-500/10 text-red-400'}`}
+          className={`mb-4 border p-3 text-sm ${actionMessage.startsWith('✅') ? 'border-green-500/20 bg-green-500/10 text-green-400' : 'border-red-500/20 bg-red-500/10 text-red-400'}`}
         >
-          {syncResult}
+          {actionMessage}
         </div>
       )}
 
@@ -265,7 +231,7 @@ export default function CoachesAdminPage() {
           <div className="p-8 text-center text-gray-500">Загрузка...</div>
         ) : coaches.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            Нет тренеров. Нажмите «Синхронизировать из COMET».
+            Нет тренеров. Запустите «Синхронизация COMET» в шапке админки или добавьте вручную.
           </div>
         ) : (
           <DragDropContext onDragEnd={onDragEnd}>
@@ -389,16 +355,6 @@ export default function CoachesAdminPage() {
           </DragDropContext>
         )}
       </div>
-
-      <ConfirmModal
-        isOpen={showSyncModal}
-        title="Синхронизация с COMET"
-        message="Обновятся ФИО, даты и привязка к COMET. Уже сохранённые в базе должность и фото не меняются — их правьте в карточке тренера. Новые записи из COMET получат должность и фото при первом появлении. Это может занять некоторое время."
-        confirmLabel="Синхронизировать"
-        onConfirm={handleSync}
-        onCancel={() => setShowSyncModal(false)}
-        loading={syncing}
-      />
 
       <ConfirmModal
         isOpen={!!coachToDelete}

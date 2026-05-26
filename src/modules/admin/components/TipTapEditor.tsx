@@ -4,9 +4,11 @@
 import { useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 
-import { createJoditGalleryButton } from '@/modules/admin/components/jodit-gallery-button';
+import { buildJoditCmsControls } from '@/modules/admin/components/jodit-editor-controls';
 import { buildCmsGalleryHtml } from '@/lib/cms-gallery';
 import { createJoditUploaderConfig } from '@/lib/jodit-uploader';
+
+const JODIT_PASTE_PLAIN_TEXT = 'insert_only_text';
 
 interface JoditEditorProps {
   content: string;
@@ -15,75 +17,90 @@ interface JoditEditorProps {
 
 const JoditEditor = dynamic(() => import('jodit-react'), { ssr: false });
 
+/** source и cms-кнопки в начале панели; toolbarAdaptive: false — не убирает их в «⋯» */
+const JODIT_MAIN_TOOLBAR = [
+  'source',
+  '|',
+  'bold',
+  'italic',
+  'underline',
+  'strikethrough',
+  '|',
+  'ul',
+  'ol',
+  '|',
+  'outdent',
+  'indent',
+  '|',
+  'font',
+  'fontsize',
+  'brush',
+  'paragraph',
+  '|',
+  'image',
+  'link',
+  'cmsYoutube',
+  'cmsGallery',
+  '|',
+  'align',
+  'undo',
+  'redo',
+  '|',
+  'hr',
+  'eraser',
+  'fullsize',
+  'selectall',
+  'copyformat',
+  '|',
+  'spoiler',
+] as const;
+
+const JODIT_COMPACT_TOOLBAR = [
+  'source',
+  '|',
+  'bold',
+  'italic',
+  '|',
+  'image',
+  'link',
+  'cmsYoutube',
+  'cmsGallery',
+  '|',
+  'undo',
+  'redo',
+] as const;
+
+const JODIT_EDITOR_STYLE = {
+  background: 'var(--color-bg-admin, #1a1a2e)',
+  color: '#ffffff',
+};
+
 export default function TipTapEditor({ content, onChange }: JoditEditorProps) {
   const editor = useRef(null);
 
   const uploader = useMemo(() => createJoditUploaderConfig('cms'), []);
 
-  const config = useMemo(
-    () => ({
-      readonly: false,
-      height: 500,
-      theme: 'dark',
-      language: 'ru',
-      toolbar: true,
-      buttons: [
-        'source',
-        '|',
-        'bold',
-        'italic',
-        'underline',
-        'strikethrough',
-        '|',
-        'ul',
-        'ol',
-        '|',
-        'outdent',
-        'indent',
-        '|',
-        'font',
-        'fontsize',
-        'brush',
-        'paragraph',
-        '|',
-        'image',
-        'link',
-        'table',
-        '|',
-        'align',
-        'undo',
-        'redo',
-        '|',
-        'hr',
-        'eraser',
-        'fullsize',
-        'selectall',
-        'copyformat',
-        '|',
-        'spoiler',
-        'cmsGallery',
-      ],
-      extraButtons: [
-        createJoditGalleryButton(buildCmsGalleryHtml),
-        {
-          name: 'spoiler',
-          tooltip: 'Вставить спойлер',
-          text: '📋',
-          icon: 'layers',
-          exec: async (editor: unknown) => {
-            const JoditStatic = (await import('jodit')).Jodit;
-            const jed = editor as {
-              selection: { insertHTML: (html: string) => void };
-              dlg: (options?: { title?: string; content?: string; buttons?: string[] }) => {
-                open: () => void;
-                close: () => void;
-                container: HTMLElement;
-                setContent: (content: string) => void;
-              };
+  const controls = useMemo(
+    () =>
+      buildJoditCmsControls(buildCmsGalleryHtml, () => ({
+        name: 'spoiler',
+        tooltip: 'Вставить спойлер',
+        text: '📋',
+        icon: 'layers',
+        exec: async (editorInstance: unknown) => {
+          const JoditStatic = (await import('jodit')).Jodit;
+          const jed = editorInstance as {
+            selection: { insertHTML: (html: string) => void };
+            dlg: (options?: { title?: string; content?: string; buttons?: string[] }) => {
+              open: () => void;
+              close: () => void;
+              container: HTMLElement;
+              setContent: (content: string) => void;
             };
+          };
 
-            const dialog = jed.dlg({ title: 'Вставить спойлер' });
-            dialog.setContent(`
+          const dialog = jed.dlg({ title: 'Вставить спойлер' });
+          dialog.setContent(`
     <div class="spoiler-dialog" style="display:flex;flex-direction:column;gap:10px;padding:12px;min-width:480px;">
       <label style="font-size:11px;color:#aaa;">Заголовок спойлера</label>
       <input type="text" id="jodit-spoiler-title" placeholder="Нажмите, чтобы раскрыть" style="width:100%;padding:8px;border:1px solid var(--color-border);background:var(--color-bg-admin);color:#fff;border-radius:6px;font-size:13px;box-sizing:border-box;" />
@@ -95,83 +112,71 @@ export default function TipTapEditor({ content, onChange }: JoditEditorProps) {
       <button id="jodit-spoiler-insert" style="margin-top:8px;padding:10px 20px;background:var(--color-accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;">Вставить спойлер</button>
     </div>
   `);
-            dialog.open();
+          dialog.open();
 
-            setTimeout(() => {
-              const container = dialog.container;
-              const editorDiv = container.querySelector(
-                '#jodit-spoiler-editor-container'
-              ) as HTMLDivElement;
-              if (!editorDiv) return;
+          setTimeout(() => {
+            const container = dialog.container;
+            const editorDiv = container.querySelector(
+              '#jodit-spoiler-editor-container'
+            ) as HTMLDivElement;
+            if (!editorDiv) return;
 
-              const innerEditor = JoditStatic.make(editorDiv, {
-                height: 300,
-                theme: 'dark',
-                language: 'ru',
-                toolbar: true,
-                buttons: [
-                  'source',
-                  '|',
-                  'bold',
-                  'italic',
-                  'underline',
-                  'strikethrough',
-                  '|',
-                  'ul',
-                  'ol',
-                  '|',
-                  'font',
-                  'fontsize',
-                  'brush',
-                  'paragraph',
-                  '|',
-                  'image',
-                  'link',
-                  'table',
-                  '|',
-                  'align',
-                  'undo',
-                  'redo',
-                  '|',
-                  'hr',
-                  'fullsize',
-                ],
-                uploader,
-                style: {
-                  background: 'var(--color-bg-admin, #1a1a2e)',
-                  color: '#ffffff',
-                },
-              });
+            const innerEditor = JoditStatic.make(editorDiv, {
+              height: 300,
+              theme: 'dark',
+              language: 'ru',
+              toolbar: true,
+              toolbarAdaptive: false,
+              buttons: [...JODIT_MAIN_TOOLBAR].filter((b) => b !== 'spoiler' && b !== 'cmsGallery' && b !== 'cmsYoutube'),
+              uploader,
+              style: JODIT_EDITOR_STYLE,
+            });
 
-              container.querySelector('#jodit-spoiler-insert')?.addEventListener('click', () => {
-                const title =
-                  (
-                    container.querySelector('#jodit-spoiler-title') as HTMLInputElement
-                  ).value.trim() || 'Нажмите, чтобы раскрыть';
-                const text = innerEditor.value || '<p>Содержимое спойлера здесь...</p>';
-                const open = (container.querySelector('#jodit-spoiler-open') as HTMLInputElement)
-                  .checked;
+            container.querySelector('#jodit-spoiler-insert')?.addEventListener('click', () => {
+              const title =
+                (
+                  container.querySelector('#jodit-spoiler-title') as HTMLInputElement
+                ).value.trim() || 'Нажмите, чтобы раскрыть';
+              const text = innerEditor.value || '<p>Содержимое спойлера здесь...</p>';
+              const open = (container.querySelector('#jodit-spoiler-open') as HTMLInputElement)
+                .checked;
 
-                const spoilerHtml = `<details${open ? ' open' : ''} style="margin: 16px 0; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; background: var(--color-bg-card);">
+              const spoilerHtml = `<details${open ? ' open' : ''} style="margin: 16px 0; border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; background: var(--color-bg-card);">
   <summary style="padding: 12px 16px; font-family: 'Inter Tight', sans-serif; font-weight: 700; font-size: 15px; color: var(--color-accent); cursor: pointer; user-select: none; letter-spacing: 0.04em; text-transform: uppercase;">${title}</summary>
   <div style="padding: 16px; color: #ffffff; font-size: 14px; line-height: 1.6; border-top: 1px solid var(--color-border);">${text}</div>
 </details>`;
 
-                innerEditor.destruct();
-                jed.selection.insertHTML(spoilerHtml);
-                dialog.close();
-              });
-            }, 200);
-          },
+              innerEditor.destruct();
+              jed.selection.insertHTML(spoilerHtml);
+              dialog.close();
+            });
+          }, 200);
         },
-      ],
-      uploader,
-      style: {
-        background: 'var(--color-bg-admin, #1a1a2e)',
-        color: '#ffffff',
-      },
-    }),
+      })),
     [uploader]
+  );
+
+  const config = useMemo(
+    () => ({
+      readonly: false,
+      height: 500,
+      theme: 'dark',
+      language: 'ru',
+      toolbar: true,
+      toolbarAdaptive: false,
+      buttons: [...JODIT_MAIN_TOOLBAR],
+      buttonsMD: [...JODIT_MAIN_TOOLBAR],
+      buttonsSM: [...JODIT_MAIN_TOOLBAR],
+      buttonsXS: [...JODIT_COMPACT_TOOLBAR],
+      controls,
+      askBeforePasteHTML: false,
+      askBeforePasteFromWord: false,
+      defaultActionOnPaste: JODIT_PASTE_PLAIN_TEXT,
+      defaultActionOnPasteFromWord: JODIT_PASTE_PLAIN_TEXT,
+      uploader,
+      style: JODIT_EDITOR_STYLE,
+    }),
+    [controls, uploader]
   );
 
   return (

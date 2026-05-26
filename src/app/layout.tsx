@@ -16,6 +16,7 @@ import { buildRootThemeCss } from '@/lib/site-theme';
 import { isTicketSaleframeModalSupportedHost } from '@/lib/ticket-frame-host';
 import AnalyticsScripts from '@/modules/shared/ui/AnalyticsScripts';
 import { getAllSettings } from '@/lib/settings';
+import { SITE_ICONS } from '@/lib/site-icons';
 import {
   DEFAULT_METADATA,
   getSitePageRedirect,
@@ -36,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const pathname = headersList.get('x-pathname') ?? '';
 
   if (pathname.startsWith('/admin')) {
-    return { title: 'Админ-панель' };
+    return { title: 'Админ-панель', icons: SITE_ICONS };
   }
 
   if (!pathname || isPartialNavigationRequest(headersList)) {
@@ -76,6 +77,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Inter:wght@400;500;600;700&family=Jersey+10+Charted&display=swap"
           rel="stylesheet"
         />
+        <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon" />
       </head>
       <body
         className="min-h-screen bg-[#242C41] text-white antialiased"

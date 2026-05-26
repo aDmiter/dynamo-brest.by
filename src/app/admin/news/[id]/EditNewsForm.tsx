@@ -12,6 +12,8 @@ import Link from 'next/link';
 import ImageUpload from '@/modules/admin/components/ImageUpload';
 import TipTapEditor from '@/modules/admin/components/TipTapEditor';
 import AdminAuditMeta from '@/modules/admin/components/AdminAuditMeta';
+import AdminSelect from '@/modules/admin/components/Select';
+import { formatLocalDateTime, toUTCString } from '@/lib/date-utils';
 
 const categories = [
   { value: 'general', label: 'Общее' },
@@ -67,7 +69,7 @@ export default function EditNewsForm({
     category: news.category,
     isFeatured: news.isFeatured,
     isPublished: news.isPublished,
-    publishedAt: new Date(news.publishedAt).toISOString().slice(0, 16),
+    publishedAt: formatLocalDateTime(news.publishedAt),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,7 +84,7 @@ export default function EditNewsForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
-          publishedAt: new Date(form.publishedAt).toISOString(),
+          publishedAt: toUTCString(form.publishedAt),
         }),
       });
 
@@ -181,17 +183,16 @@ export default function EditNewsForm({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-sm text-gray-400">Категория</label>
-                <select
+                <AdminSelect
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full border border-white/10 bg-white/5 p-2 text-sm text-white"
                 >
                   {categories.map((cat) => (
                     <option key={cat.value} value={cat.value}>
                       {cat.label}
                     </option>
                   ))}
-                </select>
+                </AdminSelect>
               </div>
               <div>
                 <label className="mb-1 block text-sm text-gray-400">Дата публикации</label>

@@ -13,8 +13,9 @@ export const ORG_STATE_REGISTRATION = 'Администрация Московс
 
 export const ORG_STATE_REGISTRATION_DATE = '12.01.2021';
 
-/** После регистрации в Торговом реестре — указать, например: «№1555 от 20.05.2026». */
-export const ORG_TRADE_REGISTRY: string | null = null;
+/** Запись интернет-магазина в торговом реестре РБ. */
+export const ORG_TRADE_REGISTRY_LINE =
+  'Интернет-магазин внесен в торговый реестр Республики Беларуси 22.05.2026, рег. номер 777945';
 
 export const ORG_LEGAL_ADDRESS = '224020, Республика Беларусь, г. Брест, ул. Гоголя, 9';
 

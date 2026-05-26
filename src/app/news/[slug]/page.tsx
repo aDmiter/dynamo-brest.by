@@ -4,7 +4,9 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { formatSiteDate, formatSiteTime } from '@/lib/date-utils';
 import { socialLinks } from '@/modules/config/social';
+import CmsHtmlContent from '@/modules/shared/ui/CmsHtmlContent';
 
 const categoryLabels: Record<string, string> = {
   general: 'Общее',
@@ -102,16 +104,9 @@ export default async function NewsArticlePage({ params }: Props) {
 
             <p className="news-article__date mt-6 flex items-center gap-2 text-sm text-white/50">
               <FontAwesomeIcon icon={faCalendarAlt} style={{ color: 'var(--color-accent)' }} />
-              {new Date(article.publishedAt).toLocaleDateString('ru-RU', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
+              {formatSiteDate(article.publishedAt)}
               {' | '}
-              {new Date(article.publishedAt).toLocaleTimeString('ru-RU', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {formatSiteTime(article.publishedAt)}
             </p>
           </div>
         </div>
@@ -144,9 +139,9 @@ export default async function NewsArticlePage({ params }: Props) {
       {/* Текст новости */}
       <section className="news-article__content relative flex min-h-screen items-center overflow-x-hidden bg-white">
         <div className="container mx-auto max-w-[1200px] px-4 py-16 md:px-8 md:ml-20">
-          <div
+          <CmsHtmlContent
             className="news-article__body prose max-w-none prose-headings:font-heading prose-headings:text-[#242C41] prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-[var(--color-accent)] prose-img:max-w-full"
-            dangerouslySetInnerHTML={{ __html: article.content }}
+            html={article.content}
           />
         </div>
 

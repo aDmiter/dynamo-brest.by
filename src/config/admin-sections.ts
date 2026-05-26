@@ -1,19 +1,20 @@
 // Разделы админ-панели для назначения прав
 export const ADMIN_SECTION_IDS = [
   'dashboard',
+  'shop',
   'news',
-  'club_history',
+  'opponent_teams',
   'players',
   'coaches',
-  'opponent_teams',
   'matches',
-  'shop',
-  'standings',
-  'banners',
+  'club_partners',
   'sponsors',
+  'banners',
+  'club_history',
   'titles',
   'translations',
   'settings',
+  'standings',
 ] as const;
 
 export type AdminSectionId = (typeof ADMIN_SECTION_IDS)[number];
@@ -26,12 +27,6 @@ export interface AdminSectionDef {
 
 export const ADMIN_SECTIONS: AdminSectionDef[] = [
   { id: 'dashboard', label: 'Дашборд', pathPrefixes: ['/admin/dashboard'] },
-  { id: 'news', label: 'Новости', pathPrefixes: ['/admin/news'] },
-  { id: 'club_history', label: 'История клуба', pathPrefixes: ['/admin/club-history'] },
-  { id: 'players', label: 'Игроки', pathPrefixes: ['/admin/players'] },
-  { id: 'coaches', label: 'Тренеры', pathPrefixes: ['/admin/coaches'] },
-  { id: 'opponent_teams', label: 'Клубы', pathPrefixes: ['/admin/opponent-teams', '/admin/teams'] },
-  { id: 'matches', label: 'Матчи', pathPrefixes: ['/admin/matches'] },
   {
     id: 'shop',
     label: 'Интернет-магазин',
@@ -44,12 +39,19 @@ export const ADMIN_SECTIONS: AdminSectionDef[] = [
       '/admin/countries',
     ],
   },
-  { id: 'standings', label: 'Таблицы', pathPrefixes: ['/admin/standings'] },
-  { id: 'banners', label: 'Баннеры', pathPrefixes: ['/admin/banners'] },
+  { id: 'news', label: 'Новости', pathPrefixes: ['/admin/news'] },
+  { id: 'opponent_teams', label: 'Клубы', pathPrefixes: ['/admin/opponent-teams', '/admin/teams'] },
+  { id: 'players', label: 'Игроки', pathPrefixes: ['/admin/players'] },
+  { id: 'coaches', label: 'Тренеры', pathPrefixes: ['/admin/coaches'] },
+  { id: 'matches', label: 'Матчи', pathPrefixes: ['/admin/matches'] },
+  { id: 'club_partners', label: 'Партнёры', pathPrefixes: ['/admin/club-partners'] },
   { id: 'sponsors', label: 'Спонсоры', pathPrefixes: ['/admin/sponsors'] },
+  { id: 'banners', label: 'Баннеры', pathPrefixes: ['/admin/banners'] },
+  { id: 'club_history', label: 'История', pathPrefixes: ['/admin/club-history'] },
   { id: 'titles', label: 'Титулы', pathPrefixes: ['/admin/titles'] },
   { id: 'translations', label: 'Переводы', pathPrefixes: ['/admin/translations'] },
   { id: 'settings', label: 'Настройки', pathPrefixes: ['/admin/settings'] },
+  { id: 'standings', label: 'Таблицы (устар.)', pathPrefixes: ['/admin/standings'] },
 ];
 
 export const ALL_ADMIN_SECTION_IDS: AdminSectionId[] = [...ADMIN_SECTION_IDS];

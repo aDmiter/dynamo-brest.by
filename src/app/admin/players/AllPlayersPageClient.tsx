@@ -5,7 +5,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEdit,
-  faSync,
   faSearch,
   faTimes,
   faUser,
@@ -71,8 +70,6 @@ interface Props {
 export default function AllPlayersPageClient({ initialPlayers, allTeams }: Props) {
   const [players, setPlayers] = useState<Player[]>(initialPlayers);
   const [search, setSearch] = useState('');
-  const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
   const [togglingTeam, setTogglingTeam] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [localToggles, setLocalToggles] = useState<Record<string, string[]>>({});
@@ -143,33 +140,6 @@ export default function AllPlayersPageClient({ initialPlayers, allTeams }: Props
     [players, teamToggles]
   );
 
-  // Синхронизация
-  const handleSync = async () => {
-    if (!confirm('Синхронизировать игроков с COMET API? Новые игроки будут добавлены.')) return;
-    setSyncing(true);
-    setSyncResult(null);
-    try {
-      const res = await fetch('/api/sync/players', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teamIds: [] }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSyncResult(`✅ Готово! Создано: ${data.created}, обновлено: ${data.updated}`);
-        // Перезагружаем страницу чтобы подтянуть свежих игроков
-        window.location.reload();
-      } else {
-        setSyncResult(`❌ Ошибка: ${data.error || 'Неизвестная'}`);
-      }
-    } catch {
-      setSyncResult('❌ Ошибка соединения');
-    } finally {
-      setSyncing(false);
-      setTimeout(() => setSyncResult(null), 5000);
-    }
-  };
-
   const getLevelBadge = (level: string | null) => {
     if (!level) return null;
     const isPro = level === 'professional';
@@ -212,28 +182,6 @@ export default function AllPlayersPageClient({ initialPlayers, allTeams }: Props
 
   return (
     <div>
-      {/* Кнопка синхронизации */}
-      <div className="mb-4 flex items-center gap-3">
-        <Button
-          size="sm"
-          onClick={handleSync}
-          disabled={syncing}
-          variant="outline"
-          className="border-[#ee862c]/30 text-[#ee862c] hover:bg-[#ee862c]/10 hover:border-[#ee862c]"
-        >
-          <FontAwesomeIcon icon={faSync} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
-          {syncing ? 'Синхронизация...' : 'Синхронизировать с COMET'}
-        </Button>
-      </div>
-
-      {syncResult && (
-        <div
-          className={`mb-4 border p-3 text-sm ${syncResult.startsWith('✅') ? 'border-green-500/20 bg-green-500/10 text-green-400' : 'border-red-500/20 bg-red-500/10 text-red-400'}`}
-        >
-          {syncResult}
-        </div>
-      )}
-
       {/* Поиск */}
       <div className="mb-4 relative">
         <FontAwesomeIcon

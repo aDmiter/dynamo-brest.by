@@ -47,6 +47,7 @@ const MUTATION_PUBLIC_GET: Array<{ prefix: string; section: AdminSectionId }> = 
 const PROTECTED_PREFIX: Array<{ prefix: string; section: AdminSectionId }> = [
   { prefix: '/api/admin/users', section: 'settings' },
   { prefix: '/api/admin/club-history', section: 'club_history' },
+  { prefix: '/api/admin/club-partners', section: 'club_partners' },
   { prefix: '/api/admin/matches', section: 'matches' },
   { prefix: '/api/coaches', section: 'coaches' },
   { prefix: '/api/opponent-teams', section: 'opponent_teams' },
@@ -74,7 +75,7 @@ const MUTATION_PREFIX: Array<{ prefix: string; section: AdminSectionId }> = [
 
 const SUPERADMIN_ONLY_PREFIXES = ['/api/admin/users'];
 
-function matchesPublic(pathname: string, method: string): boolean {
+export function matchesPublicApi(pathname: string, method: string): boolean {
   const m = method.toUpperCase();
   return PUBLIC_API.some((rule) => rule.methods.includes(m) && rule.pattern.test(pathname));
 }
@@ -95,7 +96,7 @@ export function resolveAdminApiSection(pathname: string, method: string): AdminS
   const m = method.toUpperCase();
   const isGet = m === 'GET' || m === 'HEAD';
 
-  if (matchesPublic(pathname, m)) return null;
+  if (matchesPublicApi(pathname, m)) return null;
 
   for (const prefix of SUPERADMIN_ONLY_PREFIXES) {
     if (pathname === prefix || pathname.startsWith(prefix + '/')) {

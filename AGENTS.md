@@ -42,7 +42,8 @@ women
 Статистика игроков: в API передавать teamSlug. Кэш в PlayersGrid: localStorage, ключ ps\_${teamSlug}, TTL 30 минут.
 
 COMET
-Синхронизация игроков, тренеров, матчей через /api/sync/\*
+Полная синхронизация: кнопка в шапке админки → POST /api/sync/comet (матчи, протоколы, тренеры, игроки). Cron: GET /api/cron/sync-comet?token=CRON_SECRET, скрипт scripts/sync-comet-cron.ps1
+Отдельные эндпоинты: /api/sync/matches, match-protocol, coaches, players
 Ключи и URL — из env или настроек админки, не в коде
 При sync позиции игроков не перезаписывать без явной задачи
 Магазин

@@ -1,6 +1,7 @@
 import type { CmsGalleryImage } from '@/lib/cms-gallery';
 import { escapeHtml } from '@/lib/html';
 import { uploadImageToServer } from '@/lib/jodit-uploader';
+import { JODIT_GALLERY_ICON_URL } from '@/modules/admin/components/jodit-gallery-icon';
 
 type JoditEditorLike = {
   selection: { insertHTML: (html: string) => void };
@@ -67,8 +68,7 @@ export function createJoditGalleryButton(buildHtml: (images: CmsGalleryImage[]) 
   return {
     name: 'cmsGallery',
     tooltip: 'Вставить галерею',
-    text: '🖼',
-    icon: 'image',
+    iconURL: JODIT_GALLERY_ICON_URL,
     exec: (editor: unknown) => {
       const jed = editor as JoditEditorLike;
       const images: CmsGalleryImage[] = [];

@@ -5,12 +5,15 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   children: React.ReactNode;
 }
 
+const ADMIN_SELECT_CLASS =
+  'w-full rounded-md border border-white/10 bg-white/5 p-2 text-sm text-white';
+
 export default function AdminSelect({ children, className = '', ...props }: SelectProps) {
   return (
     <select
       {...props}
-      className={`w-full rounded-md border border-slate-300 bg-slate-100 p-2 text-sm text-slate-900 shadow-sm ${className}`}
-      style={{ backgroundImage: 'none', colorScheme: 'light' }}
+      className={`${ADMIN_SELECT_CLASS} ${className}`.trim()}
+      style={{ backgroundImage: 'none', colorScheme: 'dark' }}
     >
       {children}
     </select>
