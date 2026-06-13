@@ -111,14 +111,17 @@ export default function NewsCarousel({ news }: NewsCarouselProps) {
       style={{ fontFamily: "'Inter Tight', sans-serif" }}
       aria-labelledby="home-news-title"
     >
-      <div className="news-carousel__inner home-section-inner">
-        <HomeSectionHeader
-          title="Новости"
-          linkHref="/news"
-          linkLabel="Все новости"
-          titleId="home-news-title"
-        />
-        <div className="news-carousel__slider w-full" style={{ paddingLeft: '20%' }}>
+      <div className="news-carousel__content">
+        <div className="news-carousel__inner home-section-inner">
+          <HomeSectionHeader
+            title="Новости"
+            linkHref="/news"
+            linkLabel="Все новости"
+            titleId="home-news-title"
+          />
+        </div>
+
+        <div className="news-carousel__slider">
         {mounted ? (
           <Swiper
             spaceBetween={24}

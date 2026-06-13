@@ -2,6 +2,7 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import MatchesCalendarClient from '@/modules/team/components/MatchesCalendarClient';
+import { calendarMatchWhere } from '@/modules/team/lib/match-queries';
 import {
   buildOpponentTeamMap,
   serializeTeamMatchesForPublic,
@@ -16,13 +17,7 @@ export default async function WomenCalendarPage() {
 
   const [matches, opponentTeams] = await Promise.all([
     prisma.match.findMany({
-      where: {
-        teamId: team.id,
-        OR: [
-          { matchDate: { gte: new Date() } },
-          { matchDate: { lte: new Date('1970-01-02T00:00:00.000Z') } },
-        ],
-      },
+      where: calendarMatchWhere(team.id, new Date(), true),
       orderBy: { matchDate: 'asc' },
       take: 100,
     }),

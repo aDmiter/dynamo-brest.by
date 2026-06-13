@@ -8,6 +8,7 @@ import {
   localizeProductRecord,
   saveBeContentTranslations,
 } from '@/lib/content-translations';
+import { nextProductSortOrder } from '@/lib/product-catalog-order';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -65,7 +66,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.images !== undefined) updateData.images = JSON.stringify(data.images);
     if (data.inStock !== undefined) updateData.inStock = data.inStock;
     if (data.isFeatured !== undefined) updateData.isFeatured = data.isFeatured;
-    if (data.isHit !== undefined) updateData.isHit = data.isHit;
+    if (data.isHit !== undefined) {
+      const isHit = Boolean(data.isHit);
+      const current = await prisma.product.findUnique({
+        where: { id },
+        select: { isHit: true },
+      });
+      updateData.isHit = isHit;
+      if (current && current.isHit !== isHit) {
+        updateData.sortOrder = await nextProductSortOrder(isHit);
+      }
+    }
     if (data.hasCustomization !== undefined) updateData.hasCustomization = data.hasCustomization;
     if (data.useSizes !== undefined) updateData.useSizes = data.useSizes;
     if (data.quantity !== undefined) updateData.quantity = data.quantity;

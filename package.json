@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:webpack": "next dev --webpack",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"
@@ -52,6 +52,7 @@
     "react-youtube": "^10.1.0",
     "resend": "^6.12.3",
     "shadcn": "^4.7.0",
+    "sharp": "^0.35.0",
     "soap": "^1.9.1",
     "swiper": "^12.1.4",
     "tailwind-merge": "^3.5.0",

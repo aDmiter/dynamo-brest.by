@@ -2,9 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendOrderEmails } from '@/lib/mailer';
-import { auth } from '@/lib/auth';
-import { canAccessSection } from '@/lib/admin-permissions';
+import { requireAdminSection } from '@/lib/admin-api-auth';
 import { auditUpdateData } from '@/lib/admin-audit-route';
+import { isUnpaidOrderStatus } from '@/lib/order-status';
 import { releaseOrderStock } from '@/lib/shop-stock';
 
 const RELEASE_STOCK_STATUSES = ['cancelled', 'unpaid'];
@@ -13,28 +13,12 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-function isGuestPaidStatusUpdate(data: Record<string, unknown>): boolean {
-  const keys = Object.keys(data);
-  return keys.length === 1 && keys[0] === 'status' && data.status === 'paid';
-}
-
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const data = await request.json();
-    const session = await auth();
-    const user = session?.user;
-
-    const guestPaidOnly = !user && isGuestPaidStatusUpdate(data);
-    if (!user && !guestPaidOnly) {
-      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
-    }
-    if (user && !canAccessSection(user, 'shop')) {
-      return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 });
-    }
-    if (guestPaidOnly && Object.keys(data).some((k) => k !== 'status')) {
-      return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 });
-    }
+    const admin = await requireAdminSection('shop');
+    if (admin instanceof NextResponse) return admin;
 
     const oldOrder = await prisma.order.findUnique({
       where: { id },
@@ -47,14 +31,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const updateData: Record<string, unknown> = {};
     if (data.status !== undefined) updateData.status = data.status;
-    if (user && data.trackingCode !== undefined) updateData.trackingCode = data.trackingCode;
-    if (user) Object.assign(updateData, await auditUpdateData());
+    if (data.trackingCode !== undefined) updateData.trackingCode = data.trackingCode;
+    Object.assign(updateData, await auditUpdateData());
 
     if (
       data.status &&
       RELEASE_STOCK_STATUSES.includes(data.status) &&
       oldOrder.stockReserved &&
-      oldOrder.status === 'pending_payment'
+      isUnpaidOrderStatus(oldOrder.status)
     ) {
       await releaseOrderStock(oldOrder.id);
       updateData.stockReserved = false;
@@ -79,20 +63,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
-    const session = await auth();
-    const user = session?.user;
-    if (!user) {
-      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
-    }
-    if (!canAccessSection(user, 'shop')) {
-      return NextResponse.json({ error: 'Недостаточно прав' }, { status: 403 });
-    }
+    const admin = await requireAdminSection('shop');
+    if (admin instanceof NextResponse) return admin;
 
     const { id } = await params;
 
     const order = await prisma.order.findUnique({ where: { id } });
     if (!order) {
       return NextResponse.json({ error: 'Заказ не найден' }, { status: 404 });
+    }
+
+    if (order.stockReserved) {
+      await releaseOrderStock(order.id);
     }
 
     await prisma.$transaction([

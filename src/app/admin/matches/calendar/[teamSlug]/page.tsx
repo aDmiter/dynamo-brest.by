@@ -1,6 +1,7 @@
 // src/app/admin/matches/calendar/[teamSlug]/page.tsx - Календарь матчей команды
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import { calendarMatchWhere } from '@/modules/team/lib/match-queries';
 import MatchesCalendarClient from './MatchesCalendarClient';
 
 interface Props {
@@ -15,7 +16,7 @@ export default async function CalendarPage({ params }: Props) {
 
   const [matches, allTeams] = await Promise.all([
     prisma.match.findMany({
-      where: { teamId: team.id, status: 'scheduled' },
+      where: calendarMatchWhere(team.id),
       orderBy: { matchDate: 'asc' },
       take: 100,
     }),
@@ -28,6 +29,7 @@ export default async function CalendarPage({ params }: Props) {
 
   const serialized = matches.map((m) => ({
     ...m,
+    isPublished: m.isPublished,
     matchDate: m.matchDate.toISOString(),
     createdAt: m.createdAt.toISOString(),
     updatedAt: m.updatedAt.toISOString(),

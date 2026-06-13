@@ -42,6 +42,7 @@ interface MatchData {
   matchType: string | null;
   attendance: number | null;
   ticketUrl: string | null;
+  isPublished: boolean;
 }
 
 export default function EditMatchForm({
@@ -75,6 +76,7 @@ export default function EditMatchForm({
     attendance: match.attendance?.toString() || '',
     teamId: match.teamId,
     ticketUrl: match.ticketUrl || '',
+    isPublished: match.isPublished,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,6 +100,7 @@ export default function EditMatchForm({
       attendance: form.attendance ? parseInt(form.attendance) : null,
       teamId: form.teamId,
       ticketUrl: form.ticketUrl || null,
+      isPublished: form.isPublished,
     };
 
     try {
@@ -269,7 +272,7 @@ export default function EditMatchForm({
               </p>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-6">
               <label className="flex items-center gap-2 text-sm text-gray-400">
                 <input
                   type="checkbox"
@@ -278,6 +281,15 @@ export default function EditMatchForm({
                   className="accent-[#ee862c]"
                 />
                 Домашний матч
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-400">
+                <input
+                  type="checkbox"
+                  checked={form.isPublished}
+                  onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
+                  className="accent-[#ee862c]"
+                />
+                Опубликован на сайте
               </label>
             </div>
 

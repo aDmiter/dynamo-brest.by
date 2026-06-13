@@ -54,13 +54,14 @@ async function loadMatchSectionData(): Promise<{
       where: {
         matchType: 'osnova',
         status: 'scheduled',
+        isPublished: true,
         matchDate: { gte: now },
       },
       orderBy: { matchDate: 'asc' },
     }),
     // Основной состав — последний сыгранный
     prisma.match.findFirst({
-      where: { matchType: 'osnova', status: 'finished' },
+      where: { matchType: 'osnova', status: 'finished', isPublished: true },
       orderBy: { matchDate: 'desc' },
     }),
     // Дубль — следующий матч
@@ -68,13 +69,14 @@ async function loadMatchSectionData(): Promise<{
       where: {
         matchType: 'dubl',
         status: 'scheduled',
+        isPublished: true,
         matchDate: { gte: now },
       },
       orderBy: { matchDate: 'asc' },
     }),
     // Дубль — последний сыгранный
     prisma.match.findFirst({
-      where: { matchType: 'dubl', status: 'finished' },
+      where: { matchType: 'dubl', status: 'finished', isPublished: true },
       orderBy: { matchDate: 'desc' },
     }),
     // Женская — следующий матч
@@ -82,13 +84,14 @@ async function loadMatchSectionData(): Promise<{
       where: {
         matchType: 'women',
         status: 'scheduled',
+        isPublished: true,
         matchDate: { gte: now },
       },
       orderBy: { matchDate: 'asc' },
     }),
     // Женская — последний сыгранный
     prisma.match.findFirst({
-      where: { matchType: 'women', status: 'finished' },
+      where: { matchType: 'women', status: 'finished', isPublished: true },
       orderBy: { matchDate: 'desc' },
     }),
   ]);

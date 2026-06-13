@@ -1,4 +1,6 @@
 // src/lib/footer-menu.ts — утилиты нижнего меню
+import { resolveMenuItemPublicUrl } from '@/lib/site-page-meta';
+
 export type FooterMenuItemRecord = {
   type: string;
   slug: string;
@@ -6,9 +8,9 @@ export type FooterMenuItemRecord = {
   isExternal: boolean;
 };
 
-export function getFooterItemHref(item: FooterMenuItemRecord): string {
-  if (item.type === 'link' && item.linkUrl) {
-    return item.linkUrl;
+export async function getFooterItemHref(item: FooterMenuItemRecord): Promise<string> {
+  if (item.type === 'link') {
+    return resolveMenuItemPublicUrl(item);
   }
   return `/legal/${item.slug}`;
 }

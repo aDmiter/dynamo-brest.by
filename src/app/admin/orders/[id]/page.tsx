@@ -8,6 +8,7 @@ import {
   faPhone,
   faEnvelope,
   faMapMarkerAlt,
+  faGlobe,
   faComment,
   faTruck,
 } from '@fortawesome/free-solid-svg-icons';
@@ -16,6 +17,7 @@ import TrackingCodeInput from './TrackingCodeInput';
 import DeleteOrderButton from '../DeleteOrderButton';
 import { getAdminPageFlags } from '@/lib/admin-page';
 import AdminAuditMeta from '@/modules/admin/components/AdminAuditMeta';
+import { parseProductFirstImage } from '@/lib/order-email';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -57,7 +59,9 @@ export default async function OrderDetailPage({ params }: Props) {
           <table className="w-full">
             <thead className="border-b border-white/10">
               <tr>
+                <th className="p-2 w-14 text-left text-sm text-gray-400">Фото</th>
                 <th className="p-2 text-left text-sm text-gray-400">Товар</th>
+                <th className="p-2 text-left text-sm text-gray-400">Артикул</th>
                 <th className="p-2 text-center text-sm text-gray-400">Размер</th>
                 <th className="p-2 text-left text-sm text-gray-400">Нанесение</th>
                 <th className="p-2 text-center text-sm text-gray-400">Кол-во</th>
@@ -68,9 +72,36 @@ export default async function OrderDetailPage({ params }: Props) {
             <tbody>
               {order.orderitem.map((item) => {
                 const customization = item.customization ? JSON.parse(item.customization) : null;
+                const imageUrl = parseProductFirstImage(item.product.images);
                 return (
                   <tr key={item.id} className="border-b border-white/5">
-                    <td className="p-2 text-sm text-white">{item.product.name}</td>
+                    <td className="p-2 align-middle">
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt=""
+                          className="h-12 w-12 border border-white/10 bg-white/5 object-cover"
+                        />
+                      ) : (
+                        <div
+                          className="h-12 w-12 border border-white/10 bg-white/5"
+                          aria-hidden
+                        />
+                      )}
+                    </td>
+                    <td className="p-2 align-middle text-sm">
+                      <Link
+                        href={`/admin/products/${item.product.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white hover:text-[#ee862c] hover:underline"
+                      >
+                        {item.product.name}
+                      </Link>
+                    </td>
+                    <td className="p-2 align-middle text-sm text-gray-400">
+                      {item.product.article || '—'}
+                    </td>
                     <td className="p-2 text-center text-sm text-gray-400">{item.size || '—'}</td>
                     <td className="p-2 text-sm text-gray-400">
                       {customization ? (
@@ -142,7 +173,7 @@ export default async function OrderDetailPage({ params }: Props) {
             </tbody>
             <tfoot>
               <tr className="border-t border-white/10">
-                <td colSpan={5} className="p-2 text-right text-sm text-gray-400">
+                <td colSpan={7} className="p-2 text-right text-sm text-gray-400">
                   Доставка:
                 </td>
                 <td className="p-2 text-right text-sm text-white">
@@ -150,7 +181,7 @@ export default async function OrderDetailPage({ params }: Props) {
                 </td>
               </tr>
               <tr>
-                <td colSpan={5} className="p-2 text-right text-sm font-bold text-white">
+                <td colSpan={7} className="p-2 text-right text-sm font-bold text-white">
                   Итого:
                 </td>
                 <td className="p-2 text-right text-sm font-bold text-[#ee862c]">
@@ -185,6 +216,12 @@ export default async function OrderDetailPage({ params }: Props) {
                 <p className="text-sm text-white">{order.customerEmail}</p>
               </div>
             )}
+            <div>
+              <p className="text-xs text-gray-500">
+                <FontAwesomeIcon icon={faGlobe} className="mr-1" /> Страна доставки
+              </p>
+              <p className="text-sm text-white">{order.deliveryCountryName || '—'}</p>
+            </div>
             {order.address && (
               <div>
                 <p className="text-xs text-gray-500">

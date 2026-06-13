@@ -57,6 +57,7 @@ export default function CountriesManager({ countries }: CountriesManagerProps) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState('');
   const [syncResult, setSyncResult] = useState<BelpostSyncSummary | null>(null);
   const [syncError, setSyncError] = useState('');
 
@@ -96,20 +97,74 @@ export default function CountriesManager({ countries }: CountriesManagerProps) {
     setSyncing(true);
     setSyncError('');
     setSyncResult(null);
+    setSyncProgress('');
+
+    const batchLimit = 15;
+    let offset = 0;
+    let done = false;
+    const merged: BelpostSyncSummary = {
+      updated: 0,
+      unavailable: 0,
+      skipped: 0,
+      errors: 0,
+      items: [],
+    };
 
     try {
-      const res = await fetch('/api/countries/sync-belpost', { method: 'POST' });
-      const body = await res.json();
-      if (!res.ok) {
-        setSyncError(body.error || 'Ошибка синхронизации');
-        return;
+      while (!done) {
+        setSyncProgress(
+          merged.total
+            ? `Обработано ${Math.min(offset, merged.total)} из ${merged.total}…`
+            : 'Запрос к tarifikator.belpost.by…'
+        );
+
+        const res = await fetch('/api/countries/sync-belpost', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ offset, limit: batchLimit }),
+        });
+
+        const raw = await res.text();
+        let body: BelpostSyncSummary & { error?: string };
+        try {
+          body = JSON.parse(raw) as BelpostSyncSummary & { error?: string };
+        } catch {
+          setSyncError(
+            res.ok
+              ? 'Некорректный ответ сервера'
+              : `Ошибка сервера (${res.status}): ${raw.slice(0, 180)}`
+          );
+          return;
+        }
+
+        if (!res.ok) {
+          setSyncError(body.error || `Ошибка синхронизации (${res.status})`);
+          return;
+        }
+
+        merged.updated += body.updated;
+        merged.unavailable += body.unavailable;
+        merged.skipped += body.skipped;
+        merged.errors += body.errors;
+        merged.items.push(...body.items);
+        merged.total = body.total;
+
+        done = Boolean(body.done);
+        offset = body.nextOffset ?? offset + batchLimit;
+
+        if (!done && body.nextOffset == null) {
+          done = true;
+        }
       }
-      setSyncResult(body as BelpostSyncSummary);
+
+      setSyncResult(merged);
       router.refresh();
-    } catch {
-      setSyncError('Ошибка сети при синхронизации');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Ошибка сети при синхронизации';
+      setSyncError(message);
     } finally {
       setSyncing(false);
+      setSyncProgress('');
     }
   };
 
@@ -179,6 +234,10 @@ export default function CountriesManager({ countries }: CountriesManagerProps) {
 
       {syncError && (
         <p className="mb-4 text-sm text-red-400">{syncError}</p>
+      )}
+
+      {syncProgress && (
+        <p className="mb-4 text-sm text-gray-400">{syncProgress}</p>
       )}
 
       {syncResult && (

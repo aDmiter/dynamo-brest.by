@@ -13,8 +13,32 @@ import {
 import Link from 'next/link';
 import { BePaidWidget, type BePaidWidgetHandle } from '@/modules/shop/components/BePaidWidget';
 import type { BePaidWidgetCloseStatus } from '@/types/bepaid-widget';
+import { UNPAID_ORDER_PAYMENT_TTL_MINUTES } from '@/config/shop-order-payment';
 
 const USE_WEBPAY = process.env.NEXT_PUBLIC_SHOP_PAYMENT_PROVIDER === 'webpay';
+
+interface PaymentStatusResponse {
+  status: string;
+  expired: boolean;
+  cancelled: boolean;
+  expiresAt: string;
+  remainingSeconds: number;
+  orderNumber?: string;
+}
+
+function formatPaymentCountdown(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function clearCheckoutSession() {
+  sessionStorage.removeItem('pending_order_id');
+  sessionStorage.removeItem('bepaid_payment_token');
+  sessionStorage.removeItem('webpay_params');
+  localStorage.removeItem('cart');
+  window.dispatchEvent(new Event('cartUpdated'));
+}
 
 interface CartItem {
   cartKey: string;
@@ -43,6 +67,7 @@ export default function CheckoutPage() {
   const bePaidRef = useRef<BePaidWidgetHandle>(null);
   const pendingOrderRef = useRef<{ id: string; orderNumber: string } | null>(null);
   const paymentTokenRef = useRef<string | null>(null);
+  const paymentExpiresAtRef = useRef<string | null>(null);
 
   const [cart] = useState<CartItem[]>(() => {
     if (typeof window !== 'undefined') {
@@ -60,6 +85,8 @@ export default function CheckoutPage() {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [error, setError] = useState('');
   const [paymentMock, setPaymentMock] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [paymentRemainingSeconds, setPaymentRemainingSeconds] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     customerName: '',
@@ -83,6 +110,109 @@ export default function CheckoutPage() {
     }
   }, []);
 
+  const handleOrderExpired = useCallback(() => {
+    clearCheckoutSession();
+    pendingOrderRef.current = null;
+    paymentTokenRef.current = null;
+    paymentExpiresAtRef.current = null;
+    setPendingOrderId(null);
+    setPaymentRemainingSeconds(null);
+    setProcessingPayment(false);
+    router.replace('/shop/cart?expired=1');
+  }, [router]);
+
+  const syncPaymentStatus = useCallback(
+    async (orderId: string): Promise<PaymentStatusResponse | null> => {
+      try {
+        const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/payment-status`);
+        if (!res.ok) return null;
+        const data = (await res.json()) as PaymentStatusResponse;
+
+        if (data.expired || data.cancelled || data.status === 'cancelled') {
+          handleOrderExpired();
+          return data;
+        }
+
+        if (data.orderNumber) {
+          pendingOrderRef.current = { id: orderId, orderNumber: data.orderNumber };
+        }
+
+        paymentExpiresAtRef.current = data.expiresAt;
+        setPendingOrderId(orderId);
+        setPaymentRemainingSeconds(data.remainingSeconds);
+        return data;
+      } catch {
+        return null;
+      }
+    },
+    [handleOrderExpired]
+  );
+
+  useEffect(() => {
+    const storedOrderId = sessionStorage.getItem('pending_order_id');
+    if (!storedOrderId) return;
+
+    let cancelled = false;
+
+    fetch(`/api/orders/${encodeURIComponent(storedOrderId)}/payment-status`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: PaymentStatusResponse | null) => {
+        if (cancelled || !data) return;
+
+        if (data.expired || data.cancelled || data.status === 'cancelled') {
+          handleOrderExpired();
+          return;
+        }
+
+        if (data.orderNumber) {
+          pendingOrderRef.current = { id: storedOrderId, orderNumber: data.orderNumber };
+        }
+
+        paymentExpiresAtRef.current = data.expiresAt;
+        setPendingOrderId(storedOrderId);
+        setPaymentRemainingSeconds(data.remainingSeconds);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [handleOrderExpired]);
+
+  useEffect(() => {
+    if (!pendingOrderId) return;
+
+    const tick = () => {
+      const expiresAt = paymentExpiresAtRef.current;
+      if (!expiresAt) return;
+
+      const remaining = Math.max(
+        0,
+        Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000)
+      );
+      setPaymentRemainingSeconds(remaining);
+
+      if (remaining <= 0) {
+        void syncPaymentStatus(pendingOrderId);
+      }
+    };
+
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [pendingOrderId, syncPaymentStatus]);
+
+  useEffect(() => {
+    const orderId = pendingOrderId || sessionStorage.getItem('pending_order_id');
+    if (!orderId) return;
+
+    const poll = window.setInterval(() => {
+      void syncPaymentStatus(orderId);
+    }, 30000);
+
+    return () => window.clearInterval(poll);
+  }, [pendingOrderId, syncPaymentStatus]);
+
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const selectedCountry = countries.find((c) => c.id === form.countryId);
@@ -93,10 +223,9 @@ export default function CheckoutPage() {
     (orderNumber: string) => {
       const clean = orderNumber.replace(/^#/, '');
       const token = paymentTokenRef.current;
-      const qs = token
-        ? `?orderId=${encodeURIComponent(clean)}&token=${encodeURIComponent(token)}`
-        : `?orderId=${encodeURIComponent(clean)}`;
-      router.push(`/shop/checkout/success${qs}`);
+      const params = new URLSearchParams({ orderId: clean, status: 'successful' });
+      if (token) params.set('token', token);
+      router.push(`/shop/checkout/success?${params.toString()}`);
     },
     [router]
   );
@@ -129,7 +258,7 @@ export default function CheckoutPage() {
     (status: BePaidWidgetCloseStatus) => {
       setProcessingPayment(false);
 
-      if (status === 'successful' || status === 'pending') {
+      if (status === 'successful') {
         const pending = pendingOrderRef.current;
         if (pending) {
           goToSuccess(pending.orderNumber);
@@ -137,7 +266,12 @@ export default function CheckoutPage() {
         return;
       }
 
-      if (status === 'failed' || status === 'error') {
+      if (status === 'pending' || status === 'redirected') {
+        setError('Платёж обрабатывается. Дождитесь подтверждения банка или попробуйте снова.');
+        return;
+      }
+
+      if (status === 'failed' || status === 'error' || status === null) {
         setError('Платёж не был завершён. Попробуйте снова.');
       }
     },
@@ -158,6 +292,8 @@ export default function CheckoutPage() {
           customerEmail: form.customerEmail,
           customerPhone: '',
           address: form.address,
+          deliveryCountryId: form.countryId || null,
+          deliveryCountryName: selectedCountry?.name || null,
           comment: form.comment,
           deliveryPrice,
           items: cart.map((item) => ({
@@ -169,7 +305,7 @@ export default function CheckoutPage() {
             customization: item.customization || null,
           })),
           total,
-          status: 'pending_payment',
+          status: 'unpaid',
         }),
       });
 
@@ -197,6 +333,8 @@ export default function CheckoutPage() {
       const orderNumber = orderData.orderNumber || orderData.id;
       pendingOrderRef.current = { id: orderData.id, orderNumber };
       sessionStorage.setItem('pending_order_id', orderData.id);
+      setPendingOrderId(orderData.id);
+      await syncPaymentStatus(orderData.id);
 
       const cartItems = cart.map((item) => ({
         name: item.productName + (item.size ? ` (${item.size})` : ''),
@@ -225,6 +363,10 @@ export default function CheckoutPage() {
           setProcessingPayment(true);
           submitToWebPay(signData.params);
         } else {
+          if (signRes.status === 410) {
+            handleOrderExpired();
+            return;
+          }
           setError(signData.error || 'Не удалось создать платёж');
         }
         return;
@@ -245,6 +387,10 @@ export default function CheckoutPage() {
       const checkoutData = await checkoutRes.json();
 
       if (!checkoutRes.ok || !checkoutData.token) {
+        if (checkoutRes.status === 410) {
+          handleOrderExpired();
+          return;
+        }
         setError(checkoutData.error || 'Не удалось открыть оплату');
         return;
       }
@@ -319,6 +465,22 @@ export default function CheckoutPage() {
             }}
           >
             Платёж не был завершён. Пожалуйста, попробуйте снова.
+          </div>
+        )}
+
+        {pendingOrderId && paymentRemainingSeconds !== null && paymentRemainingSeconds > 0 && (
+          <div
+            className="mt-4 p-3 text-sm text-right"
+            style={{
+              border: '1px solid rgba(59,130,246,0.35)',
+              background: 'rgba(59,130,246,0.1)',
+              color: '#93c5fd',
+              borderRadius: 8,
+            }}
+          >
+            Оплатите заказ в течение{' '}
+            <strong>{formatPaymentCountdown(paymentRemainingSeconds)}</strong>. После истечения{' '}
+            {UNPAID_ORDER_PAYMENT_TTL_MINUTES} минут заказ будет отменён, а товары вернутся на склад.
           </div>
         )}
 

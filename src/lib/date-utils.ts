@@ -64,3 +64,22 @@ export function formatSiteDateShort(value: string | Date): string {
     year: 'numeric',
   });
 }
+
+/** Короткий день недели для матчей (вс, пн, …) */
+export function formatSiteWeekdayShort(value: string | Date): string {
+  return toDate(value).toLocaleDateString('ru-RU', {
+    timeZone: SITE_TIMEZONE,
+    weekday: 'short',
+  });
+}
+
+/** Дата матча с днём недели; опционально время (Minsk, одинаково на SSR и клиенте) */
+export function formatSiteMatchDateWithWeekday(
+  value: string | Date,
+  withTime = false
+): string {
+  const weekday = formatSiteWeekdayShort(value);
+  const date = formatSiteDate(value);
+  if (!withTime) return `${weekday}, ${date}`;
+  return `${weekday}, ${date} · ${formatSiteTime(value)}`;
+}

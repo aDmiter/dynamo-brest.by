@@ -7,14 +7,29 @@ import {
   localizeCmsPageRecord,
   saveBeContentTranslations,
 } from '@/lib/content-translations';
+import { resolveMenuItemPublicUrl } from '@/lib/site-page-meta';
 
 type MenuNode = {
   id: string;
   title: string;
   subtitle: string | null;
   pageContent: string | null;
-  children: MenuNode[];
+  type: string;
+  slug: string;
+  linkUrl: string | null;
+  href?: string;
+  children?: MenuNode[];
 };
+
+async function enrichMenuWithPublicUrls(items: MenuNode[]): Promise<MenuNode[]> {
+  return Promise.all(
+    items.map(async (item) => ({
+      ...item,
+      href: await resolveMenuItemPublicUrl(item),
+      children: item.children?.length ? await enrichMenuWithPublicUrls(item.children) : [],
+    }))
+  );
+}
 
 function localizeMenuTree(
   items: MenuNode[],
@@ -47,17 +62,20 @@ export async function GET(request: NextRequest) {
     orderBy: { order: 'asc' },
   });
 
+  const menuTree = menu as unknown as MenuNode[];
+  const withUrls = forPublic ? await enrichMenuWithPublicUrls(menuTree) : menuTree;
+
   if (lang !== 'be') {
-    return NextResponse.json(menu);
+    return NextResponse.json(withUrls);
   }
 
   const ids: string[] = [];
-  for (const section of menu) {
+  for (const section of withUrls) {
     ids.push(section.id);
     for (const child of section.children) ids.push(child.id);
   }
   const tr = await loadBeTranslationsMap('menuitem', ids);
-  return NextResponse.json(localizeMenuTree(menu as MenuNode[], lang, tr));
+  return NextResponse.json(localizeMenuTree(withUrls, lang, tr));
 }
 
 // POST — создать новый пункт меню

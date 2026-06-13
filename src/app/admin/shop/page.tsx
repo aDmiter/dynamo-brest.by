@@ -10,23 +10,7 @@ import {
   faArrowRight,
 } from '@fortawesome/free-solid-svg-icons';
 
-const statusLabels: Record<string, string> = {
-  paid: 'Оплачен',
-  unpaid: 'Не оплачен',
-  pending_payment: 'Ожидает оплаты',
-  shipped: 'Отправлен',
-  delivered: 'Доставлен',
-  cancelled: 'Отменён',
-};
-
-const statusColors: Record<string, string> = {
-  paid: 'text-green-400 bg-green-400/10',
-  unpaid: 'text-yellow-400 bg-yellow-400/10',
-  pending_payment: 'text-gray-400 bg-gray-400/10',
-  shipped: 'text-purple-400 bg-purple-400/10',
-  delivered: 'text-blue-400 bg-blue-400/10',
-  cancelled: 'text-red-400 bg-red-400/10',
-};
+import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS, normalizeOrderStatus } from '@/lib/order-status';
 
 export default async function ShopDashboardPage() {
   const [productsCount, categoriesCount, ordersCount, recentOrders] = await Promise.all([
@@ -125,7 +109,9 @@ export default async function ShopDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {recentOrders.map((order, index) => (
+              {recentOrders.map((order, index) => {
+                const orderStatus = normalizeOrderStatus(order.status);
+                return (
                 <tr key={order.id} className="border-b border-white/5 hover:bg-white/5">
                   <td className="p-3 text-sm text-gray-500">#{index + 1}</td>
                   <td className="p-3 text-sm text-white">{order.customerName}</td>
@@ -137,17 +123,18 @@ export default async function ShopDashboardPage() {
                   <td className="p-3 text-center">
                     <span
                       className={`text-xs px-2 py-1 ${
-                        statusColors[order.status] || 'text-gray-400 bg-gray-400/10'
+                        ORDER_STATUS_COLORS[orderStatus] || 'text-gray-400 bg-gray-400/10'
                       }`}
                     >
-                      {statusLabels[order.status] || order.status}
+                      {ORDER_STATUS_LABELS[orderStatus] || order.status}
                     </span>
                   </td>
                   <td className="p-3 text-sm text-gray-400">
                     {new Date(order.createdAt).toLocaleDateString('ru-RU')}
                   </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         )}

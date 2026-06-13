@@ -314,7 +314,7 @@ export default function PlayerCard({ player, stats, femaleAccent = false }: Prop
           {isGoalkeeper ? (
             <StatBox value={stats?.goalsConceded ?? null} label="Пропущено" />
           ) : (
-            <StatBox value={stats?.assists ?? null} label="Пасов" />
+            <StatBox value={stats?.assists ?? null} label="Передач" />
           )}
         </div>
       </div>

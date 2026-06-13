@@ -2,6 +2,7 @@
 import { prisma } from '@/lib/prisma';
 import { getSiteLangFromCookies } from '@/lib/content-translations-server';
 import { localizeProducts } from '@/lib/content-translations';
+import { productCatalogOrderBy } from '@/lib/product-catalog-order';
 import CatalogClient from './CatalogClient';
 
 export default async function CatalogPage() {
@@ -10,7 +11,7 @@ export default async function CatalogPage() {
   const [productsRaw, categories] = await Promise.all([
     prisma.product.findMany({
       where: { inStock: true },
-      orderBy: [{ isHit: 'desc' }, { createdAt: 'desc' }],
+      orderBy: productCatalogOrderBy,
       take: 50,
       include: { productcategory: true, manufacturer: true },
     }),

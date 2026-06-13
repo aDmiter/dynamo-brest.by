@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import { buildJoditCmsControls } from '@/modules/admin/components/jodit-editor-controls';
 import { buildCmsGalleryHtml } from '@/lib/cms-gallery';
 import { createJoditUploaderConfig } from '@/lib/jodit-uploader';
+import '@/styles/jodit-editor.scss';
 
 const JODIT_PASTE_PLAIN_TEXT = 'insert_only_text';
 
@@ -41,6 +42,7 @@ const JODIT_MAIN_TOOLBAR = [
   'link',
   'cmsYoutube',
   'cmsGallery',
+  'cmsStandings',
   '|',
   'align',
   'undo',
@@ -65,6 +67,7 @@ const JODIT_COMPACT_TOOLBAR = [
   'link',
   'cmsYoutube',
   'cmsGallery',
+  'cmsStandings',
   '|',
   'undo',
   'redo',
@@ -127,7 +130,13 @@ export default function TipTapEditor({ content, onChange }: JoditEditorProps) {
               language: 'ru',
               toolbar: true,
               toolbarAdaptive: false,
-              buttons: [...JODIT_MAIN_TOOLBAR].filter((b) => b !== 'spoiler' && b !== 'cmsGallery' && b !== 'cmsYoutube'),
+              buttons: [...JODIT_MAIN_TOOLBAR].filter(
+                (b) =>
+                  b !== 'spoiler' &&
+                  b !== 'cmsGallery' &&
+                  b !== 'cmsYoutube' &&
+                  b !== 'cmsStandings'
+              ),
               uploader,
               style: JODIT_EDITOR_STYLE,
             });
@@ -173,8 +182,13 @@ export default function TipTapEditor({ content, onChange }: JoditEditorProps) {
       askBeforePasteFromWord: false,
       defaultActionOnPaste: JODIT_PASTE_PLAIN_TEXT,
       defaultActionOnPasteFromWord: JODIT_PASTE_PLAIN_TEXT,
+      link: {
+        openInNewTabCheckbox: true,
+        modeClassName: '',
+      },
       uploader,
       style: JODIT_EDITOR_STYLE,
+      editorCssClass: 'jodit-cms-editor',
     }),
     [controls, uploader]
   );

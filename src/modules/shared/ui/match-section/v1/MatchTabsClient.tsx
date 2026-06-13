@@ -14,6 +14,7 @@ import {
   faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import TicketBuyLink from '@/modules/shared/ui/TicketBuyLink';
+import CountdownTimer from './CountdownTimer';
 import MatchClubBadge from './MatchClubBadge';
 import MatchStadiumButton from '../../MatchStadiumButton';
 import {
@@ -34,6 +35,10 @@ import {
   getTablePositionForClub,
   MATCH_OUTCOME_LABEL,
 } from '../utils';
+import {
+  formatSiteMatchDateWithWeekday,
+  formatSiteTime,
+} from '@/lib/date-utils';
 
 const TEAM_LINKS: Record<MatchTabKey, string> = {
   osnova: '/team/main/calendar',
@@ -48,31 +53,11 @@ const TEAM_TABLE_LINKS: Record<MatchTabKey, string> = {
 };
 
 function formatMatchDate(iso: string, withTime: boolean) {
-  const d = new Date(iso);
-  const weekdays = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
-  const months = [
-    'января',
-    'февраля',
-    'марта',
-    'апреля',
-    'мая',
-    'июня',
-    'июля',
-    'августа',
-    'сентября',
-    'октября',
-    'ноября',
-    'декабря',
-  ];
-  const date = `${weekdays[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  if (!withTime) return date;
-  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  return `${date} · ${time}`;
+  return formatSiteMatchDateWithWeekday(iso, withTime);
 }
 
 function formatKickoff(iso: string) {
-  const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return formatSiteTime(iso);
 }
 
 function MatchCardShell({

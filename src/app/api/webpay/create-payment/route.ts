@@ -1,5 +1,9 @@
 // src/app/api/webpay/create-payment/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { isUnpaidOrderStatus } from '@/lib/order-status';
+import { rejectIfUnpaidOrderExpired } from '@/lib/shop-order-expiry';
+import { normalizeOrderNumber } from '@/lib/shop-order-fulfillment';
 import { getWebPayFormParams } from '@/lib/webpay';
 
 export async function POST(request: NextRequest) {
@@ -18,6 +22,30 @@ export async function POST(request: NextRequest) {
 
     if (!orderId || !items || !total) {
       return NextResponse.json({ error: 'orderId, items and total are required' }, { status: 400 });
+    }
+
+    const trackingId = normalizeOrderNumber(String(orderId));
+    const order = await prisma.order.findFirst({
+      where: { orderNumber: trackingId },
+    });
+
+    if (!order) {
+      return NextResponse.json({ error: 'Заказ не найден' }, { status: 404 });
+    }
+
+    if (isUnpaidOrderStatus(order.status)) {
+      const expired = await rejectIfUnpaidOrderExpired(order);
+      if (expired) {
+        return NextResponse.json(
+          { error: 'Время на оплату заказа истекло. Оформите заказ заново.' },
+          { status: 410 }
+        );
+      }
+    } else if (order.status === 'cancelled') {
+      return NextResponse.json(
+        { error: 'Заказ отменён. Оформите заказ заново.' },
+        { status: 410 }
+      );
     }
 
     // Если есть доставка — добавляем как товар

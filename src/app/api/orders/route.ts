@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendOrderEmails } from '@/lib/mailer';
+import { isUnpaidOrderStatus } from '@/lib/order-status';
 import {
   InsufficientStockError,
   reserveStock,
@@ -46,12 +47,27 @@ export async function POST(request: NextRequest) {
     const shouldReserveStock = !data.skipStockUpdate;
     const stockLines = toStockLines(items);
 
+    const deliveryCountryId =
+      typeof data.deliveryCountryId === 'string' ? data.deliveryCountryId.trim() || null : null;
+    let deliveryCountryName =
+      typeof data.deliveryCountryName === 'string' ? data.deliveryCountryName.trim() || null : null;
+
+    if (deliveryCountryId && !deliveryCountryName) {
+      const country = await prisma.country.findUnique({
+        where: { id: deliveryCountryId },
+        select: { name: true },
+      });
+      deliveryCountryName = country?.name ?? null;
+    }
+
     const orderData = {
       orderNumber,
       customerName: data.customerName,
       customerEmail: data.customerEmail || null,
       customerPhone: data.customerPhone || '',
       address: data.address || null,
+      deliveryCountryId,
+      deliveryCountryName,
       comment: data.comment || null,
       deliveryPrice: data.deliveryPrice || 0,
       status: data.status || 'received',
@@ -81,7 +97,7 @@ export async function POST(request: NextRequest) {
           include: { orderitem: { include: { product: true } } },
         });
 
-    if (data.status !== 'pending_payment') {
+    if (!isUnpaidOrderStatus(String(data.status || 'received'))) {
       try {
         await sendOrderEmails(order);
       } catch (err) {

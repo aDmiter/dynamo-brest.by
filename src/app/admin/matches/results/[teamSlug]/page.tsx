@@ -1,6 +1,7 @@
 // src/app/admin/matches/results/[teamSlug]/page.tsx - Результаты матчей команды
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import { resultsMatchWhere } from '@/modules/team/lib/match-queries';
 import MatchesResultsClient from './MatchesResultsClient';
 
 interface Props {
@@ -15,7 +16,7 @@ export default async function ResultsPage({ params }: Props) {
 
   const [matches, allTeams] = await Promise.all([
     prisma.match.findMany({
-      where: { teamId: team.id, status: 'finished' },
+      where: resultsMatchWhere(team.id),
       orderBy: { matchDate: 'desc' },
       take: 100,
     }),
@@ -39,6 +40,7 @@ export default async function ResultsPage({ params }: Props) {
 
   const serialized = matches.map((m) => ({
     ...m,
+    isPublished: m.isPublished,
     matchDate: m.matchDate.toISOString(),
     createdAt: m.createdAt.toISOString(),
     updatedAt: m.updatedAt.toISOString(),

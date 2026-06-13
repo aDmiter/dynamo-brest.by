@@ -22,7 +22,10 @@ const PUBLIC_API: Array<{ methods: string[]; pattern: RegExp }> = [
   { methods: ['GET', 'HEAD'], pattern: /^\/api\/players-customization$/ },
   { methods: ['GET', 'HEAD'], pattern: /^\/api\/facilities\/[^/]+$/ },
   { methods: ['POST'], pattern: /^\/api\/orders$/ },
-  { methods: ['PUT'], pattern: /^\/api\/orders\/[^/]+$/ },
+  { methods: ['GET'], pattern: /^\/api\/orders\/[^/]+\/payment-status$/ },
+  { methods: ['PUT', 'DELETE'], pattern: /^\/api\/orders\/[^/]+$/ },
+  { methods: ['POST'], pattern: /^\/api\/shop\/cart\/stock$/ },
+  { methods: ['GET', 'HEAD'], pattern: /^\/api\/countries$/ },
   { methods: ['GET', 'POST'], pattern: /^\/api\/webpay\// },
   { methods: ['GET', 'POST'], pattern: /^\/api\/bepaid\// },
   { methods: ['GET', 'POST'], pattern: /^\/api\/auth\// },
@@ -31,7 +34,8 @@ const PUBLIC_API: Array<{ methods: string[]; pattern: RegExp }> = [
   { methods: ['POST'], pattern: /^\/api\/site-preview\/logout$/ },
   { methods: ['POST'], pattern: /^\/api\/site-locale$/ },
   { methods: ['GET'], pattern: /^\/api\/cron\// },
-  { methods: ['GET', 'POST'], pattern: /^\/api\/test-/ },
+  /** Авторизация в обработчиках через requireAdminSection */
+  { methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], pattern: /^\/api\/admin\// },
 ];
 
 /** GET публичен, мутации — по разделу */

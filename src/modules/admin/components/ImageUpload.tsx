@@ -10,13 +10,19 @@ interface ImageUploadProps {
   onChange: (url: string) => void;
   folder?: string;
   storage?: 'images' | 'club-history';
+  /** Текст кнопки при пустом value (режим добавления в галерею). */
+  addLabel?: string;
+  /** Плейсхолдер, когда value пустой (в галерее товара не нужен). */
+  showPlaceholder?: boolean;
 }
 
 export default function ImageUpload({
   value,
   onChange,
-  folder = 'news',
+  folder = 'featured',
   storage = 'images',
+  addLabel = 'Загрузить картинку',
+  showPlaceholder = true,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,13 +71,13 @@ export default function ImageUpload({
             <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>
-      ) : (
+      ) : showPlaceholder ? (
         <img
           src="/images/placeholder.jpg"
           alt="Placeholder"
           className="mb-3 max-h-40 object-contain opacity-50"
         />
-      )}
+      ) : null}
 
       <div>
         <input
@@ -88,7 +94,7 @@ export default function ImageUpload({
           className="inline-flex items-center gap-2 border border-white/20 px-4 py-2 text-sm text-gray-400 transition-colors hover:border-[#ee862c] hover:text-[#ee862c] disabled:opacity-50"
         >
           <FontAwesomeIcon icon={faUpload} />
-          {uploading ? 'Загрузка...' : value ? 'Заменить картинку' : 'Загрузить картинку'}
+          {uploading ? 'Загрузка...' : value ? 'Заменить картинку' : addLabel}
         </button>
       </div>
     </div>

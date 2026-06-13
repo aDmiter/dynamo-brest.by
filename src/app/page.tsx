@@ -15,6 +15,7 @@ import {
   localizeNewsRecord,
   localizeProducts,
 } from '@/lib/content-translations';
+import { productCatalogOrderBy } from '@/lib/product-catalog-order';
 
 export default async function Home() {
   const lang = await getSiteLangFromCookies();
@@ -40,7 +41,7 @@ export default async function Home() {
         }),
         prisma.product.findMany({
           where: { inStock: true, isFeatured: true },
-          orderBy: [{ isHit: 'desc' }, { createdAt: 'desc' }],
+          orderBy: productCatalogOrderBy,
           take: 4,
           include: { productcategory: { select: { id: true, name: true } }, manufacturer: { select: { name: true } } },
         }),

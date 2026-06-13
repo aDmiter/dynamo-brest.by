@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getBePaidCheckoutStatus, isBePaidWebhookSuccessful } from '@/lib/bepaid';
+import { getBePaidCheckoutStatus } from '@/lib/bepaid';
 import { isBePaidMockToken } from '@/config/bepaid-public';
-import { fulfillOrderPayment } from '@/lib/shop-order-fulfillment';
+import { isPaidOrderStatus } from '@/lib/order-status';
+import { fulfillOrderPayment, orderNumberLookupValues } from '@/lib/shop-order-fulfillment';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    if (order.status === 'paid' || order.status === 'received') {
+    if (isPaidOrderStatus(order.status)) {
       return NextResponse.json({
         success: true,
         orderStatus: order.status,
@@ -35,10 +36,14 @@ export async function GET(request: NextRequest) {
 
     if (token && !isBePaidMockToken(token)) {
       const checkout = await getBePaidCheckoutStatus(token);
-      if (
-        checkout.finished &&
-        (checkout.status === 'successful' || isBePaidWebhookSuccessful({ status: checkout.status }))
-      ) {
+      const trackingMatches =
+        checkout.trackingId &&
+        order.orderNumber &&
+        orderNumberLookupValues(checkout.trackingId).some((id) =>
+          orderNumberLookupValues(order.orderNumber!).includes(id)
+        );
+
+      if (checkout.finished && checkout.status === 'successful' && trackingMatches) {
         await fulfillOrderPayment(order.orderNumber);
         return NextResponse.json({
           success: true,

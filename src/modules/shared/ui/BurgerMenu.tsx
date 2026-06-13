@@ -23,6 +23,7 @@ interface MenuItem {
   slug: string;
   type: string;
   linkUrl: string | null;
+  href?: string;
   pageContent: string | null;
   parentId: string | null;
   isActive: boolean;
@@ -61,6 +62,7 @@ export default function BurgerMenu() {
   };
 
   const getUrl = (item: MenuItem): string => {
+    if (item.href) return item.href;
     if (item.type === 'page') return resolveMainMenuTextPageUrl(item.slug);
     if (item.linkUrl) return item.linkUrl;
     return '#';

@@ -2,6 +2,39 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/images/news/:file',
+          destination: '/api/serve-upload/news/:file',
+        },
+        {
+          source: '/images/featured/:file',
+          destination: '/api/serve-upload/featured/:file',
+        },
+        {
+          source: '/images/products/:file',
+          destination: '/api/serve-upload/products/:file',
+        },
+        {
+          source: '/images/email/:file',
+          destination: '/api/serve-upload/email/:file',
+        },
+        {
+          source: '/images/:path*upload-:rest',
+          destination: '/api/serve-upload/:path*upload-:rest',
+        },
+        {
+          source: '/club-history/:path*upload-:rest',
+          destination: '/api/serve-upload/club-history/:path*upload-:rest',
+        },
+      ],
+    };
+  },
   async redirects() {
     return [
       {

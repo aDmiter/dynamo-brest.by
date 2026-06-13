@@ -227,10 +227,21 @@
     height: auto;
   }
 
-  ul,
-  ol {
+  ul:not(.transport-services__schedule-list) {
+    list-style-type: disc;
     margin-bottom: 1rem;
     padding-left: 1.5rem;
+  }
+
+  ol {
+    list-style-type: decimal;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+
+  li {
+    display: list-item;
+    margin: 0.35em 0;
   }
 }
 

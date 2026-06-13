@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminSection } from '@/lib/admin-api-auth';
 import { prisma } from '@/lib/prisma';
-import { normalizeSitePath } from '@/lib/site-page-meta';
+import {
+  normalizeSitePath,
+  syncMenuLinksForSitePageRedirect,
+} from '@/lib/site-page-meta';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -52,6 +55,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       where: { id },
       data: update,
     });
+
+    if (update.redirectTo === null && existing.redirectTo?.trim()) {
+      const oldPublicPath = normalizeSitePath(existing.redirectTo);
+      if (oldPublicPath.startsWith('/')) {
+        await syncMenuLinksForSitePageRedirect(oldPublicPath, existing.path);
+      }
+    } else if (update.redirectTo && existing.path.startsWith('/')) {
+      const publicPath = normalizeSitePath(update.redirectTo);
+      if (publicPath.startsWith('/')) {
+        await syncMenuLinksForSitePageRedirect(existing.path, publicPath);
+      }
+    }
 
     return NextResponse.json(page);
   } catch (error) {

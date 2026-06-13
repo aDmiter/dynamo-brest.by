@@ -78,6 +78,8 @@ h6 {
 @import 'standings-table';
 @import 'match-protocol-modal';
 @import 'cms-youtube-embed';
+@import 'cms-html-content';
+@import 'news-article';
 
 // Админка: select в стиле тёмной темы (color-scheme: dark — читаемый список option в Chrome/Windows)
 .admin-app select {

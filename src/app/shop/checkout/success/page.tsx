@@ -18,15 +18,13 @@ export default function SuccessPage() {
     searchParams.get('token') ||
     (typeof window !== 'undefined' ? sessionStorage.getItem('bepaid_payment_token') : null);
 
-  const initialPaid =
-    !orderId ? false : USE_WEBPAY ? Boolean(wsbTid) : bepaidStatus === 'successful';
-
   const [status, setStatus] = useState<'loading' | 'paid' | 'failed'>(
-    !orderId ? 'failed' : initialPaid ? 'paid' : 'loading'
+    !orderId ? 'failed' : 'loading'
   );
   const [errorMessage, setErrorMessage] = useState(!orderId ? 'Номер заказа не найден' : '');
   const [attemptCount, setAttemptCount] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confirmedRef = useRef(false);
 
   const clearPaidSession = useCallback(() => {
     sessionStorage.removeItem('pending_order_id');
@@ -36,84 +34,65 @@ export default function SuccessPage() {
     setStatus('paid');
   }, []);
 
-  const finalizePaid = async () => {
+  const confirmPaidOnServer = useCallback(async (): Promise<boolean> => {
+    if (!orderId) return false;
+
     if (USE_WEBPAY) {
-      const pendingOrderId = sessionStorage.getItem('pending_order_id');
-      if (pendingOrderId) {
-        await fetch(`/api/orders/${pendingOrderId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'paid' }),
-        });
-      }
+      if (!wsbTid) return false;
+      const res = await fetch(
+        `/api/webpay/callback?wsb_order_num=${encodeURIComponent(orderId)}&wsb_tid=${encodeURIComponent(wsbTid)}`
+      );
+      return res.ok;
     }
-    clearPaidSession();
-  };
+
+    const token =
+      bepaidToken ||
+      (typeof window !== 'undefined' ? sessionStorage.getItem('bepaid_payment_token') : null);
+    if (!token) return false;
+
+    const url = `/api/bepaid/status?orderNum=${encodeURIComponent(orderId)}&token=${encodeURIComponent(token)}`;
+    const res = await fetch(url);
+    if (!res.ok) return false;
+    const data = (await res.json()) as { isPaid?: boolean };
+    return Boolean(data.isPaid);
+  }, [orderId, wsbTid, bepaidToken]);
 
   useEffect(() => {
-    if (!orderId || !USE_WEBPAY || !wsbTid) return;
-
-    fetch(`/api/webpay/callback?wsb_order_num=${orderId}&wsb_tid=${wsbTid}`)
-      .then((r) => r.json())
-      .then(() => finalizePaid())
-      .catch((err) => console.error('❌ WebPay return:', err));
-  }, [orderId, wsbTid]);
-
-  useEffect(() => {
-    if (!orderId || USE_WEBPAY) return;
-    if (bepaidStatus !== 'successful') return;
-
-    let cancelled = false;
-    void (async () => {
-      const token = sessionStorage.getItem('bepaid_payment_token');
-      try {
-        const url = `/api/bepaid/status?orderNum=${encodeURIComponent(orderId)}${
-          token ? `&token=${encodeURIComponent(token)}` : ''
-        }`;
-        await fetch(url);
-      } catch (e) {
-        console.error('bePaid: подтверждение оплаты со страницы успеха', e);
-      }
-      if (!cancelled) clearPaidSession();
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId, bepaidStatus, clearPaidSession]);
-
-  useEffect(() => {
-    if (!orderId || (USE_WEBPAY && !wsbTid) || (!USE_WEBPAY && bepaidStatus === 'successful')) {
+    if (!orderId) return;
+    if (USE_WEBPAY && !wsbTid) {
+      setStatus('failed');
+      setErrorMessage('Не удалось подтвердить оплату WebPay.');
+      return;
+    }
+    if (!USE_WEBPAY && bepaidStatus !== 'successful') {
+      setStatus('failed');
+      setErrorMessage('Оплата не была завершена.');
       return;
     }
 
-    const statusUrl = USE_WEBPAY
-      ? `/api/webpay/status?orderNum=${orderId}`
-      : `/api/bepaid/status?orderNum=${orderId}${bepaidToken ? `&token=${encodeURIComponent(bepaidToken)}` : ''}`;
-
     const maxAttempts = 10;
     let attempts = 0;
+    let cancelled = false;
 
     const checkStatus = async () => {
+      if (cancelled || confirmedRef.current) return;
+
       try {
         attempts++;
         setAttemptCount(attempts);
 
-        const res = await fetch(statusUrl);
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.isPaid) {
-            await finalizePaid();
-            return;
-          }
+        const ok = await confirmPaidOnServer();
+        if (ok) {
+          confirmedRef.current = true;
+          clearPaidSession();
+          return;
         }
 
         if (attempts < maxAttempts) {
           timerRef.current = setTimeout(checkStatus, 3000);
         } else {
           setStatus('failed');
-          setErrorMessage('Не удалось подтвердить оплату автоматически.');
+          setErrorMessage('Не удалось подтвердить оплату. Если деньги списаны — свяжитесь с нами.');
         }
       } catch {
         if (attempts < maxAttempts) {
@@ -128,9 +107,10 @@ export default function SuccessPage() {
     timerRef.current = setTimeout(checkStatus, 2000);
 
     return () => {
+      cancelled = true;
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [orderId, wsbTid, bepaidStatus, bepaidToken]);
+  }, [orderId, wsbTid, bepaidStatus, confirmPaidOnServer, clearPaidSession]);
 
   return (
     <div

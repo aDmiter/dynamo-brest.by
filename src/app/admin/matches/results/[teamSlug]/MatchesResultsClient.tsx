@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faUsers } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import Image from 'next/image';
+import ToggleButton from '@/modules/admin/components/ToggleButton';
 
 interface OpponentInfo {
   id: string;
@@ -29,6 +30,7 @@ interface Match {
   isHome: boolean;
   attendance: number | null;
   hasProtocol?: boolean;
+  isPublished: boolean;
 }
 
 interface Props {
@@ -38,7 +40,7 @@ interface Props {
 }
 
 export default function MatchesResultsClient({ initialMatches, allTeams }: Props) {
-  const [matches] = useState<Match[]>(initialMatches);
+  const [matches, setMatches] = useState<Match[]>(initialMatches);
 
   const getLogo = (teamId: number | null) => {
     if (!teamId) return null;
@@ -68,7 +70,7 @@ export default function MatchesResultsClient({ initialMatches, allTeams }: Props
         matches.map((match) => (
           <div
             key={match.id}
-            className="border border-white/10 bg-white/5 backdrop-blur-sm p-3 flex items-center gap-4 hover:bg-white/[0.07] transition-colors"
+            className={`border border-white/10 bg-white/5 backdrop-blur-sm p-3 flex items-center gap-4 hover:bg-white/[0.07] transition-colors ${!match.isPublished ? 'opacity-60' : ''}`}
           >
             <div className="text-xs text-gray-500 w-20 text-center">
               {new Date(match.matchDate).toLocaleDateString('ru-RU', {
@@ -123,7 +125,18 @@ export default function MatchesResultsClient({ initialMatches, allTeams }: Props
               )}
             </div>
 
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-col items-end gap-2">
+              <ToggleButton
+                id={match.id}
+                apiUrl="/api/matches"
+                field="isPublished"
+                value={match.isPublished}
+                onChanged={(isPublished) =>
+                  setMatches((prev) =>
+                    prev.map((m) => (m.id === match.id ? { ...m, isPublished } : m))
+                  )
+                }
+              />
               {match.hasProtocol && (
                 <span className="text-[10px] uppercase tracking-wide text-gray-500">Протокол</span>
               )}

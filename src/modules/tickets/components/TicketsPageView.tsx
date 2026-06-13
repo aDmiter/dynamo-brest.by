@@ -23,6 +23,7 @@ import {
   ticketsPurchaseChannels,
 } from '@/modules/shared/data/tickets-content';
 import TicketsPricesTable from '@/modules/tickets/components/TicketsPricesTable';
+import '@/styles/tickets-page.scss';
 
 export interface TicketsNextMatch {
   id: string;
@@ -55,18 +56,17 @@ function formatMatchDate(iso: string) {
   });
 }
 
+function hasTicketUrl(url: string | null | undefined): boolean {
+  return Boolean(url?.trim());
+}
+
 export default function TicketsPageView({ nextMatch }: Props) {
-  const buyUrl = nextMatch?.ticketUrl || TICKETS_AFISHA_URL;
+  const ticketsOnSale = nextMatch ? hasTicketUrl(nextMatch.ticketUrl) : false;
 
   return (
     <div className="tickets-page" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
-      <section className="tickets-page__hero">
-        <img
-          src="/images/Stadium.jpeg"
-          alt=""
-          className="tickets-page__hero-bg"
-          aria-hidden
-        />
+      <section className="tickets-page__hero" aria-label="Стадион ОСК «Брестский»">
+        <div className="tickets-page__hero-bg" aria-hidden />
         <div className="tickets-page__hero-overlay" aria-hidden />
         <div className="tickets-page__glow tickets-page__glow--accent" aria-hidden />
         <div className="tickets-page__glow tickets-page__glow--primary" aria-hidden />
@@ -99,45 +99,36 @@ export default function TicketsPageView({ nextMatch }: Props) {
               </div>
             </div>
 
-            <div className="tickets-glass tickets-glass--accent tickets-page__match-card">
-              {nextMatch ? (
-                <>
-                  <p className="tickets-page__match-label">Следующий домашний матч</p>
-                  <p className="tickets-page__match-teams">
-                    {nextMatch.homeTeam}
-                    <span style={{ color: 'var(--color-text-stat)', fontWeight: 600 }}> — </span>
-                    {nextMatch.awayTeam}
-                  </p>
-                  <p className="tickets-page__match-meta">
-                    {nextMatch.tournament && <>{nextMatch.tournament} · </>}
-                    {formatMatchDate(nextMatch.matchDate)}
-                    {nextMatch.stadium && (
-                      <>
-                        <br />
-                        {nextMatch.stadium}
-                      </>
-                    )}
-                  </p>
-                  <TicketBuyLink href={buyUrl} className="tickets-page__cta">
+            {nextMatch && (
+              <div className="tickets-glass tickets-glass--accent tickets-page__match-card">
+                <p className="tickets-page__match-label">Следующий домашний матч</p>
+                <p className="tickets-page__match-teams">
+                  {nextMatch.homeTeam}
+                  <span style={{ color: 'var(--color-text-stat)', fontWeight: 600 }}> — </span>
+                  {nextMatch.awayTeam}
+                </p>
+                <p className="tickets-page__match-meta">
+                  {nextMatch.tournament && <>{nextMatch.tournament} · </>}
+                  {formatMatchDate(nextMatch.matchDate)}
+                  {nextMatch.stadium && (
+                    <>
+                      <br />
+                      {nextMatch.stadium}
+                    </>
+                  )}
+                </p>
+                {ticketsOnSale ? (
+                  <TicketBuyLink href={nextMatch.ticketUrl!.trim()} className="tickets-page__cta">
                     Купить билеты
                     <FontAwesomeIcon icon={faArrowRight} />
                   </TicketBuyLink>
-                </>
-              ) : (
-                <>
-                  <p className="tickets-page__match-label">Онлайн-покупка</p>
-                  <p className="tickets-page__match-teams">Билеты на все матчи</p>
-                  <p className="tickets-page__match-meta">
-                    Расписание домашних игр — в календаре команды. Покупка через официального
-                    оператора.
-                  </p>
-                  <TicketBuyLink href={TICKETS_AFISHA_URL} className="tickets-page__cta">
-                    Перейти к покупке
-                    <FontAwesomeIcon icon={faArrowRight} />
-                  </TicketBuyLink>
-                </>
-              )}
-            </div>
+                ) : (
+                  <span className="tickets-page__cta tickets-page__cta--soon" aria-disabled="true">
+                    Скоро в продаже
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>

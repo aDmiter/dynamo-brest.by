@@ -5,6 +5,7 @@ import { transliterate } from '@/lib/utils';
 import { auditCreateData } from '@/lib/admin-audit-route';
 import { getSiteLangFromRequest } from '@/lib/content-translations-server';
 import { localizeProducts, saveBeContentTranslations } from '@/lib/content-translations';
+import { nextProductSortOrder, productCatalogOrderBy } from '@/lib/product-catalog-order';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
         manufacturer: true,
         productsize: { orderBy: [{ sortOrder: 'asc' }, { size: 'asc' }] },
       },
-      orderBy: [{ isHit: 'desc' }, { createdAt: 'desc' }],
+      orderBy: productCatalogOrderBy,
       skip: (page - 1) * limit,
       take: limit,
     }),
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
       slug = slug + '-' + Date.now().toString().slice(-6);
     }
 
+    const isHit = Boolean(data.isHit);
     const product = await prisma.product.create({
       data: {
         name: data.name,
@@ -72,7 +74,8 @@ export async function POST(request: NextRequest) {
         images: data.images ? JSON.stringify(data.images) : '[]',
         inStock: Boolean(data.inStock),
         isFeatured: Boolean(data.isFeatured),
-        isHit: Boolean(data.isHit),
+        isHit,
+        sortOrder: await nextProductSortOrder(isHit),
         useSizes: Boolean(data.useSizes),
         quantity: data.useSizes ? 0 : data.quantity || 0,
         hasCustomization: Boolean(data.hasCustomization),

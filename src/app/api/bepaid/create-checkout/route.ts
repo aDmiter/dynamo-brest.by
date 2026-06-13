@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { bynToMinorUnits, createBePaidCheckoutToken } from '@/lib/bepaid';
 import { createBePaidMockToken, isBePaidMockMode } from '@/lib/bepaid-config';
 import { normalizeOrderNumber } from '@/lib/shop-order-fulfillment';
+import { rejectIfUnpaidOrderExpired } from '@/lib/shop-order-expiry';
+import { isUnpaidOrderStatus } from '@/lib/order-status';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,6 +34,21 @@ export async function POST(request: NextRequest) {
 
     if (Number(order.total) !== Number(total)) {
       return NextResponse.json({ error: 'Сумма заказа не совпадает' }, { status: 400 });
+    }
+
+    if (isUnpaidOrderStatus(order.status)) {
+      const expired = await rejectIfUnpaidOrderExpired(order);
+      if (expired) {
+        return NextResponse.json(
+          { error: 'Время на оплату заказа истекло. Оформите заказ заново.' },
+          { status: 410 }
+        );
+      }
+    } else if (order.status === 'cancelled') {
+      return NextResponse.json(
+        { error: 'Заказ отменён. Оформите заказ заново.' },
+        { status: 410 }
+      );
     }
 
     if (!isBePaidMockMode() && !process.env.BEPAID_SHOP_ID?.trim()) {

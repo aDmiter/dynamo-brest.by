@@ -154,10 +154,11 @@ export default function SitePageMetaAdmin({ initialPages }: Props) {
       </div>
 
       <p className="text-sm text-gray-400">
-        Укажите title и description для SEO. Поле «Редирект» отправит посетителей с исходного URL на
-        новый (относительный путь или полный URL). Счётчик посещений увеличивается при каждом заходе
-        на страницу. Для всех игроков сразу — строка «Игрок (шаблон)»; для одного игрока — его URL
-        после «Обновить список страниц».
+        Укажите title и description для SEO. Поле «Новый URL» задаёт публичный адрес страницы: старый
+        путь будет перенаправлять на новый, новый адрес откроет ту же страницу, ссылки в меню
+        обновятся автоматически. Можно указать внешний URL (https://…) — тогда сработает только
+        редирект. Счётчик визитов ведётся по исходной строке в таблице. Для всех игроков сразу —
+        строка «Игрок (шаблон)»; для одного игрока — его URL после «Обновить список страниц».
       </p>
 
       <div className="border border-white/10 overflow-x-auto">
@@ -166,7 +167,7 @@ export default function SitePageMetaAdmin({ initialPages }: Props) {
             <tr>
               <th className="p-3 font-medium">Страница</th>
               <th className="p-3 font-medium">Title</th>
-              <th className="p-3 font-medium">Редирект</th>
+              <th className="p-3 font-medium">Новый URL</th>
               <th className="p-3 font-medium text-right">Визиты</th>
               <th className="p-3 w-24" />
             </tr>
@@ -224,7 +225,7 @@ export default function SitePageMetaAdmin({ initialPages }: Props) {
           <div className="w-full max-w-lg border border-white/10 bg-[#0D1225] p-6 shadow-2xl space-y-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-white">Meta и редирект</h3>
+                <h3 className="text-lg font-bold text-white">Meta и URL</h3>
                 <p className="text-sm text-gray-500 font-mono mt-1">{editing.path}</p>
               </div>
               <button
@@ -273,7 +274,7 @@ export default function SitePageMetaAdmin({ initialPages }: Props) {
               />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Редирект на URL</label>
+              <label className="text-sm text-gray-400 mb-1 block">Новый публичный URL</label>
               <Input
                 value={form.redirectTo}
                 onChange={(e) => setForm({ ...form, redirectTo: e.target.value })}
@@ -283,7 +284,7 @@ export default function SitePageMetaAdmin({ initialPages }: Props) {
               />
               {editing.isTemplate && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Для шаблонов редирект недоступен — настройте конкретный URL.
+                  Для шаблонов смена URL недоступна — настройте конкретную страницу.
                 </p>
               )}
             </div>

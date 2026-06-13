@@ -18,10 +18,6 @@ interface Product {
   manufacturer?: { name: string } | null;
 }
 
-function sortHitsFirst(list: Product[]): Product[] {
-  return [...list].sort((a, b) => Number(b.isHit) - Number(a.isHit));
-}
-
 interface Category {
   id: string;
   name: string;
@@ -46,9 +42,8 @@ export default function CatalogClient({ products, categories }: Props) {
   }, [products]);
 
   const visible = useMemo(() => {
-    const filtered =
-      filter === 'ALL' ? products : products.filter((p) => p.productcategory?.id === filter);
-    return sortHitsFirst(filtered);
+    if (filter === 'ALL') return products;
+    return products.filter((p) => p.productcategory?.id === filter);
   }, [products, filter]);
 
   return (

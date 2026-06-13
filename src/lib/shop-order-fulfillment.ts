@@ -1,6 +1,11 @@
 import { prisma } from '@/lib/prisma';
 import { sendOrderEmails } from '@/lib/mailer';
-import { incrementOrderTotalSold } from '@/lib/shop-stock';
+import { isPaidOrderStatus, isUnpaidOrderStatus } from '@/lib/order-status';
+import {
+  incrementOrderTotalSold,
+  reserveStock,
+  type StockLineItem,
+} from '@/lib/shop-stock';
 
 export function normalizeOrderNumber(value: string): string {
   const clean = value.replace(/^#/, '');
@@ -61,8 +66,36 @@ export async function fulfillOrderPayment(orderNumber: string): Promise<{
     return { success: false, error: 'Order not found' };
   }
 
-  const alreadyPaid = order.status === 'paid' || order.status === 'received';
-  const wasPending = order.status === 'pending_payment';
+  const alreadyPaid = isPaidOrderStatus(order.status);
+
+  if (order.status === 'cancelled') {
+    const stockLines: StockLineItem[] = order.orderitem.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      size: item.size,
+    }));
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        await reserveStock(stockLines, tx);
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: 'paid', stockReserved: true },
+        });
+        await incrementOrderTotalSold(order.id, tx);
+      });
+      try {
+        await sendOrderEmails(order, 'paid');
+      } catch (e) {
+        console.error('Ошибка отправки письма после оплаты:', e);
+      }
+      return { success: true, status: 'paid' };
+    } catch {
+      return { success: false, error: 'Заказ отменён, товар недоступен' };
+    }
+  }
+
+  const wasPending = isUnpaidOrderStatus(order.status);
 
   if (!alreadyPaid) {
     await prisma.order.update({

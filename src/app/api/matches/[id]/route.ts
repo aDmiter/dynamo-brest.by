@@ -40,6 +40,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (data.attendance !== undefined) updateData.attendance = data.attendance;
     if (data.teamId !== undefined) updateData.teamId = data.teamId;
     if (data.ticketUrl !== undefined) updateData.ticketUrl = data.ticketUrl;
+    if (data.isPublished !== undefined) updateData.isPublished = Boolean(data.isPublished);
 
     const match = await prisma.match.update({
       where: { id },

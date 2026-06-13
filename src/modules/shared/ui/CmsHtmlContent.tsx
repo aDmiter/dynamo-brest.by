@@ -11,7 +11,11 @@ import {
   buildYoutubeIframeHtml,
   resolveCmsYoutubeVideoId,
 } from '@/lib/youtube-embed';
+import { normalizeCmsListElements } from '@/lib/cms-html-normalize';
+import { parseCmsStandingsEmbed } from '@/lib/cms-standings';
+import CmsStandingsEmbed from '@/modules/news/components/CmsStandingsEmbed';
 import TransportPhotoGallery from '@/modules/shared/ui/TransportPhotoGallery';
+import '@/styles/cms-html-content.scss';
 
 interface CmsHtmlContentProps {
   html: string;
@@ -43,6 +47,23 @@ function hydrateGalleries(container: HTMLElement): Root[] {
   return roots;
 }
 
+function hydrateStandingsEmbeds(container: HTMLElement): Root[] {
+  const roots: Root[] = [];
+
+  container.querySelectorAll('.cms-standings-embed[data-cms-standings]').forEach((el) => {
+    const cometId = parseCmsStandingsEmbed(el);
+    if (!cometId) return;
+
+    const mountPoint = document.createElement('div');
+    el.replaceWith(mountPoint);
+    const root = createRoot(mountPoint);
+    root.render(<CmsStandingsEmbed cometId={cometId} />);
+    roots.push(root);
+  });
+
+  return roots;
+}
+
 function hydrateYoutubeEmbeds(container: HTMLElement): void {
   container.querySelectorAll('.cms-youtube-embed').forEach((el) => {
     const videoId = resolveCmsYoutubeVideoId(el);
@@ -64,13 +85,17 @@ export default function CmsHtmlContent({ html, className }: CmsHtmlContentProps)
     if (!container) return;
 
     container.innerHTML = html;
+    normalizeCmsListElements(container);
     hydrateYoutubeEmbeds(container);
-    const roots = hydrateGalleries(container);
+    const galleryRoots = hydrateGalleries(container);
+    const standingsRoots = hydrateStandingsEmbeds(container);
 
     return () => {
-      roots.forEach((root) => root.unmount());
+      [...galleryRoots, ...standingsRoots].forEach((root) => root.unmount());
     };
   }, [html]);
 
-  return <div ref={ref} className={className} suppressHydrationWarning />;
+  const mergedClassName = ['cms-html-content', className].filter(Boolean).join(' ');
+
+  return <div ref={ref} className={mergedClassName} suppressHydrationWarning />;
 }

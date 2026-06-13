@@ -224,7 +224,7 @@ export default function HeroSlider({ featuredNews }: HeroSliderProps) {
 
       <div className="hero__scroll-indicator absolute bottom-8 left-1/2 z-10 -translate-x-1/2">
         <div className="flex flex-col items-center gap-2 text-white/60">
-          <span className="text-[10px] uppercase tracking-[0.4em]">Scroll</span>
+          <span className="text-[10px] uppercase tracking-[0.4em]">Листайте</span>
           <div className="h-12 w-[1px] bg-white/30" />
         </div>
       </div>

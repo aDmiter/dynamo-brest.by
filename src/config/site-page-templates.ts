@@ -54,7 +54,7 @@ export function resolveSitePageTemplatePath(pathname: string): string | null {
 export const SITE_PAGE_TEMPLATE_PLACEHOLDERS: Record<SitePageTemplateId, string[]> = {
   player: ['{fullName}', '{firstName}', '{lastName}', '{number}', '{position}', '{team}'],
   news: ['{title}', '{category}'],
-  product: ['{name}', '{category}'],
+  product: ['{name}', '{price}', '{category}'],
   'cms-page': ['{title}'],
   'legal-page': ['{title}'],
 };

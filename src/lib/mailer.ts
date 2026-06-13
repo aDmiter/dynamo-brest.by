@@ -1,5 +1,4 @@
 // src/lib/mailer.ts
-import nodemailer from 'nodemailer';
 import {
   buildAdminNewOrderEmail,
   buildAdminStatusEmail,
@@ -8,16 +7,7 @@ import {
   mapOrderForEmail,
   type OrderEmailData,
 } from '@/lib/order-email';
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: 'divid.joomlin@gmail.com',
-    pass: 'tbckytarhjtnjjkg',
-  },
-});
+import { createMailTransporter, getMailFrom } from '@/lib/mail-config';
 
 const statusLabels: Record<string, string> = {
   received: 'Получен',
@@ -28,13 +18,18 @@ const statusLabels: Record<string, string> = {
   cancelled: 'Отменён',
 };
 
+function getTransporter() {
+  return createMailTransporter();
+}
+
 export async function sendNewOrderEmail(order: OrderEmailData) {
   const { html } = buildCustomerNewOrderEmail(order);
+  const from = getMailFrom();
 
   if (order.customerEmail) {
     try {
-      await transporter.sendMail({
-        from: 'Динамо-Брест <divid.joomlin@gmail.com>',
+      await getTransporter().sendMail({
+        from,
         to: order.customerEmail,
         subject: `Заказ №${order.orderNumber} принят`,
         html,
@@ -47,8 +42,8 @@ export async function sendNewOrderEmail(order: OrderEmailData) {
 
   if (process.env.ADMIN_EMAIL) {
     try {
-      await transporter.sendMail({
-        from: 'Динамо-Брест <divid.joomlin@gmail.com>',
+      await getTransporter().sendMail({
+        from,
         to: process.env.ADMIN_EMAIL,
         subject: `Новый заказ №${order.orderNumber} — ${order.customerName}`,
         html: buildAdminNewOrderEmail(order),
@@ -62,6 +57,7 @@ export async function sendNewOrderEmail(order: OrderEmailData) {
 
 export async function sendStatusUpdateEmail(order: OrderEmailData, newStatus: string) {
   const statusLabel = statusLabels[newStatus] || newStatus;
+  const from = getMailFrom();
   let customerHtml: string | null = null;
   try {
     customerHtml = buildCustomerStatusEmail(order, statusLabel, newStatus).html;
@@ -71,8 +67,8 @@ export async function sendStatusUpdateEmail(order: OrderEmailData, newStatus: st
 
   if (order.customerEmail && customerHtml) {
     try {
-      await transporter.sendMail({
-        from: 'Динамо-Брест <divid.joomlin@gmail.com>',
+      await getTransporter().sendMail({
+        from,
         to: order.customerEmail,
         subject: `Заказ №${order.orderNumber} — ${statusLabel}`,
         html: customerHtml,
@@ -85,8 +81,8 @@ export async function sendStatusUpdateEmail(order: OrderEmailData, newStatus: st
 
   if (process.env.ADMIN_EMAIL) {
     try {
-      await transporter.sendMail({
-        from: 'Динамо-Брест <divid.joomlin@gmail.com>',
+      await getTransporter().sendMail({
+        from,
         to: process.env.ADMIN_EMAIL,
         subject: `Заказ №${order.orderNumber} — ${statusLabel}`,
         html: buildAdminStatusEmail(order, statusLabel, newStatus),

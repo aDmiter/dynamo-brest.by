@@ -1,4 +1,6 @@
 // src/lib/format-match-datetime.ts
+import { SITE_TIMEZONE } from '@/lib/date-utils';
+
 const TBD_THRESHOLD_YEAR = 1971;
 
 export function isMatchDateTbd(date: Date): boolean {
@@ -16,11 +18,13 @@ export function formatMatchDateTime(date: Date): {
 
   return {
     dateLabel: date.toLocaleDateString('ru-RU', {
+      timeZone: SITE_TIMEZONE,
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     }),
     timeLabel: date.toLocaleTimeString('ru-RU', {
+      timeZone: SITE_TIMEZONE,
       hour: '2-digit',
       minute: '2-digit',
     }),

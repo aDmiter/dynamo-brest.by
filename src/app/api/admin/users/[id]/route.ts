@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { requireSuperAdmin } from '@/lib/admin-api-auth';
@@ -64,14 +65,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const data = await request.json();
-    const update: {
-      email?: string;
-      name?: string;
-      password?: string;
-      role?: string;
-      isActive?: boolean;
-      permissions?: AdminSectionId[] | null;
-    } = {};
+    const update: Prisma.adminUpdateInput = {};
 
     if (data.email !== undefined) {
       const email = String(data.email).trim().toLowerCase();
@@ -116,7 +110,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }
       update.role = role;
       if (role === SUPERADMIN_ROLE) {
-        update.permissions = null;
+        update.permissions = Prisma.DbNull;
       }
     }
 
@@ -140,7 +134,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (data.permissions !== undefined) {
       const role = update.role ?? existing.role;
       if (role === SUPERADMIN_ROLE) {
-        update.permissions = null;
+        update.permissions = Prisma.DbNull;
       } else {
         const permissions: AdminSectionId[] = Array.isArray(data.permissions)
           ? data.permissions.filter((pid: string): pid is AdminSectionId =>

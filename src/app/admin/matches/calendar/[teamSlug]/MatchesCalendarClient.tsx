@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
+import ToggleButton from '@/modules/admin/components/ToggleButton';
 import StadiumModal from '@/modules/shared/ui/StadiumModal';
 
 interface OpponentInfo {
@@ -33,6 +34,7 @@ interface Match {
   tournament: string | null;
   round: string | null;
   isHome: boolean;
+  isPublished: boolean;
 }
 
 interface Props {
@@ -55,10 +57,11 @@ function cleanTeamName(name: string): string {
 
 export default function MatchesCalendarClient({ initialMatches, teamSlug, allTeams }: Props) {
   const [stadiumModal, setStadiumModal] = useState<number | null>(null);
+  const [matches, setMatches] = useState(initialMatches);
 
   const isTBD = (dateStr: string) => new Date(dateStr).getFullYear() < 2000;
 
-  const sortedMatches = [...initialMatches].sort((a, b) => {
+  const sortedMatches = [...matches].sort((a, b) => {
     const aTBD = isTBD(a.matchDate);
     const bTBD = isTBD(b.matchDate);
     if (aTBD && !bTBD) return 1;
@@ -110,7 +113,7 @@ export default function MatchesCalendarClient({ initialMatches, teamSlug, allTea
             return (
               <div
                 key={match.id}
-                className={`border border-white/10 bg-white/5 backdrop-blur-sm p-4 flex items-center gap-6 flex-wrap hover:bg-white/[0.07] transition-colors ${tbd ? 'opacity-60' : ''}`}
+                className={`border border-white/10 bg-white/5 backdrop-blur-sm p-4 flex items-center gap-6 flex-wrap hover:bg-white/[0.07] transition-colors ${tbd || !match.isPublished ? 'opacity-60' : ''}`}
               >
                 <div className="text-center min-w-[80px]">
                   {tbd ? (
@@ -187,7 +190,18 @@ export default function MatchesCalendarClient({ initialMatches, teamSlug, allTea
                   {!match.isHome && <p className="text-[10px] text-blue-400 mt-1">Выезд</p>}
                 </div>
 
-                <div>
+                <div className="flex flex-col items-end gap-2">
+                  <ToggleButton
+                    id={match.id}
+                    apiUrl="/api/matches"
+                    field="isPublished"
+                    value={match.isPublished}
+                    onChanged={(isPublished) =>
+                      setMatches((prev) =>
+                        prev.map((m) => (m.id === match.id ? { ...m, isPublished } : m))
+                      )
+                    }
+                  />
                   <Link
                     href={`/admin/matches/${match.id}/edit`}
                     className="text-sm text-[#ee862c] hover:underline"

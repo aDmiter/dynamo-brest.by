@@ -7,6 +7,7 @@
 
 .tickets-page__glow {
   position: absolute;
+  z-index: 1;
   border-radius: 50%;
   filter: blur(80px);
   pointer-events: none;
@@ -49,22 +50,33 @@
 
 .tickets-page__hero {
   position: relative;
+  left: 50%;
+  right: 50%;
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: -50vw;
+  margin-right: -50vw;
   min-height: min(88vh, 820px);
   display: flex;
   align-items: flex-end;
   overflow: hidden;
+  isolation: isolate;
 }
 
 .tickets-page__hero-bg {
   position: absolute;
   inset: 0;
-  object-fit: cover;
-  object-position: center 30%;
+  z-index: 0;
+  background-image: url('/images/Stadium.jpeg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
 .tickets-page__hero-overlay {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background:
     linear-gradient(180deg, rgba(13, 17, 23, 0.35) 0%, rgba(13, 17, 23, 0.92) 72%, var(--color-bg-main) 100%),
     linear-gradient(90deg, rgba(13, 17, 23, 0.88) 0%, transparent 55%);
@@ -81,6 +93,7 @@
 
 .tickets-page__watermark {
   position: absolute;
+  z-index: 1;
   top: 50%;
   right: -16px;
   transform: translateY(-58%);
@@ -211,6 +224,20 @@
   transform: translateY(-1px);
   box-shadow: 0 12px 32px var(--color-accent-20);
   background: var(--color-accent-hover, var(--color-accent));
+}
+
+.tickets-page__cta--soon {
+  cursor: default;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--color-border, rgba(255, 255, 255, 0.12));
+  pointer-events: none;
+
+  &:hover {
+    transform: none;
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.06);
+  }
 }
 
 .tickets-page__content {

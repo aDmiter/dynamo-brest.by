@@ -1,4 +1,4 @@
-import { execFileSync } from 'child_process';
+import https from 'node:https';
 import { prisma } from '@/lib/prisma';
 
 export const BELPOST_PARCEL_URL = 'https://tarifikator.belpost.by/forms/international/parcel.php';
@@ -10,7 +10,15 @@ const FORM_DEFAULTS = {
   weight: '1',
 } as const;
 
-const REQUEST_DELAY_MS = 300;
+const REQUEST_DELAY_MS = 150;
+const REQUEST_TIMEOUT_MS = 15_000;
+
+/** Один Agent на все запросы — быстрее и меньше нагрузка на SSL. */
+const belpostHttpsAgent = new https.Agent({
+  rejectUnauthorized: false,
+  keepAlive: true,
+  maxSockets: 4,
+});
 
 export type BelpostSyncItemStatus = 'updated' | 'unavailable' | 'skipped' | 'error';
 
@@ -29,6 +37,15 @@ export interface BelpostSyncSummary {
   skipped: number;
   errors: number;
   items: BelpostSyncItemResult[];
+  total?: number;
+  processed?: number;
+  nextOffset?: number | null;
+  done?: boolean;
+}
+
+export interface BelpostSyncOptions {
+  offset?: number;
+  limit?: number;
 }
 
 /** Округление вверх до десятков + 20 BYN. */
@@ -49,42 +66,73 @@ export function isBelpostShippingUnavailable(html: string): boolean {
 async function fetchBelpostHtml(countryCode: string): Promise<string> {
   const body = new URLSearchParams(FORM_DEFAULTS);
   body.set('to', countryCode);
+  const bodyStr = body.toString();
+  const url = new URL(BELPOST_PARCEL_URL);
 
-  try {
-    const res = await fetch(BELPOST_PARCEL_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (compatible; dynamo-brest-belpost-sync/1.0)',
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: url.hostname,
+        path: `${url.pathname}${url.search}`,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(bodyStr),
+          'User-Agent': 'Mozilla/5.0 (compatible; dynamo-brest-belpost-sync/1.0)',
+        },
+        // У tarifikator.belpost.by неполная цепочка SSL — Node fetch/curl ведут себя по-разному.
+        rejectUnauthorized: false,
+        agent: belpostHttpsAgent,
+        timeout: REQUEST_TIMEOUT_MS,
       },
-      body: body.toString(),
-      signal: AbortSignal.timeout(25_000),
-    });
-    if (res.ok) return await res.text();
-  } catch {
-    /* fallback curl */
-  }
+      (res) => {
+        let data = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        res.on('end', () => {
+          if (res.statusCode && res.statusCode >= 400) {
+            reject(new Error(`HTTP ${res.statusCode} от tarifikator.belpost.by`));
+            return;
+          }
+          resolve(data);
+        });
+      }
+    );
 
-  const curlBin = process.platform === 'win32' ? 'curl.exe' : 'curl';
-  return execFileSync(
-    curlBin,
-    ['-sL', '-A', 'Mozilla/5.0', '-X', 'POST', BELPOST_PARCEL_URL, '--data', body.toString()],
-    { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 }
-  );
+    req.on('error', (error) => {
+      reject(error instanceof Error ? error : new Error(String(error)));
+    });
+    req.on('timeout', () => {
+      req.destroy(new Error('Таймаут запроса к tarifikator.belpost.by'));
+    });
+
+    req.write(bodyStr);
+    req.end();
+  });
 }
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-export async function syncBelpostCountryPrices(): Promise<BelpostSyncSummary> {
+export async function syncBelpostCountryPrices(
+  options: BelpostSyncOptions = {}
+): Promise<BelpostSyncSummary> {
   const countries = await prisma.country.findMany({
     orderBy: [{ order: 'asc' }, { name: 'asc' }],
   });
 
+  const offset = Math.max(0, options.offset ?? 0);
+  const limit =
+    options.limit === undefined || options.limit === null
+      ? countries.length
+      : Math.max(1, options.limit);
+  const batch = countries.slice(offset, offset + limit);
   const items: BelpostSyncItemResult[] = [];
 
-  for (const country of countries) {
+  for (const country of batch) {
     if (country.code === 'BY') {
       items.push({
         code: country.code,
@@ -146,11 +194,18 @@ export async function syncBelpostCountryPrices(): Promise<BelpostSyncSummary> {
     await sleep(REQUEST_DELAY_MS);
   }
 
+  const nextOffset = offset + batch.length;
+  const done = nextOffset >= countries.length;
+
   return {
     updated: items.filter((i) => i.status === 'updated').length,
     unavailable: items.filter((i) => i.status === 'unavailable').length,
     skipped: items.filter((i) => i.status === 'skipped').length,
     errors: items.filter((i) => i.status === 'error').length,
     items,
+    total: countries.length,
+    processed: nextOffset,
+    nextOffset: done ? null : nextOffset,
+    done,
   };
 }

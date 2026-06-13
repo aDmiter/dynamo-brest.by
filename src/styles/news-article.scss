@@ -1,0 +1,45 @@
+// Текст новости на публичной странице
+.news-article__body {
+  ul:not(.transport-services__schedule-list) {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin: 1em 0;
+  }
+
+  ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+    margin: 1em 0;
+  }
+
+  li {
+    display: list-item;
+    margin: 0.35em 0;
+  }
+
+  ul ul,
+  ol ol,
+  ul ol,
+  ol ul {
+    margin: 0.35em 0;
+  }
+
+  a {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+
+.news-article__body.cms-html-content {
+  ul:not(.transport-services__schedule-list) {
+    list-style-type: disc !important;
+  }
+
+  ol {
+    list-style-type: decimal !important;
+  }
+
+  li {
+    display: list-item !important;
+  }
+}

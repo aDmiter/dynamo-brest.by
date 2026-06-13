@@ -44,6 +44,7 @@ export default async function OrdersAdminPage({ searchParams }: Props) {
               <th className="p-3 text-left text-sm text-gray-400">Номер</th>
               <th className="p-3 text-left text-sm text-gray-400">Клиент</th>
               <th className="p-3 text-left text-sm text-gray-400">Телефон</th>
+              <th className="p-3 text-left text-sm text-gray-400">Страна</th>
               <th className="p-3 text-center text-sm text-gray-400">Товаров</th>
               <th className="p-3 text-right text-sm text-gray-400">Сумма</th>
               <th className="p-3 text-center text-sm text-gray-400">Статус</th>
@@ -54,7 +55,7 @@ export default async function OrdersAdminPage({ searchParams }: Props) {
           <tbody>
             {orders.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-6 text-center text-gray-500">
+                <td colSpan={9} className="p-6 text-center text-gray-500">
                   Нет заказов
                 </td>
               </tr>
@@ -69,6 +70,9 @@ export default async function OrdersAdminPage({ searchParams }: Props) {
                   </td>
                   <td className="p-3 text-sm text-white">{order.customerName}</td>
                   <td className="p-3 text-sm text-gray-400">{order.customerPhone || '—'}</td>
+                  <td className="p-3 text-sm text-gray-400">
+                    {order.deliveryCountryName || '—'}
+                  </td>
                   <td className="p-3 text-center text-sm text-white">{order.orderitem.length}</td>
                   <td className="p-3 text-right text-sm text-white font-medium">
                     {Number(order.total).toFixed(2)} BYN

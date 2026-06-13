@@ -26,6 +26,7 @@ export default async function TicketsPage() {
       where: {
         teamId: team.id,
         status: 'scheduled',
+        isPublished: true,
         isHome: true,
         matchDate: { gte: new Date() },
       },

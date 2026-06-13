@@ -2,7 +2,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faShoppingCart,
@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 import type { StockAvailability } from '@/lib/shop-stock';
 import { maxQuantityForCartLine } from '@/lib/shop-stock';
+import { UNPAID_ORDER_PAYMENT_TTL_MINUTES } from '@/config/shop-order-payment';
 
 interface CartItem {
   cartKey: string;
@@ -56,6 +57,8 @@ function toStockPayload(items: CartItem[]) {
 
 export default function CartPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const orderExpired = searchParams.get('expired') === '1';
   const [cart, setCart] = useState<CartItem[]>(getInitialCart);
   const [stockLines, setStockLines] = useState<StockAvailability[]>([]);
   const [stockLoading, setStockLoading] = useState(false);
@@ -199,9 +202,16 @@ export default function CartPage() {
           >
             Корзина пуста
           </h1>
-          <p className="mt-2" style={{ color: 'var(--color-text-stat)' }}>
-            Добавьте товары из каталога
-          </p>
+          {orderExpired ? (
+            <p className="mt-4 max-w-md mx-auto text-sm" style={{ color: 'var(--color-loss)' }}>
+              Время на оплату заказа истекло ({UNPAID_ORDER_PAYMENT_TTL_MINUTES} мин). Заказ
+              отменён, бронь снята со склада. Добавьте товары заново.
+            </p>
+          ) : (
+            <p className="mt-2" style={{ color: 'var(--color-text-stat)' }}>
+              Добавьте товары из каталога
+            </p>
+          )}
           <Link
             href="/shop/catalog"
             className="mt-8 inline-flex items-center gap-3 px-10 py-4 text-sm font-bold uppercase tracking-wider text-white transition-colors"

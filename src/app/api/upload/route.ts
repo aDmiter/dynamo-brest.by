@@ -1,7 +1,9 @@
 // src/app/api/upload/route.ts - Загрузка изображений
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
+import { access, mkdir, writeFile } from 'fs/promises';
 import path from 'path';
+import { optimizeUploadImage } from '@/lib/optimize-upload-image';
+import { getClubHistoryDir, getImagesDir } from '@/lib/public-upload-paths';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,34 +21,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Файл не найден' }, { status: 400 });
     }
 
-    const extFromName = (file.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '');
+    const extFromName = (file.name.split('.').pop() || 'jpg')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toLowerCase();
     const isImageMime = file.type.startsWith('image/');
-    const isImageExt = /^(jpe?g|png|gif|webp|svg|avif|heic)$/i.test(extFromName);
+    const isImageExt = /^(jpe?g|png|gif|webp|svg|avif|heic)$/.test(extFromName);
     if (!isImageMime && !isImageExt) {
       return NextResponse.json({ error: 'Можно загружать только изображения' }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const inputBuffer = Buffer.from(bytes);
+    const { buffer, ext } = await optimizeUploadImage(inputBuffer, extFromName || 'jpg', folderPath);
 
     const timestamp = Date.now();
-    const ext = extFromName || 'jpg';
     const fileName = `upload-${timestamp}.${ext}`;
 
     let uploadDir: string;
     let publicUrl: string;
 
     if (storage === 'club-history') {
-      uploadDir = path.join(process.cwd(), 'public', 'club-history', ...folderSegments);
+      uploadDir = getClubHistoryDir(...folderSegments);
       publicUrl = `/club-history/${folderPath}/${fileName}`;
     } else {
-      uploadDir = path.join(process.cwd(), 'public', 'images', ...folderSegments);
+      uploadDir = getImagesDir(...folderSegments);
       publicUrl = `/images/${folderPath}/${fileName}`;
     }
 
     await mkdir(uploadDir, { recursive: true });
     const filePath = path.join(uploadDir, fileName);
     await writeFile(filePath, buffer);
+    await access(filePath);
 
     return NextResponse.json({
       url: publicUrl,

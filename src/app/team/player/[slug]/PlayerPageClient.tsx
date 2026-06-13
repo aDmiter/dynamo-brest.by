@@ -339,7 +339,7 @@ export default function PlayerPageClient({
                 ) : (
                   <>
                     <StatCard label="Голов" value={stats.totals.goals} highlight />
-                    <StatCard label="Пасов" value={stats.totals.assists ?? 0} />
+                    <StatCard label="Передач" value={stats.totals.assists ?? 0} />
                     <StatCard label="Минут" value={stats.totals.minutesPlayed} />
                   </>
                 )}

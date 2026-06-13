@@ -22,6 +22,7 @@ export async function getNextMainTicketMatch(): Promise<NextTicketMatch | null> 
       where: {
         matchType: 'osnova',
         status: 'scheduled',
+        isPublished: true,
         matchDate: { gte: now },
         ticketUrl: { not: null },
       },

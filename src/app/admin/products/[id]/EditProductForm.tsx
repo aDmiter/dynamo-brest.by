@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import ImageUpload from '@/modules/admin/components/ImageUpload';
+import ProductImagesUpload from '@/modules/admin/components/ProductImagesUpload';
 import AdminAuditMeta from '@/modules/admin/components/AdminAuditMeta';
 import ProductSizesEditor from '@/modules/admin/components/ProductSizesEditor';
 import ContentBeFields, {
@@ -113,10 +113,6 @@ export default function EditProductForm({
       .then(setManufacturers)
       .catch(console.error);
   }, []);
-
-  const addImage = (url: string) => setForm({ ...form, images: [...form.images, url] });
-  const removeImage = (i: number) =>
-    setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -238,25 +234,9 @@ export default function EditProductForm({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-sm text-gray-400 mb-2 block">Фотографии</label>
-              <div className="flex flex-wrap gap-3 mb-2">
-                {form.images.map((img, i) => (
-                  <div key={i} className="relative">
-                    <img src={img} alt="" className="h-20 w-20 object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(i)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <ImageUpload
-                value={form.images.length > 0 ? form.images[form.images.length - 1] : ''}
-                onChange={(url) => {
-                  if (url) addImage(url);
-                }}
+              <ProductImagesUpload
+                images={form.images}
+                onChange={(images) => setForm({ ...form, images })}
               />
             </div>
             <div>

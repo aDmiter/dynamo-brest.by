@@ -55,6 +55,7 @@ model match {
   tournamentId    String?
   round           String?
   status          String       @default("scheduled")
+  isPublished     Boolean      @default(true)
   isHome          Boolean      @default(true)
   matchType       String?
   gender          String?
@@ -95,6 +96,7 @@ model matchLineup {
 
   @@unique([matchId, personCometId])
   @@index([matchId])
+  @@map("matchlineup")
 }
 
 model matchEvent {
@@ -115,6 +117,7 @@ model matchEvent {
 
   @@index([matchId])
   @@index([matchId, eventType])
+  @@map("matchevent")
 }
 
 model OpponentTeam {
@@ -131,6 +134,8 @@ model OpponentTeam {
   updatedAt DateTime @updatedAt
   homeMatches match[] @relation("HomeMatches")
   awayMatches match[] @relation("AwayMatches")
+
+  @@map("opponentteam")
 }
 
 model Facility {
@@ -148,6 +153,8 @@ model Facility {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   matches   match[]
+
+  @@map("facility")
 }
 
 model news {
@@ -175,6 +182,8 @@ model order {
   customerEmail    String?
   customerPhone    String
   address          String?
+  deliveryCountryId   String?
+  deliveryCountryName String?
   comment          String?     @db.Text
   status           String      @default("new")
   total            Decimal     @db.Decimal(10, 2)
@@ -243,6 +252,7 @@ model PlayerTeam {
   team     team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@id([playerId, teamId])
+  @@map("playerteam")
 }
 
 model coach {
@@ -278,6 +288,7 @@ model CoachTeam {
   team    team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@id([coachId, teamId])
+  @@map("coachteam")
 }
 
 model productmanufacturer {
@@ -300,6 +311,7 @@ model product {
   inStock           Boolean           @default(true)
   isFeatured        Boolean           @default(false)
   isHit             Boolean           @default(false)
+  sortOrder         Int               @default(0)
   images            String?           @db.Text
   sizes             String?           @db.Text
   createdAt         DateTime          @default(now())
@@ -321,6 +333,7 @@ model product {
 
   @@index([categoryId], map: "Product_categoryId_fkey")
   @@index([manufacturerId])
+  @@index([isHit, sortOrder])
 }
 
 model productcategory {
@@ -415,6 +428,7 @@ model contentTranslation {
 
   @@unique([resourceType, resourceId, field, locale], map: "ContentTranslation_resource_field_locale_key")
   @@index([resourceType, resourceId, locale])
+  @@map("contenttranslation")
 }
 
 model Country {
@@ -426,6 +440,8 @@ model Country {
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("country")
 }
 
 model ProductSize {
@@ -440,6 +456,7 @@ model ProductSize {
 
   @@unique([productId, size])
   @@index([productId, sortOrder])
+  @@map("productsize")
 }
 
 model Customization {
@@ -453,6 +470,8 @@ model Customization {
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("customization")
 }
 
 model PlayerCustomization {
@@ -462,6 +481,8 @@ model PlayerCustomization {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("playercustomization")
 }
 
 model menuitem {
@@ -491,6 +512,8 @@ model Setting {
   value     String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("setting")
 }
 
 /// Доступ к закрытой публичной версии сайта (проверка банком и т.п.)
@@ -502,6 +525,8 @@ model sitePreviewUser {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("sitepreviewuser")
 }
 
 model footermenuitem {
@@ -540,6 +565,8 @@ model clubHistoryIntro {
   updatedAt        DateTime @updatedAt
   updatedByAdminId String?
   updatedByName    String?
+
+  @@map("clubhistoryintro")
 }
 
 model clubHistoryYear {
@@ -560,6 +587,7 @@ model clubHistoryYear {
 
   @@index([sortOrder])
   @@index([year])
+  @@map("clubhistoryyear")
 }
 
 model clubHistoryYearImage {
@@ -571,6 +599,7 @@ model clubHistoryYearImage {
   year      clubHistoryYear @relation(fields: [yearId], references: [id], onDelete: Cascade)
 
   @@index([yearId, sortOrder])
+  @@map("clubhistoryyearimage")
 }
 
 model clubContactsPage {
@@ -579,6 +608,8 @@ model clubContactsPage {
   subtitle  String?  @default("Клуб")
   lead      String?  @db.Text
   updatedAt DateTime @updatedAt
+
+  @@map("clubcontactspage")
 }
 
 model clubContactSection {
@@ -593,6 +624,7 @@ model clubContactSection {
   staff     clubContactStaff[]
 
   @@index([sortOrder])
+  @@map("clubcontactsection")
 }
 
 model clubContactPhone {
@@ -605,6 +637,7 @@ model clubContactPhone {
   section   clubContactSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   @@index([sectionId, sortOrder])
+  @@map("clubcontactphone")
 }
 
 model clubContactStaff {
@@ -618,12 +651,15 @@ model clubContactStaff {
   section   clubContactSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   @@index([sectionId, sortOrder])
+  @@map("clubcontactstaff")
 }
 
 model clubPartnersPage {
   id        String   @id @default("main")
   ctaHtml   String   @db.LongText
   updatedAt DateTime @updatedAt
+
+  @@map("clubpartnerspage")
 }
 
 model clubPartnerLogo {
@@ -638,6 +674,7 @@ model clubPartnerLogo {
   updatedAt DateTime @updatedAt
 
   @@index([section, sortOrder])
+  @@map("clubpartnerlogo")
 }
 
 model sitePageMeta {
@@ -656,4 +693,5 @@ model sitePageMeta {
   updatedAt          DateTime @updatedAt
 
   @@index([source])
+  @@map("sitepagemeta")
 }

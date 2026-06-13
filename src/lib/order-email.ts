@@ -60,6 +60,10 @@ export function parseProductFirstImage(images: string | null | undefined): strin
   }
 }
 
+function belpostTrackingUrl(trackingCode: string): string {
+  return `https://belpost.by/Otsleditotpravleniye?number=${encodeURIComponent(trackingCode.trim())}`;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -295,7 +299,7 @@ export function buildCustomerStatusEmail(
     <div style="margin:0 0 24px;padding:16px 18px;background:#fff8f0;border:1px solid rgba(238,134,44,0.35);border-radius:10px;">
       <p style="margin:0 0 6px;font-size:13px;color:${BRAND.textMuted};">Код отслеживания</p>
       <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:${BRAND.textPrimary};">${escapeHtml(order.trackingCode)}</p>
-      <p style="margin:0;font-size:13px;"><a href="https://belpost.by" style="color:${BRAND.accent};">Отследить на belpost.by</a></p>
+      <p style="margin:0;font-size:13px;"><a href="${belpostTrackingUrl(order.trackingCode)}" style="color:${BRAND.accent};">Отследить на belpost.by</a></p>
     </div>`
       : '';
 

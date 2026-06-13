@@ -30,9 +30,6 @@ export default async function Footer() {
     'footer',
   );
 
-  const block1 = items.filter((i) => i.block === 1);
-  const block2 = items.filter((i) => i.block === 2);
-
   const contactsData = contacts ?? {
     title: 'Контакты',
     email: 'info@dynamo-brest.by',
@@ -40,10 +37,18 @@ export default async function Footer() {
     address: 'г. Брест, ул. Гоголя, 9',
   };
 
-  const renderLinks = (blockItems: typeof menuItems) => (
+  const footerLinks = await Promise.all(
+    items.map(async (item) => ({
+      item,
+      href: await getFooterItemHref(item),
+    })),
+  );
+  const block1Links = footerLinks.filter(({ item }) => item.block === 1);
+  const block2Links = footerLinks.filter(({ item }) => item.block === 2);
+
+  const renderLinks = (links: typeof block1Links) => (
     <ul className="site-footer__links">
-      {blockItems.map((item) => {
-        const href = getFooterItemHref(item);
+      {links.map(({ item, href }) => {
         const external = isFooterItemExternal(item);
         const className = 'site-footer__link';
 
@@ -106,8 +111,8 @@ export default async function Footer() {
 
       <div className="site-footer__main">
         <div className="site-footer__grid">
-          <div className="site-footer__col">{renderLinks(block1)}</div>
-          <div className="site-footer__col">{renderLinks(block2)}</div>
+          <div className="site-footer__col">{renderLinks(block1Links)}</div>
+          <div className="site-footer__col">{renderLinks(block2Links)}</div>
           <div className="site-footer__col site-footer__contacts">
             <h3 className="site-footer__contacts-title">{contactsData.title}</h3>
             <p className="site-footer__contacts-line">

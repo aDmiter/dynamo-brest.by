@@ -2,11 +2,12 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import MatchesResultsClient from '@/modules/team/components/MatchesResultsClient';
+import { enrichMatchesWithGoals } from '@/modules/team/lib/enrich-match-goals';
+import { resultsMatchWhere } from '@/modules/team/lib/match-queries';
 import {
   buildOpponentTeamMap,
   serializeTeamMatchesForPublic,
 } from '@/modules/team/lib/resolve-match-teams';
-import { enrichMatchesWithGoals } from '@/modules/team/lib/enrich-match-goals';
 
 export default async function WomenResultsPage() {
   const team = await prisma.team.findUnique({
@@ -17,7 +18,7 @@ export default async function WomenResultsPage() {
 
   const [matches, opponentTeams] = await Promise.all([
     prisma.match.findMany({
-      where: { teamId: team.id, status: 'finished' },
+      where: resultsMatchWhere(team.id, new Date(), true),
       orderBy: { matchDate: 'desc' },
       take: 100,
     }),

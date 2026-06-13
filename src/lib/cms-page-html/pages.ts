@@ -142,7 +142,7 @@ ${sectionHtml(
 ${sectionHtml(
   'hotel-services',
   'Услуги',
-  `<ul class="transport-services__schedule-list">
+  `<ul class="transport-services__list">
 <li>проживание в одноместных и двухместных номерах;</li>
 <li>завтраки и питание в кафе «5 колец»;</li>
 <li>парковка для гостей;</li>

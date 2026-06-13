@@ -163,6 +163,7 @@ export default function EditNewsForm({
             <div>
               <label className="mb-1 block text-sm text-gray-400">Картинка</label>
               <ImageUpload
+                folder="featured"
                 value={form.imageUrl}
                 onChange={(url) => setForm({ ...form, imageUrl: url })}
               />

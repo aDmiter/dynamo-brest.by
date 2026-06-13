@@ -21,6 +21,7 @@ import {
   getResultBorderColorTailwind,
   getTablePositionForClub,
 } from '../utils';
+import { formatSiteDate, formatSiteTime } from '@/lib/date-utils';
 
 function TablePosition({ position }: { position: number | null }) {
   if (position == null) return null;
@@ -279,19 +280,11 @@ function MatchCard({
         </div>
         <p className="match__card-date flex items-center gap-2 text-right text-sm text-white/70 justify-end">
           <FontAwesomeIcon icon={faCalendarAlt} className="text-xs text-[var(--color-accent)]" />
-          {new Date(match.matchDate).toLocaleDateString('ru-RU', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          })}
+          {formatSiteDate(match.matchDate)}
           {isNext && (
             <>
               {' '}
-              |{' '}
-              {new Date(match.matchDate).toLocaleTimeString('ru-RU', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              | {formatSiteTime(match.matchDate)}
             </>
           )}
         </p>

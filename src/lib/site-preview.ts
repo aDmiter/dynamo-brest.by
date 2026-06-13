@@ -31,5 +31,9 @@ export function isSitePreviewPublicPath(pathname: string): boolean {
   if (pathname === '/preview-login' || pathname.startsWith('/preview-login/')) return true;
   if (pathname.startsWith('/api/site-preview/')) return true;
   if (pathname.startsWith('/api/auth/')) return true;
+  if (pathname.startsWith('/api/cron/')) return true;
+  if (pathname.startsWith('/api/serve-upload/')) return true;
+  if (pathname.startsWith('/images/')) return true;
+  if (pathname.startsWith('/club-history/')) return true;
   return false;
 }
